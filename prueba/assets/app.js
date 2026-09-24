@@ -16,7 +16,7 @@
   'use strict';
 
   /* direccion del intermediario del modo editor (Cloudflare Worker); vacia = aun sin conectar */
-  var EDITOR = '';
+  var EDITOR = 'https://picksin-editor.javiermirelesreyna.workers.dev';
 
   var CONFIG = { local: /^(localhost|127\.0\.0\.1)$/.test(location.hostname) };
   CONFIG.editor = CONFIG.local ? location.origin + '/editor' : EDITOR.replace(/\/+$/, '');
