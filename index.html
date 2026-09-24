@@ -14,7 +14,7 @@
   <meta property="og:image" content="https://javiermirelesreyna.github.io/picksin2026/assets/compartir.png">
   <link rel="icon" type="image/png" href="assets/icono.png">
   <link rel="apple-touch-icon" href="assets/icono-apple.png">
-  <link rel="stylesheet" href="assets/estilo.css?v=2">
+  <link rel="stylesheet" href="assets/estilo.css?v=3">
   <script>
     /* Windows no dibuja las banderas en emoji (salen dos letras): ahi se usa la fuente propia. */
     (function () {
@@ -43,6 +43,7 @@
         <a href="#/auditoria" data-nav="auditoria"><span class="nav-emoji" aria-hidden="true">🔍</span><span>Auditoría</span></a>
         <a href="#/escogidos" data-nav="escogidos"><span class="nav-emoji" aria-hidden="true">✅</span><span>Escogidos</span></a>
         <a href="#/resultados" data-nav="resultados"><span class="nav-emoji" aria-hidden="true">🏅</span><span>Resultados</span></a>
+        <a href="#/seleccionadores" data-nav="seleccionadores"><span class="nav-emoji" aria-hidden="true">👥</span><span class="nav-largo">Seleccionadores</span><span class="nav-corto">Ranking</span></a>
       </nav>
     </div>
     <div id="editor-barra" class="editor-barra" hidden></div>
@@ -65,23 +66,12 @@
   <dialog id="dlg-editor" class="dialogo" aria-labelledby="dlg-titulo">
     <form method="dialog" id="form-editor">
       <h2 id="dlg-titulo">🔑 Modo editor</h2>
-      <p>Para escoger picks desde la página. Pega tu token de GitHub: se guarda solo en este
-        navegador y nunca se publica.</p>
-      <label class="campo">Token de GitHub
-        <input type="password" id="token" autocomplete="off" spellcheck="false" required placeholder="github_pat_…">
+      <p>Para escoger picks. Escribe tu clave de seleccionador: la página te reconoce y cada pick
+        que escojas llevará tu nombre. Se guarda solo en este navegador.</p>
+      <label class="campo">Tu clave
+        <input type="password" id="clave" autocomplete="current-password" spellcheck="false" required>
       </label>
-      <details class="ayuda">
-        <summary>¿Cómo creo el token?</summary>
-        <ol>
-          <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener"><b>la página para crear el token</b></a>
-            (con tu sesión de GitHub iniciada).</li>
-          <li><b>Token name:</b> Picksin editor. <b>Expiration:</b> la que quieras (por ejemplo, 1 año).</li>
-          <li><b>Repository access:</b> «Only select repositories» → <b>picksin2026</b>.</li>
-          <li><b>Permissions → Repository permissions → Contents:</b> «Read and write». Nada más.</li>
-          <li><b>Generate token</b>, cópialo (empieza con <code>github_pat_</code>; GitHub solo lo muestra una vez) y pégalo aquí.
-            Puedes guardarlo en tus notas para pegarlo en cada dispositivo.</li>
-        </ol>
-      </details>
+      <p class="dlg-nota">¿No tienes clave? Pídesela a picksin.</p>
       <p class="dlg-error" id="dlg-error" hidden></p>
       <div class="dlg-botones">
         <button type="button" class="boton secundario" data-accion="editor-cancelar">Cancelar</button>
@@ -90,6 +80,6 @@
     </form>
   </dialog>
 
-  <script src="assets/app.js?v=2"></script>
+  <script src="assets/app.js?v=3"></script>
 </body>
 </html>
