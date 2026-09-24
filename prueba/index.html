@@ -74,10 +74,13 @@
       <details class="ayuda">
         <summary>¿Cómo creo el token?</summary>
         <ol>
-          <li>En GitHub: <b>Settings → Developer settings → Personal access tokens → Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+          <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener"><b>la página para crear el token</b></a>
+            (con tu sesión de GitHub iniciada).</li>
+          <li><b>Token name:</b> Picksin editor. <b>Expiration:</b> la que quieras (por ejemplo, 1 año).</li>
           <li><b>Repository access:</b> «Only select repositories» → <b>picksin2026</b>.</li>
-          <li><b>Permissions → Contents:</b> «Read and write». Nada más.</li>
-          <li>Genéralo, cópialo y pégalo aquí. Haz lo mismo en cada dispositivo desde el que quieras escoger.</li>
+          <li><b>Permissions → Repository permissions → Contents:</b> «Read and write». Nada más.</li>
+          <li><b>Generate token</b>, cópialo (empieza con <code>github_pat_</code>; GitHub solo lo muestra una vez) y pégalo aquí.
+            Puedes guardarlo en tus notas para pegarlo en cada dispositivo.</li>
         </ol>
       </details>
       <p class="dlg-error" id="dlg-error" hidden></p>
