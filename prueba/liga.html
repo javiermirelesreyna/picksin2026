@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Picksin</title>
+  <script>
+    /* Enlaces viejos (liga.html?l=<id>): llevan al ultimo analisis de esa liga. */
+    var l = new URLSearchParams(location.search).get('l');
+    location.replace('./' + (l ? '#/liga/' + encodeURIComponent(l) : ''));
+  </script>
+</head>
+<body><p><a href="./">Ir a Picksin</a></p></body>
+</html>

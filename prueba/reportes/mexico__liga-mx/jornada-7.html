@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PICK$IN Analytics — Liga MX, Apertura · Jornada 7</title>
+<style>
+:root{--dorado:#FFD700;--azul:#007BFF;--gris:#808080;--morado:#A855F7;--txt:#111;--muted:#666;--line:#e5e5e5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0;background:#FFFFFF;color:var(--txt);font-family:'Inter','Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.35}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 10px 40px}
+header{border-bottom:3px solid #111;padding:12px 0 10px;margin-bottom:12px}
+header h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px}
+header .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:10px;background:#f4f4f4;border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:#333}
+.chip b{color:#000}
+details{border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fff;overflow:hidden}
+details[open]{box-shadow:0 1px 3px rgba(0,0,0,.06)}
+summary{cursor:pointer;list-style:none;padding:11px 12px;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;background:#fafafa;border-bottom:1px solid transparent}
+details[open]>summary{border-bottom-color:var(--line)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';margin-left:auto;color:var(--muted);font-size:12px;transition:transform .15s}
+details[open]>summary::after{transform:rotate(180deg)}
+summary .num{min-width:22px;height:22px;border-radius:6px;background:#111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 auto}
+.body{padding:11px 12px}
+.hint{font-size:11px;color:var(--muted);margin:0 0 9px;font-style:italic}
+.pick{border:1px solid var(--line);border-left-width:10px;border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fff;transition:box-shadow .12s,border-color .12s}
+.pick.selectable{cursor:pointer}
+.pick[data-color="dorado"]{border-left-color:var(--dorado)}
+.pick[data-color="azul"]{border-left-color:var(--azul)}
+.pick[data-color="gris"]{border-left-color:var(--gris)}
+.pick[data-color="morado"]{border-left-color:var(--morado)}
+.pick.sel[data-color="dorado"]{border:5px solid var(--dorado);border-left-width:10px;box-shadow:0 0 0 3px rgba(255,215,0,.28)}
+.pick.sel[data-color="azul"]{border:5px solid var(--azul);border-left-width:10px;box-shadow:0 0 0 3px rgba(0,123,255,.25)}
+.pick.sel[data-color="gris"]{border:5px solid var(--gris);border-left-width:10px;box-shadow:0 0 0 3px rgba(128,128,128,.25)}
+.pick.sel[data-color="morado"]{border:5px solid var(--morado);border-left-width:10px;box-shadow:0 0 0 3px rgba(168,85,247,.25)}
+.pick-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:3px}
+.pick-head .tit{font-weight:800;font-size:12.5px;flex:1 1 auto;min-width:180px}
+.pick-head .tag{font-size:11px;font-weight:800;white-space:nowrap}
+.pick-head .prob{color:#0a7d34}.pick-head .cuota{color:#0b5ea8}.pick-head .conf{color:#7a3ea1}
+.pick-head .delta{color:#b45309}
+.subsec{margin:18px 0 8px;padding-top:13px;border-top:2px dashed var(--azul);font-size:12.5px;font-weight:800;color:#0b5ea8}
+.pick-head .match{font-size:10.5px;color:var(--muted);font-weight:600;width:100%}
+.pick-just{font-size:11.5px;line-height:1.25;color:#222;margin:0}
+.vacio{border:1px dashed #d4d4d4;border-radius:8px;padding:11px;background:#fcfcfc;font-size:12px;color:#555}
+.vacio b{color:#991b1b}
+.tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1560px;font-size:10.5px;font-family:'Roboto Condensed','Segoe UI',sans-serif}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:5px 6px;text-align:center;white-space:nowrap}
+th{background:#111;color:#fff;font-size:9.5px;font-weight:700;position:sticky;top:0;text-transform:uppercase;letter-spacing:.2px}
+td.part{text-align:left;font-weight:700;font-size:10.5px;background:#fafafa;position:sticky;left:0;z-index:2}
+th.part{position:sticky;left:0;z-index:3}
+tbody tr:nth-child(even) td{background:#fcfcfc}
+tbody tr:nth-child(even) td.part{background:#f5f5f5}
+.expl{border-left:4px solid #111;padding:6px 10px;margin-bottom:8px;background:#fafafa;border-radius:0 6px 6px 0}
+.expl h4{margin:0 0 2px;font-size:12.5px}
+.expl p{margin:0;font-size:11.5px;line-height:1.3;color:#222}
+.mini{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0 10px;min-width:0}
+.mini th,.mini td{border:1px solid var(--line);padding:4px 7px;text-align:left;white-space:normal}
+.mini th{background:#f4f4f4;font-size:10px;text-transform:uppercase}
+.trampa{border-left:5px solid #dc2626;background:#fef7f7;padding:7px 10px;margin-bottom:7px;border-radius:0 6px 6px 0;font-size:11.5px;line-height:1.3}
+.trampa b{color:#991b1b}
+h3.sub{font-size:12.5px;margin:12px 0 5px;padding-bottom:3px;border-bottom:2px solid #111}
+#auditoria{margin-top:22px;border:3px solid #111;border-radius:12px;overflow:hidden}
+#auditoria .cab{background:#111;color:#fff;padding:11px 12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+#auditoria .cab h2{margin:0;font-size:14px;font-weight:800}
+#auditoria .cab .cnt{margin-left:auto;font-size:11px;background:#fff;color:#111;border-radius:20px;padding:2px 10px;font-weight:800}
+#auditoria .inner{padding:10px}
+.dia-tit{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#111;margin:9px 0 5px;text-align:left;border-bottom:1px solid var(--line);padding-bottom:2px}
+.dia-tit:first-child{margin-top:0}
+.apick{border:1px solid var(--line);border-left-width:10px;border-radius:6px;padding:5px;margin-bottom:4px;cursor:pointer;background:#fff}
+.apick[data-color="dorado"]{border-left-color:var(--dorado)}
+.apick[data-color="azul"]{border-left-color:var(--azul)}
+.apick[data-color="gris"]{border-left-color:var(--gris)}
+.apick[data-color="morado"]{border-left-color:var(--morado)}
+.apick.ok{background:#D1FAE5}.apick.ko{background:#FEE2E2}
+.apick .ah{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.apick .ah .tit{font-weight:800;font-size:11.5px;flex:1 1 auto;min-width:150px}
+.apick .ah .tag{font-size:10.5px;font-weight:800;white-space:nowrap}
+.apick .ah .st{font-size:11px;font-weight:800;margin-left:auto}
+.apick .aj{font-size:11px;line-height:1.1;margin:2px 0 0;color:#222}
+.apick .am{font-size:9.5px;color:var(--muted);font-weight:700;width:100%}
+.vacio-aud{font-size:12px;color:var(--muted);text-align:center;padding:16px;font-style:italic}
+.barra{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:7px 0;margin-bottom:6px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.btn{font-size:11px;font-weight:800;border:1.5px solid #111;background:#fff;color:#111;border-radius:20px;padding:5px 12px;cursor:pointer}
+.btn.pri{background:#111;color:#fff}
+.leyenda{margin-left:auto;display:flex;gap:8px;font-size:9.5px;align-items:center;color:var(--muted);flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
+@media (max-width:620px){.wrap{padding:8px 7px 30px}header h1{font-size:16px}summary{font-size:12.5px;padding:10px}.leyenda{width:100%;margin-left:0;margin-top:4px}}
+@media print{.barra,summary::after{display:none!important}details{border:1px solid #999;break-inside:avoid}details>.body{display:block!important}.pick,.apick,.expl,.trampa{break-inside:avoid}body{font-size:10px}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}table{min-width:0;font-size:7.5px}@page{margin:8mm}}
+</style></head><body><div class="wrap">
+<div class="barra">
+  <button class="btn pri" onclick="window.print()">🖨️ Guardar como PDF</button>
+  <button class="btn" onclick="setAll(true)">Abrir todo</button>
+  <button class="btn" onclick="setAll(false)">Cerrar todo</button>
+  <button class="btn" onclick="limpiar()">Limpiar selección</button>
+  <span class="leyenda">
+    <span><span class="dot" style="background:#FFD700"></span>Picks Sugeridos</span>
+    <span><span class="dot" style="background:#007BFF"></span>Top 5 Real</span>
+    <span><span class="dot" style="background:#808080"></span>Tendencias</span>
+    <span><span class="dot" style="background:#A855F7"></span>Especializados</span>
+  </span>
+</div>
+<header><h1>PICK$IN Analytics — Liga MX, Apertura</h1>
+<div class="sub">Apertura 2026 · <b>Jornada 7</b> · 5 partidos</div>
+<div class="meta"><span class="chip">Procesados <b>54/54</b> ✓</span><span class="chip">Dixon-Coles γ<sub>L</sub>=<b>0.9708</b> γ<sub>V</sub>=<b>0.702</b> ρ=<b>-0.25</b></span><span class="chip">Banda <b>P 60–86.96%</b> · cuota <b>1.20–1.72</b></span></div></header>
+<details open><summary><span class="num">1</span>📊 Tabla de pronósticos consolidada</summary><div class="body"><p class="hint">Desliza horizontalmente para ver las 18 columnas técnicas. Sección de solo visualización.</p><div class="tabla-scroll"><table><thead><tr><th>Día</th><th class="part">Partido</th><th>%L/E/V</th><th>Goles L/V</th><th>Tarjetas L/V</th><th>Remates L/V</th><th>Rem.Arco L/V</th><th>Córners L/V</th><th>Offsides L/V</th><th>Faltas L/V</th><th>BTTS Sí%</th><th>O/U Goles</th><th>O/U Tarjetas</th><th>O/U Remates</th><th>O/U Rem.Arco</th><th>O/U Córners</th><th>O/U Offsides</th><th>O/U Faltas</th></tr></thead><tbody><tr><td>vie</td><td class="part">FC Juarez vs CF Pachuca</td><td>27/30/43</td><td>1.29/1.67</td><td>1.46/1.92</td><td>10.83/17.00</td><td>3.48/5.83</td><td>3.83/6.02</td><td>1.46/2.18</td><td>11.08/13.83</td><td>62</td><td>2.5→57/43</td><td>3.5→40/60</td><td>27.5→49/51</td><td>9.5→45/55</td><td>9.5→49/51</td><td>3.5→45/55</td><td>24.5→51/49</td></tr><tr><td>sáb</td><td class="part">Atletico San Luis vs CD Guadalajara</td><td>36/32/32</td><td>1.38/1.31</td><td>1.60/1.50</td><td>12.56/16.92</td><td>4.17/5.75</td><td>3.42/7.29</td><td>1.41/1.33</td><td>11.00/12.25</td><td>58</td><td>2.5→50/50</td><td>3.5→38/62</td><td>29.5→46/54</td><td>9.5→53/47</td><td>10.5→49/51</td><td>2.5→46/54</td><td>23.5→46/54</td></tr><tr><td>sáb</td><td class="part">Tigres UANL vs Club Necaxa</td><td>51/29/21</td><td>1.79/1.10</td><td>2.17/3.08</td><td>17.75/14.58</td><td>4.69/5.00</td><td>6.50/4.94</td><td>1.01/1.42</td><td>13.65/13.85</td><td>58</td><td>2.5→55/45</td><td>5.5→49/51</td><td>32.5→46/54</td><td>9.5→50/50</td><td>11.5→45/55</td><td>2.5→39/61</td><td>27.5→49/51</td></tr><tr><td>sáb</td><td class="part">Atlas FC vs Atlante FC</td><td>50/30/21</td><td>1.72/1.07</td><td>1.70/1.83</td><td>12.83/14.42</td><td>4.83/4.74</td><td>5.58/5.25</td><td>2.33/1.25</td><td>11.25/13.67</td><td>57</td><td>2.5→53/47</td><td>3.5→46/54</td><td>27.5→46/54</td><td>9.5→49/51</td><td>10.5→48/52</td><td>3.5→45/55</td><td>24.5→52/48</td></tr><tr><td>dom</td><td class="part">Cruz Azul vs Santos Laguna</td><td>59/25/16</td><td>2.10/1.07</td><td>1.09/1.96</td><td>17.76/11.62</td><td>6.73/3.88</td><td>5.85/5.96</td><td>1.67/1.67</td><td>11.46/9.92</td><td>60</td><td>2.5→61/39</td><td>3.5→36/64</td><td>29.5→48/52</td><td>10.5→49/51</td><td>11.5→52/48</td><td>3.5→39/61</td><td>21.5→47/53</td></tr></tbody></table></div><p class="hint"><b>Nota de procesamiento de datos:</b> en toda métrica <b>L/V</b>, el valor a la izquierda corresponde estrictamente al <b>Local</b> y el de la derecha al <b>Visitante</b>, tratados como variables independientes. Tarjetas: tarjetas que RECIBE cada equipo. Los O/U se leen <b>línea → Over%/Under%</b>.</p><p class="hint"><b>Factor de Correlación por Faltas activado en 1 partidos:</b> Tigres UANL vs Club Necaxa (P(Over) x1.15 (faltas totales 27.50 &gt; p75 de la liga 26.50)).</p><p class="hint"><b>Ninguna familia validada.</b> Las 22 familias del motor están <b>en observación</b> y sus 154 candidatos quedaron apartados: 0 de 22 tienen skill score. Las probabilidades de esta tabla son proyecciones <b>sin validar</b>, no picks.</p><p class="hint">Las 7 escaleras Over/Under (162–243 observaciones) están en <b>omitida_sin_validacion_posible</b>: tienen datos de sobra y les faltan <b>jornadas</b> para armar los dos folds de la ventana expansiva. Se desbloquean con la J7 ya jugada.</p><p class="hint">Las 15 familias restantes (1X2, BTTS, 1H, dominio) están en <b>omitida_muestra_insuficiente</b>: 21–27 observaciones frente a las 60 que exige Platt. Se desbloquean hacia la J10–J11.</p><p class="hint">Ponderación temporal 55/30/15 <b>colapsada a [1.0, 0, 0]</b> en los 10 equipos (componentes 2 y 3 vacíos), con <b>muestra_robusta = false</b> en los cinco partidos. 132 anomalías marcadas por Z robusto MAD &gt; 3.5.</p><p class="hint">Los <b>10 umbrales del perfil de liga salieron por valor de reserva</b>, no de percentiles de la Liga MX: faltas &gt; 14.5, conversión 6.0–18.0%, IPT 3.50 (partido) / 2.50 (1T). Con 6 jornadas no hay muestra para calcularlos.</p><p class="hint">En tarjetas, la lambda es <b>las amonestaciones que RECIBE cada equipo</b>. Es la única métrica con la orientación invertida en el CSV.</p><p class="hint"><b>Nota de procesamiento de datos:</b> en todas las métricas marcadas como L/V, el valor a la izquierda de la diagonal corresponde estrictamente al equipo <b>Local</b> y el de la derecha al <b>Visitante</b>. El modelo trata ambos números como variables independientes.</p></div></details><details open><summary><span class="num">2</span>📝 Explicación breve de cada partido</summary><div class="body"><p class="hint">Sección de solo visualización.</p><div class="expl"><h4>FC Juarez vs CF Pachuca</h4><p>Escenario Neutro. El diferencial que manda es el de remates: <b>10.83 contra 17.00</b>, la separación más ancha de la jornada (6.17). Es el único partido donde el visitante sale favorito (43% contra 27%), con λ 1.29–1.67.</p></div><div class="expl"><h4>Atletico San Luis vs CD Guadalajara</h4><p>Escenario Neutro. Las lambdas de gol casi se tocan (<b>1.38–1.31</b>) y el 1X2 sale plano (36/32/32); el único diferencial marcado está en corners, <b>3.42 contra 7.29</b> a favor del visitante.</p></div><div class="expl"><h4>Tigres UANL vs Club Necaxa</h4><p>Escenario de <b>Alta Volatilidad (Over 2.5 / BTTS)</b>. Lo dispara el cruce PO/VD del local: potencia ofensiva 1.926 contra vulnerabilidad defensiva 1.379 del rival. Necaxa proyecta <b>3.08 tarjetas recibidas</b>, el valor más alto de la jornada.</p></div><div class="expl"><h4>Atlas FC vs Atlante FC</h4><p>Escenario Neutro. λ de gol <b>1.72–1.07</b> con el local al 50%; el diferencial propio es el de offsides, <b>2.33 contra 1.25</b>, casi el doble.</p></div><div class="expl"><h4>Cruz Azul vs Santos Laguna</h4><p>Escenario de <b>Alta Volatilidad (Over 2.5 / BTTS)</b>. Es la mayor disparidad de la jornada: λ <b>2.10–1.07</b>, remates 17.76–11.62 y remates al arco 6.73–3.88. El 59% local es la probabilidad de resultado más alta de las cinco.</p></div></div></details><details open><summary><span class="num">3</span>💎 PICKS SUGERIDOS CON CUOTAS IMPLÍCITAS</summary><div class="body"><p class="hint">Toca cualquier pick para seleccionarlo y enviarlo a «PICKS DE LA JORNADA».</p><div class="vacio"><b>[EL MURO] DESIERTO</b>&lt;br&gt;Motivo del motor: <i>ningún pick reúne confianza Alta, probabilidad ≥ 70%, muestra robusta y cero alertas</i>. Los dos requisitos que fallan son estructurales esta jornada: <b>muestra_robusta = false</b> en los cinco partidos, y la confianza está topada en Baja en los 7 candidatos.</div>
+<div class="vacio"><b>[LA DISPARIDAD] DESIERTO</b>&lt;br&gt;Motivo del motor: <i>no hay mercados de resultado en banda sobre los que monetizar la disparidad</i>. La disparidad matemática existe y es grande — Cruz Azul vs Santos Laguna proyecta λ <b>2.10 contra 1.07</b>, casi el doble — pero se expresa en 1X2 y doble oportunidad, y esas familias están en observación. No hay dónde ponerla.</div>
+<div class="pick selectable" data-color="dorado" data-dia="sabado" data-id="d1">
+  <div class="pick-head"><span class="tit">[LA BOVEDA] Atletico San Luis vs CD Guadalajara — Carrera a 5 Corners: CD Guadalajara (si alguien llega)</span><span class="tag prob">85.9%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: B</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">Es la probabilidad más alta de todo el procesamiento y la única por encima del 80%. La sostiene el diferencial de corners más ancho de la jornada — <b>7.29 proyectados para Guadalajara contra 3.42 para San Luis</b>, con IPT de partido 3.875 (el único candidato que supera el 3.50, que salió por valor de reserva). El riesgo real no está en quién gana la carrera sino en el <b>15.3%</b> de escenarios donde ninguno de los dos llega a 5 corners.</p>
+</div>
+<div class="vacio"><b>[EL ESPEJISMO] DESIERTO</b>&lt;br&gt;Motivo del motor: <i>ningún equipo de la jornada tiene la conversión fuera de la banda de la liga</i>. Esa banda es 6.0%–18.0% y también salió por valor de reserva, así que ni siquiera está midiendo la Liga MX: con 6 jornadas no hubo muestra para calcular sus percentiles propios. El criterio queda desierto sobre un umbral prestado.</div>
+<div class="pick selectable" data-color="dorado" data-dia="viernes" data-id="d2">
+  <div class="pick-head"><span class="tit">[EL RADAR] FC Juarez vs CF Pachuca — Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)</span><span class="tag prob">73.5%</span><span class="tag cuota">Cuota 1.41</span><span class="tag conf">Confianza: B</span><span class="match">viernes · FC Juarez vs CF Pachuca</span></div>
+  <p class="pick-just">Mercado alternativo con patrón temporal — el desequilibrio de corners de Pachuca se concentra en el primer tiempo (<b>3.58 contra 2.04</b>, una separación de 1.54 sobre un total de 5.63 saques proyectados en la mitad). Se apoya en el mismo cuadro que da al visitante 17.00 remates contra 10.83 del local. Falla el <b>22.4%</b> de las veces en que ninguno llega a 3.</p>
+</div>
+</div></details><details open><summary><span class="num">4</span>🏆 TOP 5 REAL FINAL Multi-Mercado</summary><div class="body"><p class="hint">Cruce de los tres bloques, con diversidad obligatoria (máximo 2 picks por mercado).</p><div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a3">
+  <div class="pick-head"><span class="tit">1 · Atletico San Luis vs CD Guadalajara — Carrera a 5 Corners: CD Guadalajara (si alguien llega)</span><span class="tag prob">85.9%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Baja</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">Diferencial de corners de <b>7.29 contra 3.42</b> — 3.87 de separación, la más ancha de la jornada en cualquier métrica. P(ninguno llega a 5) = <b>15.3%</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="viernes" data-id="a4">
+  <div class="pick-head"><span class="tit">2 · FC Juarez vs CF Pachuca — Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)</span><span class="tag prob">73.5%</span><span class="tag cuota">Cuota 1.41</span><span class="tag conf">Confianza: Baja</span><span class="match">viernes · FC Juarez vs CF Pachuca</span></div>
+  <p class="pick-just">Diferencial de corners en primer tiempo de <b>3.58 contra 2.04</b> — 1.54 a favor del visitante. P(ninguno llega a 3 en 1H) = <b>22.4%</b>.</p>
+</div>
+<h4 class="subsec">⤵ Desplazados por diversidad — 5 picks válidos apartados por el tope</h4><p class="hint">No son descartes por calidad: están dentro de la banda operativa, su familia superó la validación y su confianza es la real. Perdieron el sitio únicamente por el tope de diversidad. El valor en naranja es la diferencia de probabilidad frente al pick nº2 del TOP 5 (73.5%), es decir el precio exacto de haber diversificado. Son seleccionables como cualquier otro pick.</p><div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a5">
+  <div class="pick-head"><span class="tit">⤵ Atletico San Luis vs CD Guadalajara — Carrera a 5 Corners: CD Guadalajara</span><span class="tag prob">72.8%</span><span class="tag cuota">Cuota 1.42</span><span class="tag conf">Confianza: Baja</span><span class="tag delta">-0.69 pt</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">Misma lectura que la variante condicional, con el caso «ninguno llega» contado como pérdida en vez de excluido. Diferencial de corners <b>7.29 contra 3.42</b>, IPT de partido 3.875. Desplazado del TOP 5 por el tope de diversidad: <b>−0.69 pt</b> de respaldo contra el pick nº2. · Apartado porque <b>ya hay 2 picks de corners</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="viernes" data-id="a6">
+  <div class="pick-head"><span class="tit">⤵ FC Juarez vs CF Pachuca — Carrera a 5 Corners: CF Pachuca (si alguien llega)</span><span class="tag prob">72.5%</span><span class="tag cuota">Cuota 1.43</span><span class="tag conf">Confianza: Baja</span><span class="tag delta">-0.97 pt</span><span class="match">viernes · FC Juarez vs CF Pachuca</span></div>
+  <p class="pick-just">Diferencial de corners a partido completo de <b>6.02 contra 3.83</b> a favor del visitante, IPT 2.188 (por debajo del 3.50 de reserva). P(ninguno llega a 5) = <b>24.7%</b>, el más alto de los siete candidatos. Desplazado del TOP 5 por el tope de diversidad: <b>−0.97 pt</b> de respaldo. · Apartado porque <b>ya hay 2 picks de corners</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a7">
+  <div class="pick-head"><span class="tit">⤵ Atletico San Luis vs CD Guadalajara — Carrera a 3 Corners 1H: CD Guadalajara (si alguien llega)</span><span class="tag prob">67.7%</span><span class="tag cuota">Cuota 1.53</span><span class="tag conf">Confianza: Baja</span><span class="tag delta">-5.75 pt</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">El mismo desequilibrio del partido leído sobre el primer tiempo: <b>3.25 contra 2.24</b>, una separación de 1.01 sobre 5.49 saques proyectados en la mitad. P(ninguno llega a 3 en 1H) = <b>22.6%</b>. Desplazado del TOP 5 por el tope de diversidad: <b>−5.75 pt</b> de respaldo. · Apartado porque <b>ya hay 2 picks de corners</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a8">
+  <div class="pick-head"><span class="tit">⤵ Tigres UANL vs Club Necaxa — Carrera a 3 Corners 1H: Tigres UANL (si alguien llega)</span><span class="tag prob">66.0%</span><span class="tag cuota">Cuota 1.56</span><span class="tag conf">Confianza: Baja</span><span class="tag delta">-7.46 pt</span><span class="match">sábado · Tigres UANL vs Club Necaxa</span></div>
+  <p class="pick-just">Único candidato de la jornada donde el <b>local</b> domina el saque de esquina en la primera mitad: <b>3.58 contra 2.58</b>. IPT 1.000, muy por debajo del 2.50 de reserva. P(ninguno llega a 3 en 1H) = <b>17.2%</b>. Desplazado del TOP 5 por el tope de diversidad: <b>−7.46 pt</b> de respaldo. · Apartado porque <b>ya hay 2 picks de corners</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a9">
+  <div class="pick-head"><span class="tit">⤵ Tigres UANL vs Club Necaxa — Carrera a 5 Corners: Tigres UANL (si alguien llega)</span><span class="tag prob">63.6%</span><span class="tag cuota">Cuota 1.62</span><span class="tag conf">Confianza: Baja</span><span class="tag delta">-9.86 pt</span><span class="match">sábado · Tigres UANL vs Club Necaxa</span></div>
+  <p class="pick-just">A partido completo Tigres proyecta <b>6.50 corners contra 4.94</b> de Necaxa, la separación más estrecha de las tres carreras a 5. IPT 1.562, por debajo del 3.50 de reserva. P(ninguno llega a 5) = <b>16.6%</b>. Desplazado del TOP 5 por el tope de diversidad: <b>−9.86 pt</b> de respaldo, el precio más alto de los cinco. · Apartado porque <b>ya hay 2 picks de corners</b>.</p>
+</div>
+</div></details><details><summary><span class="num">5</span>🎯 Tendencia Maestra por Partido (Análisis Individual)</summary><div class="body"><p class="hint">La mejor tendencia dentro de la banda operativa entre los mercados comparables de cada partido, calculada por el motor.</p><div class="vacio"><b>FC Juarez vs CF Pachuca</b> — sin tendencia en banda.</div>
+<div class="vacio"><b>Atletico San Luis vs CD Guadalajara</b> — sin tendencia en banda.</div>
+<div class="vacio"><b>Tigres UANL vs Club Necaxa</b> — sin tendencia en banda.</div>
+<div class="vacio"><b>Atlas FC vs Atlante FC</b> — sin tendencia en banda.</div>
+<div class="vacio"><b>Cruz Azul vs Santos Laguna</b> — sin tendencia en banda.</div>
+</div></details><details><summary><span class="num">6</span>[A] TOP 3 (A) — Moneyline / Hándicap / BTTS</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. Las tres familias quedaron sin candidatos sobre el piso de 65% porque 1x2_local, 1x2_visitante, 1x2_empate y btts están en observación con 27 observaciones cada una frente a las 60 que exige Platt. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">7</span>[B] TOP 3 (B) — Over/Under Goles / Remates / Tiros a Puerta</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. ou_goles (162 obs), ou_remates (243) y ou_sot (243) tienen observaciones de sobra — lo que les falta son jornadas para armar los dos folds de la ventana expansiva. Se desbloquean con la J7 ya jugada. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">8</span>[C] TOP 3 (C) — Over/Under Tarjetas / Córners / Faltas</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. ou_tarjetas (224 obs), ou_corners (243) y ou_faltas (243) esperan jornadas, no partidos. La escala de tarjetas (0.873) se descartó por no reducir el sesgo fuera de muestra: 5.5 pt contra 5.5 pt. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">9</span>[D] TOP 3 (D) — Dominio 1x2 Remates / Remates al Arco / Córners</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. dom2v_remates (26 obs), dom2v_sot (22) y dom2v_corners (24) están muy lejos de las 60 observaciones necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">10</span>⏱️ TOP 2 Gol en 1H (Over 0.5 Goles 1H)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. gol_1h en observación, 27 observaciones de las 60 necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">11</span>⏱️ TOP 2 Tarjeta en 1H (Over 0.5 Tarjetas 1H)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. tarjeta_1h en observación, 27 observaciones de las 60 necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">12</span>⏱️ TOP 2 Carrera a 3 Córners en 1H</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="viernes" data-id="s12_10">
+  <div class="pick-head"><span class="tit">1 · FC Juarez vs CF Pachuca — Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)</span><span class="tag prob">73.5%</span><span class="tag cuota">Cuota 1.41</span><span class="tag conf">Baja</span><span class="match">viernes · FC Juarez vs CF Pachuca</span></div>
+  <p class="pick-just">Diferencial de corners en primer tiempo de <b>3.58 contra 2.04</b> — 1.54 a favor del visitante, sobre un total de 5.63 saques proyectados en la mitad. Se apoya en el mismo cuadro que da al visitante 17.00 remates contra 10.83 del local. P(ninguno llega a 3 en 1H) = <b>22.4%</b>.</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s12_11">
+  <div class="pick-head"><span class="tit">2 · Atletico San Luis vs CD Guadalajara — Carrera a 3 Corners 1H: CD Guadalajara (si alguien llega)</span><span class="tag prob">67.7%</span><span class="tag cuota">Cuota 1.53</span><span class="tag conf">Baja</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">El mismo desequilibrio del partido leído sobre el primer tiempo: <b>3.25 contra 2.24</b>, una separación de 1.01 sobre 5.49 saques proyectados en la mitad. P(ninguno llega a 3 en 1H) = <b>22.6%</b>. Desplazado del TOP 5 por el tope de diversidad: <b>−5.75 pt</b> de respaldo.</p>
+</div>
+<p class="hint">El <b>IPT es etiqueta informativa, nunca filtro</b>: 1.541, 1.010 y 1.000 frente al umbral nominal de 2.50 para primer tiempo — <i>cumple_umbral_ipt_2_5: false</i> en los tres candidatos. Y ese 2.50 salió por <b>valor de reserva</b>, no de los percentiles de la Liga MX.</p></div></details><details><summary><span class="num">13</span>📈 TOP 2 Choque Disciplinario (equipo que recibe más tarjetas que su rival)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. dom2v_tarjetas en observación, 22 observaciones de las 60 necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">14</span>📈 TOP 2 Predominio de Faltas (equipo que comete más faltas que su rival)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. dom2v_faltas en observación, 26 observaciones de las 60 necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">15</span>📈 TOP 2 Supremacía en Fueras de Juego</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. dom2v_offsides en observación, 21 observaciones de las 60 necesarias. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">16</span>📈 TOP 2 Especialistas en Carreras a 5 Córners</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s16_12">
+  <div class="pick-head"><span class="tit">1 · Atletico San Luis vs CD Guadalajara — Carrera a 5 Corners: CD Guadalajara (si alguien llega)</span><span class="tag prob">85.9%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Baja</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">Diferencial de corners de <b>7.29 contra 3.42</b> — 3.87 de separación, la más ancha de la jornada en cualquier métrica. Es la probabilidad más alta de todo el procesamiento y la única por encima del 80%, con IPT de partido 3.875, el único candidato que supera el 3.50 (que salió por valor de reserva). P(ninguno llega a 5) = <b>15.3%</b>.</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s16_13">
+  <div class="pick-head"><span class="tit">2 · Atletico San Luis vs CD Guadalajara — Carrera a 5 Corners: CD Guadalajara</span><span class="tag prob">72.8%</span><span class="tag cuota">Cuota 1.42</span><span class="tag conf">Baja</span><span class="match">sábado · Atletico San Luis vs CD Guadalajara</span></div>
+  <p class="pick-just">Misma lectura que la variante condicional, con el caso «ninguno llega» contado como pérdida en vez de excluido. Diferencial de corners <b>7.29 contra 3.42</b>, IPT de partido 3.875. Desplazado del TOP 5 por el tope de diversidad: <b>−0.69 pt</b> de respaldo contra el pick nº2.</p>
+</div>
+<p class="hint"><b>carrera_5c</b> y <b>carrera_3c_1h</b> son los mercados que <b>nunca</b> podrán validarse desde esta tabla: necesitan el minuto de cada saque de esquina y el CSV guarda totales por tiempo. Por eso su confianza es Baja aunque uno marque 85.9%, y por eso el rescate empírico no puede alcanzarlos.</p></div></details><details><summary><span class="num">17</span>📈 TOP 2 Intensidad Disciplinaria Compartida (ambos reciben 2 o más tarjetas)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. Ningún partido reúne probabilidad conjunta ≥ 62% con ambas lambdas de tarjetas ≥ 2. La proyección más alta es Necaxa con 3.08 recibidas, pero su rival Tigres queda en 2.17 y el resto de partidos no acerca ninguna de las dos. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">18</span>📈 TOP 2 Consistencia Goleadora (ambas mitades más de 0.5 goles)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> DESIERTO. Ningún partido cumple P(gol 1H) &gt; 70% y P(gol 2H) &gt; 80% a la vez. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">19</span>🏁 Conclusiones de la jornada y Sección EVITAR</summary><div class="body"><p class="hint">Sección de solo visualización.</p><h3 class="sub">Equipos en forma (últimos 7)</h3><table class="mini"><tr><th>Equipo</th><th>PPP</th><th>Dif. goles</th><th>Dif. xG</th></tr><tr><td>Club America</td><td>2.67</td><td>+10</td><td>+2.52</td></tr><tr><td>CD Toluca</td><td>2.17</td><td>+8</td><td>+4.57</td></tr><tr><td>Club Tijuana</td><td>2.17</td><td>+3</td><td>+4.05</td></tr><tr><td>Atlas FC</td><td>2</td><td>+1</td><td>-2.64</td></tr><tr><td>CD Guadalajara</td><td>1.83</td><td>+3</td><td>+4.34</td></tr><tr><td>Queretaro FC</td><td>1.67</td><td>+2</td><td>+0.32</td></tr></table><p style="font-size:11.5px;margin:0 0 10px"><b>Atlas FC es el nombre a mirar dos veces:</b> 12 puntos con un diferencial de xG de <b>−2.64</b>, el único de los seis en forma con el xG en contra. Está por encima de lo que sus datos sostienen, y el sábado recibe al Atlante.</p><h3 class="sub">Equipos en dificultades</h3><table class="mini"><tr><th>Equipo</th><th>PPP</th><th>Dif. goles</th><th>Dif. xG</th></tr><tr><td>Atletico San Luis</td><td>1</td><td>-2</td><td>-2.6</td></tr><tr><td>Atlante FC</td><td>1</td><td>-2</td><td>-3.96</td></tr><tr><td>Tigres UANL</td><td>0.83</td><td>-2</td><td>+2.56</td></tr><tr><td>CF Pachuca</td><td>0.83</td><td>+0</td><td>-1.79</td></tr><tr><td>Santos Laguna</td><td>0.17</td><td>-7</td><td>-1.42</td></tr><tr><td>FC Juarez</td><td>0</td><td>-16</td><td>-10.53</td></tr></table><p style="font-size:11.5px;margin:0 0 10px"><b>Tigres es el espejo de Atlas:</b> 5 puntos con un xG de <b>+2.56</b>, el mejor diferencial de los seis. Está por debajo de lo que sus datos sostienen. <b>FC Juárez es otra cosa</b> — 0 puntos, 19 goles en contra y un diferencial de xG de <b>−10.53</b> que triplica al segundo peor. No es mala suerte.</p><h3 class="sub">🚫 Trampas de la jornada — EVITAR</h3><div class="trampa"><b>1. La tabla de pronósticos de la sección 1, entera.</b> Es la trampa central y hay que decirlo sin rodeos: los números más apetecibles de esta jornada — el 61.2% de Over 2.5 en Cruz Azul–Santos, el 63.6% de Under 3.5 tarjetas en ese mismo partido, el 59% local — salen de familias que <b>no tienen veredicto</b>. No son probabilidades más débiles: son proyecciones sin una sola validación detrás. Están publicadas porque la tabla consolidada es un anclaje de datos, no un menú de picks. El motor no las promovió a ningún ranking por esa razón exacta.</div><div class="trampa"><b>2. Cruz Azul vs Santos Laguna como «ganador seguro».</b> Es el partido con la mayor disparidad de la jornada (λ 2.10–1.07, remates 17.76–11.62) y el más tentador para el mercado de resultado. Pero <b>muestra_robusta = false</b>, la ponderación 55/30/15 colapsó a [1.0, 0, 0] en los dos equipos — se está proyectando con seis partidos y un solo componente temporal — y la familia 1x2_local tiene 27 observaciones de las 60 que necesita. La disparidad es real; la probabilidad que la cuantifica, no está medida.</div><div class="trampa"><b>3. Las propias carreras a corners que sí se publican.</b> Son los dos únicos picks de la jornada y conviene entender su límite: <b>carrera_5c</b> y <b>carrera_3c_1h</b> son los mercados que <b>nunca</b> podrán validarse desde esta tabla, porque necesitan el minuto de cada saque de esquina y el CSV guarda totales por tiempo. Por eso su confianza es Baja aunque uno marque 85.9%, y por eso el rescate empírico no puede alcanzarlos. Van con el respaldo del diferencial de lambdas y nada más.</div><h3 class="sub">Nota de integridad</h3><p style="font-size:11.5px;margin:0">Los tres bloques salen de una única ejecución del motor sobre round-1-6.csv (54 partidos, 117 columnas, jornadas 1–6, 18 equipos). MLE Dixon-Coles con convergencia OK: gamma_L = 0.9708, gamma_V = 0.7020, rho = −0.2500, decay = exp(−0.0065 · Δjornada). Re-validación de las cifras publicadas contra el JSON: <b>0 discrepancias</b> en 13 comprobaciones. La jornada se analiza con <b>5 partidos</b>: Puebla–Toluca, Querétaro–Monterrey, América–Tijuana y Pumas–León están aplazados y quedan fuera por decisión del usuario. Los 154 candidatos apartados se guardan en el JSON para que auditoria-jornada los resuelva contra el resultado real.</p></div></details>
+<div id="auditoria"><div class="cab"><h2>✅ PICKS DE LA JORNADA</h2>
+<span class="cnt" id="contador">0 seleccionados</span></div>
+<div class="inner"><p class="hint" style="margin-top:0">Toca un pick aquí para marcar resultado:
+1 clic → <b>ACERTADO ✅</b> · 2 clics → <b>FALLADO ❌</b> · 3 clics → neutro.
+La rayita de color de su sección permanece visible siempre.</p>
+<div id="lista"></div></div></div>
+</div><script>
+const ORDEN_DIAS=["viernes", "sabado", "domingo", "lunes", "martes", "miercoles", "jueves"];
+const NOMBRE_DIA={"viernes": "VIERNES", "sabado": "SÁBADO", "domingo": "DOMINGO", "lunes": "LUNES", "martes": "MARTES", "miercoles": "MIÉRCOLES", "jueves": "JUEVES"};
+const estados={};
+document.querySelectorAll('.pick.selectable').forEach(function(p){
+  p.addEventListener('click',function(){p.classList.toggle('sel');render();});
+});
+function render(){
+  const sel=Array.from(document.querySelectorAll('.pick.selectable.sel'));
+  const cont=document.getElementById('lista');
+  document.getElementById('contador').textContent=sel.length+(sel.length===1?' seleccionado':' seleccionados');
+  if(!sel.length){cont.innerHTML='<div class="vacio-aud">Aún no has seleccionado ningún pick. Toca cualquier tarjeta de las secciones 3 a 18.</div>';return;}
+  const porDia={};
+  sel.forEach(function(p){const d=p.dataset.dia;(porDia[d]=porDia[d]||[]).push(p);});
+  let html='';
+  ORDEN_DIAS.forEach(function(dia){
+    if(!porDia[dia]||!porDia[dia].length)return;
+    html+='<div class="dia-tit">'+(NOMBRE_DIA[dia]||dia.toUpperCase())+'</div>';
+    porDia[dia].forEach(function(p){
+      const id=p.dataset.id,color=p.dataset.color;
+      const tit=p.querySelector('.tit').textContent;
+      const match=p.querySelector('.match')?p.querySelector('.match').textContent:'';
+      const tags=Array.from(p.querySelectorAll('.pick-head .tag')).map(function(t){return '<span class="tag">'+t.textContent.trim()+'</span>';}).join('');
+      const just=p.querySelector('.pick-just').innerHTML;
+      const st=estados[id]||0;
+      const cls=st===1?' ok':(st===2?' ko':'');
+      const etq=st===1?'ACERTADO ✅':(st===2?'FALLADO ❌':'');
+      html+='<div class="apick'+cls+'" data-color="'+color+'" data-id="'+id+'" onclick="ciclo(\''+id+'\')">'
+          +'<div class="ah"><span class="tit">'+tit+'</span>'+tags
+          +'<span class="st">'+etq+'</span><span class="am">'+match+'</span></div>'
+          +'<p class="aj">'+just+'</p></div>';
+    });
+  });
+  cont.innerHTML=html;
+}
+function ciclo(id){estados[id]=((estados[id]||0)+1)%3;render();}
+function setAll(a){document.querySelectorAll('details').forEach(function(d){d.open=a;});}
+function limpiar(){document.querySelectorAll('.pick.selectable.sel').forEach(function(p){p.classList.remove('sel');});for(const k in estados)delete estados[k];render();}
+render();
+</script></body></html>
