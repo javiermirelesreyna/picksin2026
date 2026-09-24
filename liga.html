@@ -2,21 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="color-scheme" content="light dark">
-  <title>Picksin 2026</title>
-  <link rel="stylesheet" href="assets/estilo.css">
+  <title>Picksin</title>
+  <script>
+    /* Enlaces viejos (liga.html?l=<id>): llevan al ultimo analisis de esa liga. */
+    var l = new URLSearchParams(location.search).get('l');
+    location.replace('./' + (l ? '#/liga/' + encodeURIComponent(l) : ''));
+  </script>
 </head>
-<body>
-  <header class="cabecera">
-    <a class="volver" href="./">← Todas las ligas</a>
-    <h1 id="titulo">Cargando…</h1>
-    <p class="sub" id="actualizado"></p>
-  </header>
-  <main id="app" class="contenedor"></main>
-  <footer class="pie">Pronósticos estadísticos del Motor Picksin 2.0: probabilidades, no certezas.</footer>
-  <script src="assets/app.js"></script>
-  <script>Picksin.liga();</script>
-</body>
+<body><p><a href="./">Ir a Picksin</a></p></body>
 </html>

@@ -2,21 +2,94 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="color-scheme" content="light dark">
-  <title>Picksin 2026</title>
-  <link rel="stylesheet" href="assets/estilo.css">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#ffffff">
+  <title>Picksin</title>
+  <meta name="description" content="Picks de fútbol con respaldo estadístico: análisis por liga, picks escogidos y auditoría de cada semana.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Picksin">
+  <meta property="og:description" content="Picks de fútbol con respaldo estadístico, semana a semana.">
+  <meta property="og:image" content="https://javiermirelesreyna.github.io/picksin2026/assets/compartir.png">
+  <link rel="icon" type="image/png" href="assets/icono.png">
+  <link rel="apple-touch-icon" href="assets/icono-apple.png">
+  <link rel="stylesheet" href="assets/estilo.css?v=2">
+  <script>
+    /* Windows no dibuja las banderas en emoji (salen dos letras): ahi se usa la fuente propia. */
+    (function () {
+      try {
+        var c = document.createElement('canvas'); c.width = c.height = 24;
+        var x = c.getContext('2d', { willReadFrequently: true });
+        x.textBaseline = 'top'; x.font = '20px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif';
+        x.fillText('🇫🇷', 0, 0);
+        var d = x.getImageData(0, 0, 24, 24).data;
+        for (var i = 0; i < d.length; i += 4) { if (d[i + 3] > 200 && (d[i] !== d[i + 1] || d[i + 1] !== d[i + 2])) { return; } }
+        document.documentElement.className += ' banderas-fuente';
+      } catch (e) { /* sin canvas: se deja el emoji tal cual */ }
+    })();
+  </script>
 </head>
 <body>
-  <header class="cabecera">
-    <h1>Picksin 2026</h1>
-    <p class="sub" id="actualizado">Cargando…</p>
+  <a class="saltar" href="#app">Ir al contenido</a>
+  <header class="barra">
+    <div class="barra-in">
+      <a class="marca" href="#/" aria-label="Picksin, inicio">
+        <img src="assets/logo-mini.webp" alt="" width="34" height="40">
+        <span>Picksin</span>
+      </a>
+      <nav class="nav" aria-label="Secciones">
+        <a href="#/analisis" data-nav="analisis"><span class="nav-emoji" aria-hidden="true">📊</span><span>Análisis</span></a>
+        <a href="#/auditoria" data-nav="auditoria"><span class="nav-emoji" aria-hidden="true">🔍</span><span>Auditoría</span></a>
+        <a href="#/escogidos" data-nav="escogidos"><span class="nav-emoji" aria-hidden="true">✅</span><span>Escogidos</span></a>
+        <a href="#/resultados" data-nav="resultados"><span class="nav-emoji" aria-hidden="true">🏅</span><span>Resultados</span></a>
+      </nav>
+    </div>
+    <div id="editor-barra" class="editor-barra" hidden></div>
   </header>
-  <main id="app" class="contenedor"></main>
-  <footer class="pie">Pronósticos estadísticos del Motor Picksin 2.0: probabilidades, no certezas.
-    Cada pick muestra su respaldo bilateral: lo que hace cada equipo y lo que permite su rival.</footer>
-  <script src="assets/app.js"></script>
-  <script>Picksin.portada();</script>
+
+  <main id="app" class="contenedor" tabindex="-1">
+    <p class="cargando">Cargando…</p>
+  </main>
+
+  <footer class="pie">
+    <p>Pronósticos estadísticos del Motor Picksin 2.0: probabilidades, no certezas. Cada pick muestra su
+      respaldo bilateral: lo que hace cada equipo y lo que permite su rival.</p>
+    <p>Semanas de jueves a miércoles · fechas y horas del centro de México · banderas de
+      <a href="https://github.com/twitter/twemoji" rel="noopener">Twemoji</a> (CC BY 4.0).</p>
+    <p><button type="button" class="enlace-editor" data-accion="editor">🔑 Modo editor</button></p>
+  </footer>
+
+  <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="dlg-editor" class="dialogo" aria-labelledby="dlg-titulo">
+    <form method="dialog" id="form-editor">
+      <h2 id="dlg-titulo">🔑 Modo editor</h2>
+      <p>Para escoger picks desde la página. Pega tu token de GitHub: se guarda solo en este
+        navegador y nunca se publica.</p>
+      <label class="campo">Token de GitHub
+        <input type="password" id="token" autocomplete="off" spellcheck="false" required placeholder="github_pat_…">
+      </label>
+      <details class="ayuda">
+        <summary>¿Cómo creo el token?</summary>
+        <ol>
+          <li>Abre <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener"><b>la página para crear el token</b></a>
+            (con tu sesión de GitHub iniciada).</li>
+          <li><b>Token name:</b> Picksin editor. <b>Expiration:</b> la que quieras (por ejemplo, 1 año).</li>
+          <li><b>Repository access:</b> «Only select repositories» → <b>picksin2026</b>.</li>
+          <li><b>Permissions → Repository permissions → Contents:</b> «Read and write». Nada más.</li>
+          <li><b>Generate token</b>, cópialo (empieza con <code>github_pat_</code>; GitHub solo lo muestra una vez) y pégalo aquí.
+            Puedes guardarlo en tus notas para pegarlo en cada dispositivo.</li>
+        </ol>
+      </details>
+      <p class="dlg-error" id="dlg-error" hidden></p>
+      <div class="dlg-botones">
+        <button type="button" class="boton secundario" data-accion="editor-cancelar">Cancelar</button>
+        <button type="submit" class="boton" id="dlg-entrar">Entrar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="assets/app.js?v=2"></script>
 </body>
 </html>
