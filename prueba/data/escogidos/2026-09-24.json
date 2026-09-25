@@ -1,1 +1,96 @@
-{"semana":"2026-09-24","actualizado":"2026-09-24T15:00:00Z","picks":[{"id":"mexico__liga-mx-j7|Atletico San Luis vs CD Guadalajara|Carrera a 5 Corners: CD Guadalajara (si alguien llega)","archivo":"mexico__liga-mx-j7","liga":"mexico__liga-mx","nombre":"Liga MX","pais":"México","bandera":"🇲🇽","jornada":7,"sa":"2026-09-24","origen":"TOP 5","por":["maki","diego"],"escogido":{"maki":"2026-09-24T15:00:00Z","diego":"2026-09-24T15:00:00Z"},"partido":"Atletico San Luis vs CD Guadalajara","mercado":"Carrera a 5 Corners: CD Guadalajara (si alguien llega)","fecha":"2026-09-26","dia":"sábado","hora":"13:30","ts":1790451000,"p":0.859,"cuota":1.21,"confianza":"Baja","respaldo":null,"familia":null,"aviso":"mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada"},{"id":"mexico__liga-mx-j7|FC Juarez vs CF Pachuca|Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)","archivo":"mexico__liga-mx-j7","liga":"mexico__liga-mx","nombre":"Liga MX","pais":"México","bandera":"🇲🇽","jornada":7,"sa":"2026-09-24","origen":"TOP 5","por":["diego"],"escogido":{"diego":"2026-09-24T15:00:00Z"},"partido":"FC Juarez vs CF Pachuca","mercado":"Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)","fecha":"2026-09-25","dia":"viernes","hora":"11:00","ts":1790355600,"p":0.735,"cuota":1.41,"confianza":"Baja","respaldo":null,"familia":null,"aviso":"mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada"},{"id":"brazil__brasileirao-j25|Flamengo vs Botafogo|Under 13.5 Remates al Arco","archivo":"brazil__brasileirao-j25","liga":"brazil__brasileirao","nombre":"Brasileirao Serie A","pais":"Brasil","bandera":"🇧🇷","jornada":25,"sa":"2026-09-24","origen":"TOP 5","por":["picksin"],"escogido":{"picksin":"2026-09-24T15:00:00Z"},"partido":"Flamengo vs Botafogo","mercado":"Under 13.5 Remates al Arco","fecha":"2026-09-27","dia":"domingo","hora":"11:00","ts":1790528400,"p":0.868,"cuota":1.2,"confianza":"Alta","respaldo":null,"familia":null}]}
+{
+ "semana": "2026-09-24",
+ "actualizado": "2026-09-25T01:43:29.610Z",
+ "picks": [
+  {
+   "id": "mexico__liga-mx-j7|FC Juarez vs CF Pachuca|Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)",
+   "archivo": "mexico__liga-mx-j7",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 7,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "por": [
+    "diego",
+    "picksin"
+   ],
+   "escogido": {
+    "diego": "2026-09-24T15:00:00Z",
+    "picksin": "2026-09-25T01:43:29.610Z"
+   },
+   "partido": "FC Juarez vs CF Pachuca",
+   "mercado": "Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)",
+   "fecha": "2026-09-25",
+   "dia": "viernes",
+   "hora": "11:00",
+   "ts": 1790355600,
+   "p": 0.735,
+   "cuota": 1.41,
+   "confianza": "Baja",
+   "respaldo": null,
+   "familia": null,
+   "aviso": "mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada"
+  },
+  {
+   "id": "mexico__liga-mx-j7|Atletico San Luis vs CD Guadalajara|Carrera a 5 Corners: CD Guadalajara (si alguien llega)",
+   "archivo": "mexico__liga-mx-j7",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 7,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "por": [
+    "maki",
+    "diego"
+   ],
+   "escogido": {
+    "maki": "2026-09-24T15:00:00Z",
+    "diego": "2026-09-24T15:00:00Z"
+   },
+   "partido": "Atletico San Luis vs CD Guadalajara",
+   "mercado": "Carrera a 5 Corners: CD Guadalajara (si alguien llega)",
+   "fecha": "2026-09-26",
+   "dia": "sábado",
+   "hora": "13:30",
+   "ts": 1790451000,
+   "p": 0.859,
+   "cuota": 1.21,
+   "confianza": "Baja",
+   "respaldo": null,
+   "familia": null,
+   "aviso": "mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada"
+  },
+  {
+   "id": "brazil__brasileirao-j25|Flamengo vs Botafogo|Under 13.5 Remates al Arco",
+   "archivo": "brazil__brasileirao-j25",
+   "liga": "brazil__brasileirao",
+   "nombre": "Brasileirao Serie A",
+   "pais": "Brasil",
+   "bandera": "🇧🇷",
+   "jornada": 25,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-09-24T15:00:00Z"
+   },
+   "partido": "Flamengo vs Botafogo",
+   "mercado": "Under 13.5 Remates al Arco",
+   "fecha": "2026-09-27",
+   "dia": "domingo",
+   "hora": "11:00",
+   "ts": 1790528400,
+   "p": 0.868,
+   "cuota": 1.2,
+   "confianza": "Alta",
+   "respaldo": null,
+   "familia": null
+  }
+ ]
+}
