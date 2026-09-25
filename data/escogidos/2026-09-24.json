@@ -1,5 +1,36 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-25T00:30:27.473Z",
- "picks": []
+ "actualizado": "2026-09-25T00:35:14.272Z",
+ "picks": [
+  {
+   "id": "mexico__liga-mx-j10|Cruz Azul vs CD Toluca|Over 7.5 Corners",
+   "archivo": "mexico__liga-mx-j10",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 10,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "partido": "Cruz Azul vs CD Toluca",
+   "mercado": "Over 7.5 Corners",
+   "fecha": "2026-09-26",
+   "dia": "sábado",
+   "hora": "16:50",
+   "ts": 1790463000,
+   "sem": "2026-09-24",
+   "p": 0.869,
+   "cuota": 1.2,
+   "confianza": "Alta",
+   "respaldo": "2/4 a favor, 1 en contra",
+   "familia": "Corners",
+   "liga_joven": true,
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-09-25T00:35:14.272Z"
+   }
+  }
+ ]
 }
