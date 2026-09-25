@@ -1,36 +1,5 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-25T00:27:19.973Z",
- "picks": [
-  {
-   "id": "mexico__liga-mx-j10|Santos Laguna vs CF Pachuca|Over 1.5 Tarjetas",
-   "archivo": "mexico__liga-mx-j10",
-   "liga": "mexico__liga-mx",
-   "nombre": "Liga MX",
-   "pais": "México",
-   "bandera": "🇲🇽",
-   "jornada": 10,
-   "sa": "2026-09-24",
-   "origen": "TOP 5",
-   "partido": "Santos Laguna vs CF Pachuca",
-   "mercado": "Over 1.5 Tarjetas",
-   "fecha": "2026-09-26",
-   "dia": "sábado",
-   "hora": "21:05",
-   "ts": 1790478300,
-   "sem": "2026-09-24",
-   "p": 0.867,
-   "cuota": 1.2,
-   "confianza": "Alta",
-   "respaldo": "2/4 a favor, 2 en contra",
-   "familia": "Tarjetas",
-   "liga_joven": true,
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-09-25T00:27:19.973Z"
-   }
-  }
- ]
+ "actualizado": "2026-09-25T00:27:28.592Z",
+ "picks": []
 }
