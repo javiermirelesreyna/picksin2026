@@ -1,36 +1,5 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-25T00:30:26.260Z",
- "picks": [
-  {
-   "id": "spain__laliga2-j7|Girona FC vs Albacete Balompie|Girona FC gana Remates (sin empate)",
-   "archivo": "spain__laliga2-j7",
-   "liga": "spain__laliga2",
-   "nombre": "LaLiga 2",
-   "pais": "España",
-   "bandera": "🇪🇸",
-   "jornada": 7,
-   "sa": "2026-09-24",
-   "origen": "Dominios: quién hace más",
-   "partido": "Girona FC vs Albacete Balompie",
-   "mercado": "Girona FC gana Remates (sin empate)",
-   "fecha": "2026-09-25",
-   "dia": "viernes",
-   "hora": "12:30",
-   "ts": 1790361000,
-   "sem": "2026-09-24",
-   "p": 0.774,
-   "cuota": 1.34,
-   "confianza": "Baja",
-   "respaldo": "3/4 a favor, 0 en contra",
-   "familia": "Remates",
-   "liga_joven": true,
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-09-25T00:30:26.260Z"
-   }
-  }
- ]
+ "actualizado": "2026-09-25T00:30:27.473Z",
+ "picks": []
 }
