@@ -1,6 +1,6 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-25T01:43:29.610Z",
+ "actualizado": "2026-09-25T01:43:37.459Z",
  "picks": [
   {
    "id": "mexico__liga-mx-j7|FC Juarez vs CF Pachuca|Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)",
@@ -32,6 +32,34 @@
    "respaldo": null,
    "familia": null,
    "aviso": "mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada"
+  },
+  {
+   "id": "norway__eliteserien-j20|Fredrikstad FK vs Bodo/Glimt|Carrera a 3 Corners 1H: Bodo/Glimt (si alguien llega)",
+   "archivo": "norway__eliteserien-j20",
+   "liga": "norway__eliteserien",
+   "nombre": "Eliteserien",
+   "pais": "Noruega",
+   "bandera": "🇳🇴",
+   "jornada": 20,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "partido": "Fredrikstad FK vs Bodo/Glimt",
+   "mercado": "Carrera a 3 Corners 1H: Bodo/Glimt (si alguien llega)",
+   "fecha": "2026-09-25",
+   "dia": "viernes",
+   "hora": "13:30",
+   "ts": 1790364600,
+   "sem": "2026-09-24",
+   "p": 0.813,
+   "cuota": 1.28,
+   "confianza": "Alta",
+   "aviso": "mercado no validable con la tabla: el orden en que caen los córners no se puede reconstruir, así que esta probabilidad no está auditada",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-09-25T01:43:37.459Z"
+   }
   },
   {
    "id": "mexico__liga-mx-j7|Atletico San Luis vs CD Guadalajara|Carrera a 5 Corners: CD Guadalajara (si alguien llega)",
