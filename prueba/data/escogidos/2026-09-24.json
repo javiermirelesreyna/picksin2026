@@ -1,6 +1,6 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-26T03:18:59.917Z",
+ "actualizado": "2026-09-26T03:19:06.452Z",
  "picks": [
   {
    "id": "mexico__liga-mx-j7|FC Juarez vs CF Pachuca|Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)",
@@ -59,6 +59,33 @@
    ],
    "escogido": {
     "picksin": "2026-09-25T01:43:37.459Z"
+   }
+  },
+  {
+   "id": "brazil__brasileirao-j25|Sao Paulo vs Red Bull Bragantino|Under 11.5 Remates al Arco",
+   "archivo": "brazil__brasileirao-j25",
+   "liga": "brazil__brasileirao",
+   "nombre": "Brasileirao Serie A",
+   "pais": "Brasil",
+   "bandera": "🇧🇷",
+   "jornada": 25,
+   "sa": "2026-09-24",
+   "origen": "TOP 5",
+   "partido": "Sao Paulo vs Red Bull Bragantino",
+   "mercado": "Under 11.5 Remates al Arco",
+   "fecha": "2026-09-26",
+   "dia": "sábado",
+   "hora": "13:30",
+   "ts": 1790451000,
+   "sem": "2026-09-24",
+   "p": 0.867,
+   "cuota": 1.2,
+   "confianza": "Alta",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-09-26T03:19:06.452Z"
    }
   },
   {
