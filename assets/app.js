@@ -1087,10 +1087,32 @@
      nivel. Sale una imagen (lienzo 1080 px de ancho) y un texto para copiar. No se guarda en
      GitHub: el borrador vive solo en este navegador (picksin.green). */
   var NIVELES = {
-    fuerte: { t: 'Fuerte', e: '💪', n: 1, fondo: '#1279bb' },
+    fuerte: { t: 'Fuerte', e: '💪', n: 1, fondo: '#49ad33' },
     superfuerte: { t: 'Superfuerte', e: '🔥', n: 2, fondo: '#2e8f35' },
     ultrafuerte: { t: 'Ultrafuerte', e: '🚀', n: 3, fondo: null }            // degradado azul -> verde
   };
+  /* selecciones propias (fuera del analisis): deporte y pais de cada una */
+  var DEPORTES = {
+    futbol: ['⚽', 'Fútbol'], beisbol: ['⚾', 'Béisbol'], basquetbol: ['🏀', 'Básquetbol'], americano: ['🏈', 'Fútbol americano'],
+    tenis: ['🎾', 'Tenis'], box: ['🥊', 'Box'], mma: ['🥋', 'MMA / UFC'], hockey: ['🏒', 'Hockey'], golf: ['⛳', 'Golf'],
+    autos: ['🏎️', 'Automovilismo'], voleibol: ['🏐', 'Voleibol'], otro: ['🏅', 'Otro']
+  };
+  var PAISES = [['MX', 'México'], ['US', 'Estados Unidos'], ['CA', 'Canadá'], ['ES', 'España'], ['ENG', 'Inglaterra'],
+    ['SCO', 'Escocia'], ['GB', 'Reino Unido'], ['IT', 'Italia'], ['DE', 'Alemania'], ['FR', 'Francia'], ['PT', 'Portugal'],
+    ['NL', 'Países Bajos'], ['BE', 'Bélgica'], ['CH', 'Suiza'], ['TR', 'Turquía'], ['GR', 'Grecia'], ['PL', 'Polonia'],
+    ['CZ', 'República Checa'], ['RS', 'Serbia'], ['HR', 'Croacia'], ['RU', 'Rusia'], ['NO', 'Noruega'], ['BR', 'Brasil'],
+    ['AR', 'Argentina'], ['CO', 'Colombia'], ['CL', 'Chile'], ['UY', 'Uruguay'], ['PE', 'Perú'], ['EC', 'Ecuador'],
+    ['VE', 'Venezuela'], ['CU', 'Cuba'], ['DO', 'República Dominicana'], ['PR', 'Puerto Rico'], ['JP', 'Japón'],
+    ['KR', 'Corea del Sur'], ['CN', 'China'], ['AU', 'Australia'], ['EU', 'Europa'], ['INT', 'Internacional'], ['', 'Sin bandera']];
+  function banderaDe(cod) {
+    if (!cod) { return ''; }
+    if (cod === 'INT') { return '🌍'; }
+    if (cod === 'ENG') { return String.fromCodePoint(0x1F3F4, 0xE0067, 0xE0062, 0xE0065, 0xE006E, 0xE0067, 0xE007F); }
+    if (cod === 'SCO') { return String.fromCodePoint(0x1F3F4, 0xE0067, 0xE0062, 0xE0073, 0xE0063, 0xE0074, 0xE007F); }
+    return String.fromCodePoint(0x1F1E6 + cod.charCodeAt(0) - 65, 0x1F1E6 + cod.charCodeAt(1) - 65);
+  }
+  function deporteDe(p) { return DEPORTES[p.deporte] || DEPORTES.futbol; }        // lo del analisis es futbol
+  function nombreDe(p) { return p.nombre || (p.manual ? deporteDe(p)[1] : ''); }
   var GZ = leerGZ(), gzPicks = [], gzReloj = null, gzTurno = 0, gzBlob = null, gzUrl = null, gzVigia = null;
   function leerGZ() {
     var d = null;
@@ -1172,26 +1194,18 @@
       varios: n > 1 || sinFecha, fecha: f[0]
     };
   }
-  function tipoTexto(c, n) { return c.tipo === 'parlay' ? 'Parlay · ' + n + ' selecciones' : c.tipo === 'directas' ? n + ' directas' : 'Directa'; }
 
-  /* texto para pegar en el grupo: se puede copiar pick por pick a la aplicacion de cada quien */
+  /* el texto que acompana a la imagen: solo la justificacion y la probabilidad de cada seleccion,
+     con el mismo numero que lleva en la imagen */
   function textoGZ() {
-    var P = GZ.patas, c = calcularGZ(), niv = NIVELES[GZ.nivel], d = diaGZ(P);
-    var l = ['🟢 GREEN ZONE by Picksin ✅', '📅 ' + d.largo, (c.tipo === 'parlay' ? '🔗 ' : '🎯 ') + tipoTexto(c, P.length) +
-      ' · ' + niv.e + ' ' + niv.t.toUpperCase(), ''];
+    var P = GZ.patas, l = [];
     P.forEach(function (x, i) {
-      var p = x.pick;
-      l.push((P.length > 1 ? (i + 1) + '. ' : '') + (p.bandera ? p.bandera + ' ' : '') + p.nombre + ' · ' + (d.varios ? cuando(p) : (p.hora || cuando(p))));
-      l.push(p.partido);
-      l.push('👉 ' + p.mercado + (c.decs[i] ? ' (' + americano(c.decs[i]) + ')' : ''));
-      if (c.tipo === 'directas' && c.patas[i].apuesta) {
-        l.push('💵 ' + dinero(c.patas[i].apuesta) + (c.patas[i].pago ? ' → ' + dinero(c.patas[i].pago) : ''));
-      }
+      var p = x.pick, just = String(p.just || '').trim(), prob = p.p ? 'Probabilidad: ' + (p.p * 100).toFixed(1) + '%' : '';
+      if (!just && !prob) { return; }
+      l.push(((P.length > 1 ? (i + 1) + '. ' : '') + (prob ? '📈 ' + prob : '')).trim());
+      if (just) { l.push(just); }
       l.push('');
     });
-    if (c.tipo !== 'directas' && c.dec) { l.push('📈 Momio: ' + americano(c.dec)); }
-    if (c.apuesta) { l.push('💵 Apuesta' + (c.tipo === 'directas' ? ' total' : '') + ': ' + dinero(c.apuesta)); }
-    if (c.pago) { l.push('💰 Ganancia total: ' + dinero(c.pago)); }
     return l.join('\n').replace(/\n+$/, '');
   }
 
@@ -1253,17 +1267,30 @@
     while (t > min && c.measureText(texto).width > ancho) { t -= 2; letra(c, peso, t); }
     return t;
   }
+  /* "NO ES SUERTE, ES CIENCIA" de fondo, con trazo para engrosar la letra y "ES CIENCIA" mas oscuro.
+     Cada parte se dibuja opaca en su propia capa y luego se funde con su transparencia (asi el
+     trazo y el relleno no se suman en los bordes). */
   function marcaAgua(c, W, H) {
-    c.save();
-    c.translate(W / 2, H / 2);
-    c.rotate(-Math.PI / 9);
-    letra(c, 900, 54);
-    c.fillStyle = 'rgba(15, 89, 137, 0.04)';
-    c.textAlign = 'left';
-    var f = 'NO ES SUERTE, ES CIENCIA  ·  ', fw = c.measureText(f).width, D = Math.sqrt(W * W + H * H);
-    for (var i = 0, y = -D / 2; y < D / 2; y += 92, i++) {
-      for (var x = -D / 2 - (i % 2) * fw / 2; x < D / 2; x += fw) { c.fillText(f, x, y); }
+    var D = Math.sqrt(W * W + H * H), capas = [0, 1].map(function () {
+      var k = document.createElement('canvas');
+      k.width = W; k.height = H;
+      var x = k.getContext('2d');
+      x.translate(W / 2, H / 2); x.rotate(-Math.PI / 9);
+      letra(x, 900, 62);
+      x.textAlign = 'left'; x.lineJoin = 'round'; x.lineWidth = 6; x.fillStyle = x.strokeStyle = '#0f5989';
+      return x;
+    });
+    var t1 = 'NO ES SUERTE, ', t2 = 'ES CIENCIA', w1 = capas[0].measureText(t1).width;
+    var fw = w1 + capas[0].measureText(t2 + '   ·   ').width;
+    for (var i = 0, y = -D / 2; y < D / 2; y += 104, i++) {
+      for (var x = -D / 2 - (i % 2) * fw / 2; x < D / 2; x += fw) {
+        capas[0].strokeText(t1, x, y); capas[0].fillText(t1, x, y);
+        capas[1].strokeText(t2, x + w1, y); capas[1].fillText(t2, x + w1, y);
+      }
     }
+    c.save();
+    c.globalAlpha = 0.06; c.drawImage(capas[0].canvas, 0, 0);
+    c.globalAlpha = 0.13; c.drawImage(capas[1].canvas, 0, 0);
     c.restore();
   }
   /* se llama dos veces: sin `plan` solo mide (para saber el alto) y con `plan` dibuja */
@@ -1278,19 +1305,16 @@
       c.fillStyle = g; c.fillRect(0, 0, W, plan.H);
       marcaAgua(c, W, plan.H);
     }
-    /* logo, "seleccion del dia" y el dia en grande */
+    /* logo, el dia en grande y la fecha */
     var lh = 210, lw = A.logo ? lh * A.logo.width / A.logo.height : 0;
     if (pintar && A.logo) {
       c.save(); c.shadowColor = 'rgba(15, 89, 137, .28)'; c.shadowBlur = 36; c.shadowOffsetY = 12;
       c.drawImage(A.logo, (W - lw) / 2, y, lw, lh); c.restore();
     }
-    y += lh + 60;
+    y += lh;
     c.textAlign = 'center';
-    letra(c, 800, 28); espaciado(c, 8);
-    if (pintar) { c.fillStyle = AZUL; c.fillText('SELECCIÓN DEL DÍA', W / 2, y); }
-    espaciado(c, 0);
     var t = ajustar(c, 900, 132, 56, dia.titulo, TW - 40);
-    y += Math.round(t * 0.92) + 14;
+    y += 54 + Math.round(t * 0.74);
     if (pintar) { c.fillStyle = VERDE; c.fillText(dia.titulo, W / 2, y); }
     letra(c, 700, 30); espaciado(c, 4);
     y += 52;
@@ -1306,12 +1330,12 @@
       c.strokeStyle = '#e0e8f0'; c.lineWidth = 2; redondo(c, X, arriba, TW, plan.tarjeta, 40); c.stroke();
     }
     y += PAD;
-    var etq = tipoTexto(calc, P.length).toUpperCase();
+    var etq = P.length === 1 ? '1 SELECCIÓN' : P.length + ' SELECCIONES';
     letra(c, 800, 24); espaciado(c, 3);
     var ew = c.measureText(etq).width + 48;
     if (pintar) {
-      c.fillStyle = calc.tipo === 'parlay' ? '#eaf7e6' : '#e8f2fb'; redondo(c, X + PAD, y, ew, 52, 26); c.fill();
-      c.fillStyle = calc.tipo === 'parlay' ? '#237a29' : MARINO; c.textAlign = 'left'; c.fillText(etq, X + PAD + 24, y + 35);
+      c.fillStyle = '#eaf7e6'; redondo(c, X + PAD, y, ew, 52, 26); c.fill();
+      c.fillStyle = '#237a29'; c.textAlign = 'left'; c.fillText(etq, X + PAD + 24, y + 35);
     }
     espaciado(c, 0);
     y += 52 + 34;
@@ -1324,7 +1348,8 @@
       var ancho = der - (mw ? mw + 26 : 0) - x0;
       c.textAlign = 'left';
       letra(c, 700, 25);
-      var l1 = partir(c, (p.bandera ? p.bandera + '  ' : '') + (p.nombre || '') + '  ·  ' + (dia.varios ? cuando(p) : (p.hora || cuando(p))), ancho, 1)[0];
+      var l1 = partir(c, (p.bandera ? p.bandera + '  ' : '') + nombreDe(p) + '  ·  ' + (dia.varios ? cuando(p) : (p.hora || cuando(p))) +
+        '  ' + deporteDe(p)[0], ancho, 1)[0];
       y += 26;
       if (pintar) { c.fillStyle = SUAVE; c.fillText(l1, x0, y); }
       letra(c, 800, 40);
@@ -1388,14 +1413,18 @@
     y += PAD;
     var tarjeta = y - arriba;
 
-    /* el nivel, el avatar y la firma */
+    /* el nivel, el avatar y la firma: la firma se mide primero, porque la franja del nivel empieza
+       a la altura de su punto verde, ya a la derecha del avatar */
     y += 44;
-    var bh = 156, bt = y, tx = X + 282;
+    var parte = [['GREEN ZONE', 900, VERDE], [' by Picksin', 800, TEXTO]], ancho = 30 + 16 + 16 + 46;
+    parte.forEach(function (k) { letra(c, k[1], 44); ancho += c.measureText(k[0]).width; });
+    var fx = (X + 282 + X + TW) / 2 - ancho / 2;
+    var bh = 156, bt = y, bx = fx - 8, tx = bx + 40;
     if (pintar) {
       var fb = niv.fondo;
-      if (!fb) { fb = c.createLinearGradient(X, 0, X + TW, 0); fb.addColorStop(0, MARINO); fb.addColorStop(1, '#49ad33'); }
+      if (!fb) { fb = c.createLinearGradient(bx, 0, X + TW, 0); fb.addColorStop(0, MARINO); fb.addColorStop(1, '#49ad33'); }
       c.save(); c.shadowColor = 'rgba(14, 40, 72, .18)'; c.shadowBlur = 30; c.shadowOffsetY = 10;
-      c.fillStyle = fb; redondo(c, X, bt, TW, bh, 40); c.fill(); c.restore();
+      c.fillStyle = fb; redondo(c, bx, bt, X + TW - bx, bh, 40); c.fill(); c.restore();
       c.textAlign = 'left';
       letra(c, 800, 22); espaciado(c, 5); c.fillStyle = '#ffffff'; c.globalAlpha = 0.8;
       c.fillText('NIVEL', tx, bt + 54);
@@ -1411,9 +1440,6 @@
     }
     y = bt + bh + 82;
     if (pintar) {
-      var parte = [['GREEN ZONE', 900, VERDE], [' by Picksin', 800, TEXTO]], ancho = 30 + 16 + 16 + 46;
-      parte.forEach(function (k) { letra(c, k[1], 44); ancho += c.measureText(k[0]).width; });
-      var fx = (tx + X + TW) / 2 - ancho / 2;
       c.fillStyle = VERDE; c.beginPath(); c.arc(fx + 15, y - 15, 15, 0, 2 * Math.PI); c.fill();
       fx += 46;
       c.textAlign = 'left';
@@ -1485,7 +1511,42 @@
       (signo === '+' ? '+' : '−') + '</button><input type="text" inputmode="decimal" autocomplete="off" spellcheck="false" ' + attrs +
       ' value="' + esc(valor || '') + '" placeholder="momio" aria-label="Momio"></span>';
   }
+  function pataPropiaGZ(x, i, c) {
+    var p = x.pick, dep = deporteDe(p);
+    var campo = function (t, html, clase) { return '<label' + (clase ? ' class="' + clase + '"' : '') + '><span>' + t + '</span>' + html + '</label>'; };
+    var texto = function (k, ph, tipo) {
+      return '<input type="' + (tipo || 'text') + '" data-gm="' + k + '" value="' + esc(p[k] || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') +
+        ' autocomplete="off">';
+    };
+    var lista = function (k, opciones) {
+      return '<select data-gm="' + k + '">' + opciones.map(function (o) {
+        return '<option value="' + esc(o[0]) + '"' + ((p[k] || '') === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+      }).join('') + '</select>';
+    };
+    return '<li class="gz-pata gz-propia" data-id="' + esc(x.id) + '"><div class="gz-pata-cab">' +
+      (GZ.patas.length > 1 ? '<span class="gz-num">' + (i + 1) + '</span>' : '') +
+      '<div class="gz-pata-txt"><b>✍️ Selección propia</b><small data-gz-out="propia-sub">' + dep[0] + ' ' + esc(dep[1]) + '</small></div>' +
+      '<button type="button" class="gz-quitar" data-accion="gz-quitar" aria-label="Quitar de la jugada">✕</button></div>' +
+      '<div class="gz-form">' +
+      campo('Deporte', lista('deporte', Object.keys(DEPORTES).map(function (k) { return [k, DEPORTES[k][0] + ' ' + DEPORTES[k][1]]; }))) +
+      campo('País', lista('pais', PAISES.map(function (o) { return [o[0], (o[0] ? banderaDe(o[0]) + ' ' : '') + o[1]]; }))) +
+      campo('Torneo o liga', texto('nombre', 'MLB, ATP, UFC… (opcional)'), 'ancho') +
+      campo('Local / jugador 1', texto('local', 'ej. Yankees'), 'ancho') +
+      campo('Visitante / jugador 2', texto('visitante', 'ej. Red Sox'), 'ancho') +
+      campo('Fecha', texto('fecha', '', 'date')) +
+      campo('Hora', texto('hora', '', 'time')) +
+      campo('Tu apuesta', texto('mercado', 'ej. Yankees gana, Más de 8.5 carreras'), 'ancho') + '</div>' +
+      '<div class="gz-pata-datos"><label class="gz-campo"><span>Momio</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
+      (c.tipo === 'directas' ? '<label class="gz-campo"><span>Apuesta</span><span class="gz-caja"><i>$</i><input type="text" inputmode="decimal" autocomplete="off" ' +
+        'data-gz="apuesta-pata" value="' + esc(x.apuesta || '') + '" placeholder="' + esc(GZ.apuesta || '500') + '" aria-label="Apuesta de esta selección"></span></label>' +
+        '<span class="gz-pata-gana" data-gz-out="pata-gana"></span>' : '') + '</div>' +
+      '<details class="gz-extra"' + (p.just || p.pTxt ? ' open' : '') + '><summary>📝 Justificación y probabilidad (para el texto)</summary>' +
+      '<textarea data-gm="just" rows="3" placeholder="Por qué la escogiste, con números si los tienes">' + esc(p.just || '') + '</textarea>' +
+      '<label class="gz-campo"><span>Probabilidad</span><span class="gz-caja"><input type="text" inputmode="decimal" autocomplete="off" data-gm="prob" value="' +
+      esc(p.pTxt || '') + '" placeholder="ej. 75" aria-label="Probabilidad en porcentaje"><i class="gz-pct">%</i></span></label></details></li>';
+  }
   function pataGZ(x, i, c) {
+    if (x.manual) { return pataPropiaGZ(x, i, c); }
     var p = x.pick, repetido = GZ.patas.filter(function (y) { return y.pick.partido === p.partido; }).length > 1;
     return '<li class="gz-pata" data-id="' + esc(x.id) + '"><div class="gz-pata-cab">' + (GZ.patas.length > 1 ? '<span class="gz-num">' + (i + 1) + '</span>' : '') +
       '<div class="gz-pata-txt"><b>' + esc(p.mercado) + '</b><small>' + bandera(p.bandera) + ' ' + esc(p.partido) + ' · 📅 ' + esc(cuando(p)) + '</small></div>' +
@@ -1501,7 +1562,7 @@
     var P = GZ.patas, c = calcularGZ();
     var h = '<h2><span class="emoji">2️⃣</span>Tu jugada' + (P.length ? ' <span class="cuenta">' + plural(P.length, 'selección', 'selecciones') + '</span>' : '') + '</h2>';
     if (!P.length) {
-      return h + vacio('🎯', 'Toca los picks de la lista: uno para una directa, dos o más para un parlay o varias directas.');
+      return h + vacio('🎯', 'Toca los picks de la lista o agrega una selección propia: una para una directa, dos o más para un parlay o varias directas.');
     }
     if (P.length > 1) {
       h += '<div class="conmutador gz-tipo" role="group" aria-label="Tipo de jugada">' +
@@ -1553,9 +1614,33 @@
       }
     });
   }
+  function cargarJustGZ() {
+    GZ.patas.forEach(function (x) {
+      if (x.manual || !x.pick.sa || !x.pick.archivo) { return; }
+      docLiga(x.pick.sa, x.pick.archivo).then(function (d) {
+        var p = todosLosPicks(d).filter(function (q) { return q && q.partido === x.pick.partido && q.mercado === x.pick.mercado; })[0];
+        if (p && p.just && p.just !== x.pick.just) { x.pick.just = p.just; guardarGZ(); }
+      }, function () { /* sin el analisis: el texto sale solo con la probabilidad */ });
+    });
+  }
+  function agregarPropiaGZ() {
+    GZ.patas.push({ id: 'propia-' + Date.now().toString(36), manual: true, signo: '-', momio: '', apuesta: '',
+      pick: { manual: true, deporte: 'futbol', pais: 'MX', bandera: banderaDe('MX'), nombre: '', local: '', visitante: '',
+        partido: '', mercado: '', fecha: GZ.dia && GZ.dia !== '*' ? GZ.dia : hoy(), hora: '', just: '', p: null, pTxt: '' } });
+    GZ.total = null;
+    guardarGZ();
+    pintarPanelGZ();
+    var ult = $$('.gz-propia');
+    if (ult.length) {
+      ult[ult.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var i = $('[data-gm="local"]', ult[ult.length - 1]);
+      if (i) { i.focus({ preventScroll: true }); }
+    }
+  }
   function pintarPanelGZ() {
     var p = $('#gz-panel');
     if (!p) { return; }
+    cargarJustGZ();
     p.innerHTML = panelGZ();
     salidasGZ();
     renderGZ();
@@ -1577,7 +1662,10 @@
       return Esc.cargar(sem).then(function (E) {
         gzPicks = E.picks.slice().sort(ordenPicks);
         var h = cab + selectorSemana(idx, sem, 'green');
-        h += '<div class="gz"><section class="gz-col"><h2><span class="emoji">1️⃣</span>Escoge de los picks escogidos</h2>' +
+        h += '<div class="gz"><section class="gz-col"><h2><span class="emoji">1️⃣</span>Escoge tus selecciones</h2>' +
+          '<button type="button" class="boton secundario gz-propia-btn" data-accion="gz-propia">✍️ Agregar una selección propia</button>' +
+          '<p class="criterio gz-propia-nota">Para lo que no está en el análisis (tenis, box, béisbol…). Se combina con los escogidos en parlay o en directas.</p>' +
+          '<h3>✅ De los picks escogidos</h3>' +
           (gzPicks.length ? '<div id="gz-lista">' + listaGZ() + '</div>'
             : vacio('📭', 'Todavía no hay picks escogidos en esta semana. Escógelos en <a href="#/analisis/' + sem + '">📊 Análisis</a>.')) +
           '</section><section class="gz-col gz-panel" id="gz-panel"></section></div>' +
@@ -1633,9 +1721,9 @@
     if (!gzBlob) { avisar('⏳ La imagen se está preparando: vuelve a tocar en un segundo.'); return; }
     var texto = textoGZ(), archivo = null;
     try { archivo = new File([gzBlob], nombreGZ(), { type: 'image/png' }); } catch (e) { archivo = null; }
-    var copiado = copiarTexto(texto).then(function () { return true; }, function () { return false; });
+    var copiado = texto ? copiarTexto(texto).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
     if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) {
-      navigator.share({ files: [archivo], text: texto }).then(function () {
+      navigator.share(texto ? { files: [archivo], text: texto } : { files: [archivo] }).then(function () {
         copiado.then(function (ok) { if (ok) { avisar('✅ Listo. El texto también quedó copiado por si lo quieres pegar.'); } });
       }, function (e) {
         if (e && e.name !== 'AbortError') { descargarGZ(); avisar('📥 Se descargó la imagen: compártela desde tu galería.'); }
@@ -1714,6 +1802,7 @@
   function accionGZ(a, t) {
     var x, c;
     if (a === 'gz-alternar') { alternarGZ(t.getAttribute('data-id')); }
+    else if (a === 'gz-propia') { agregarPropiaGZ(); }
     else if (a === 'gz-quitar') { x = pataDe(t); if (x) { alternarGZ(x.id); } }
     else if (a === 'gz-dia') {
       GZ.dia = t.getAttribute('data-dia');
@@ -1742,6 +1831,7 @@
     else if (a === 'gz-compartir') { compartirGZ(); }
     else if (a === 'gz-descargar') { if (!gzBlob || !descargarGZ()) { avisar('⏳ La imagen se está preparando: vuelve a tocar en un segundo.'); } }
     else if (a === 'gz-copiar') {
+      if (!textoGZ()) { avisar('Todavía no hay justificación ni probabilidad que copiar.'); return; }
       copiarTexto(textoGZ()).then(function () { avisar('📋 Texto copiado: pégalo en el grupo.'); },
         function () { avisar('⚠️ No se pudo copiar el texto en este navegador.'); });
     }
@@ -1752,7 +1842,25 @@
     }
   }
   document.addEventListener('input', function (e) {
-    var t = e.target, k = t.getAttribute && t.getAttribute('data-gz');
+    var t = e.target, gm = t.getAttribute && t.getAttribute('data-gm');
+    if (gm) {
+      var x0 = pataDe(t), q = x0.pick;
+      if (gm === 'prob') {
+        var n = parseFloat(String(t.value).replace(',', '.').replace('%', ''));
+        q.pTxt = t.value; q.p = n > 0 && n < 100 ? n / 100 : null;
+      } else { q[gm] = t.value; }
+      if (gm === 'pais') { q.bandera = banderaDe(t.value); }
+      if (gm === 'local' || gm === 'visitante') {
+        q.partido = [q.local, q.visitante].map(function (v) { return String(v || '').trim(); }).filter(Boolean).join(' vs ');
+      }
+      if (gm === 'deporte') {
+        var sub = $('[data-gz-out="propia-sub"]', t.closest('.gz-pata'));
+        if (sub) { sub.textContent = deporteDe(q)[0] + ' ' + deporteDe(q)[1]; }
+      }
+      guardarGZ(); salidasGZ(); renderGZ();
+      return;
+    }
+    var k = t.getAttribute && t.getAttribute('data-gz');
     if (!k) { return; }
     var v = t.value, m = /^\s*([+\-−–])/.exec(v), signo = null;
     if ((k === 'momio' || k === 'total') && m) {             // escribieron el signo: pasa al boton

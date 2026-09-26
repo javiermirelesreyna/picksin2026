@@ -592,7 +592,7 @@ th .por { margin-left: 0; }
 }
 .gz-niveles .e { font-size: 1.45rem; line-height: 1.2; }
 .gz-niveles button[aria-pressed="true"] { border-color: transparent; color: #fff; box-shadow: var(--sombra-alta); }
-.gz-niveles .n-fuerte[aria-pressed="true"] { background: var(--azul); }
+.gz-niveles .n-fuerte[aria-pressed="true"] { background: var(--verde); }
 .gz-niveles .n-superfuerte[aria-pressed="true"] { background: var(--verde-oscuro); }
 .gz-niveles .n-ultrafuerte[aria-pressed="true"] { background: linear-gradient(90deg, var(--azul-oscuro), var(--verde)); }
 
@@ -613,3 +613,22 @@ th .por { margin-left: 0; }
 }
 .gz-flotante[hidden], .gz-flotante.oculto { display: none; }
 @media (min-width: 980px) { .gz-flotante { display: none; } }
+
+/* seleccion propia (fuera del analisis) */
+.gz-propia-btn { width: 100%; justify-content: center; }
+.gz-propia-nota { margin: 6px 2px 4px; }
+.gz-col h3 { margin: 18px 0 8px; font-size: .95rem; }
+.gz-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 10px; margin-top: 10px; }
+.gz-form label { display: flex; flex-direction: column; gap: 4px; min-width: 0; font-size: .76rem; font-weight: 700; color: var(--suave); }
+.gz-form .ancho { grid-column: 1 / -1; }
+.gz-form input, .gz-form select, .gz-extra textarea {
+  width: 100%; min-width: 0; font: inherit; font-size: 16px; color: var(--texto); background: #fff;
+  border: 1px solid var(--borde-fuerte); border-radius: 10px; padding: 8px 10px;
+}
+.gz-form input:focus, .gz-form select:focus, .gz-extra textarea:focus { outline: none; border-color: var(--azul); box-shadow: 0 0 0 3px rgba(18, 121, 187, .16); }
+html.banderas-fuente .gz-form select { font-family: "Banderas Picksin", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif, "Segoe UI Emoji"; }
+.gz-extra { margin-top: 10px; font-size: .84rem; }
+.gz-extra summary { cursor: pointer; color: var(--azul); font-weight: 700; padding: 2px 0; }
+.gz-extra textarea { display: block; margin: 8px 0; min-height: 76px; resize: vertical; line-height: 1.4; }
+.gz-extra .gz-caja input { width: 72px; }
+.gz-caja .gz-pct { padding: 0 12px 0 0; }
