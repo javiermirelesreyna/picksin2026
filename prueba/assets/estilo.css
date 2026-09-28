@@ -678,4 +678,5 @@ html.banderas-fuente .gz-form select { font-family: "Banderas Picksin", system-u
 .rep-form input { font: inherit; font-size: 16px; border: 1px solid var(--borde-fuerte); border-radius: 10px; padding: 7px 10px; background: #fff; color: var(--texto); }
 .rep-atajos { margin: 6px 0 14px; }
 .rep-vista img { max-width: 520px; }
-
+.rep-modos { display: flex; margin: 0 0 14px; }
+.rep-modos a { flex: 1; text-align: center; }
