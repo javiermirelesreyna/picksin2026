@@ -1,6 +1,6 @@
 {
  "semana": "2026-09-24",
- "actualizado": "2026-09-28T20:05:36.741Z",
+ "actualizado": "2026-09-28T20:05:46.433Z",
  "selecciones": [
   {
    "id": "muestra-05",
@@ -41,9 +41,9 @@
    ],
    "por": "picksin",
    "creado": "2026-09-25T15:00:00Z",
-   "resultado": null,
+   "resultado": "ganada",
    "resuelto_por": "picksin",
-   "resuelto": "2026-09-28T20:05:36.741Z"
+   "resuelto": "2026-09-28T20:05:46.433Z"
   },
   {
    "id": "muestra-06",
