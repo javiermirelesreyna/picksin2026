@@ -680,3 +680,44 @@ html.banderas-fuente .gz-form select { font-family: "Banderas Picksin", system-u
 .rep-vista img { max-width: 520px; }
 .rep-modos { display: flex; margin: 0 0 14px; }
 .rep-modos a { flex: 1; text-align: center; }
+
+/* historial en lista desplegable */
+.hs-mes { margin-top: 24px; }
+.hs-lista { display: grid; gap: 8px; }
+.hs-item { background: var(--superficie); border: 1px solid var(--borde); border-left: 6px solid var(--azul); border-radius: 14px; box-shadow: var(--sombra); }
+.hs-item.r-ganada { border-left-color: var(--verde); }
+.hs-item.r-perdida { border-left-color: var(--rojo); }
+.hs-item.r-nula { border-left-color: #9aa5b1; }
+.hs-item > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-weight: 750;
+}
+.hs-item > summary::-webkit-details-marker { display: none; }
+.hs-item > summary::after { content: "▾"; color: var(--tenue); }
+.hs-item[open] > summary::after { content: "▴"; }
+.hs-fecha small { color: var(--suave); font-weight: 600; }
+.hs-chip { margin-left: auto; font-size: .82rem; font-weight: 800; border-radius: 999px; padding: 3px 12px; background: var(--azul-suave); color: var(--azul-oscuro); }
+.hs-item.r-ganada .hs-chip { background: var(--verde-suave); color: var(--verde-texto); }
+.hs-item.r-perdida .hs-chip { background: var(--rojo-suave); color: var(--rojo-texto); }
+.hs-item.r-nula .hs-chip { background: var(--gris-suave); color: var(--suave); }
+.hs-item .hs { border: 0; border-top: 1px solid var(--borde); border-radius: 0 0 14px 14px; box-shadow: none; }
+.hs-item .hs-res { display: none; }
+
+/* tablas del reporte */
+.rep-tabla td { vertical-align: top; }
+.rep-jugada { white-space: normal !important; min-width: 200px; }
+.rep-tabla tr.r-ganada td.rep-dia { box-shadow: inset 4px 0 0 var(--verde); }
+.rep-tabla tr.r-perdida td.rep-dia { box-shadow: inset 4px 0 0 var(--rojo); }
+.rep-tabla tr.r-nula td.rep-dia { box-shadow: inset 4px 0 0 #9aa5b1; }
+.rep-tabla tr.r-pendiente td.rep-dia { box-shadow: inset 4px 0 0 var(--azul); }
+.rep-jugada b, .rep-jugada span { display: block; line-height: 1.35; }
+.rep-jugada span { font-size: .84rem; }
+.rep-res { font-weight: 800; }
+tr.r-ganada .rep-res { color: var(--verde-texto); }
+tr.r-perdida .rep-res { color: var(--rojo-texto); }
+tr.r-nula .rep-res { color: var(--suave); }
+tr.r-pendiente .rep-res { color: var(--azul-oscuro); }
+td.neto { font-weight: 800; }
+td.neto.mas { color: var(--verde-texto); }
+td.neto.menos { color: var(--rojo-texto); }
+.rep-crear { width: 100%; justify-content: center; }
+

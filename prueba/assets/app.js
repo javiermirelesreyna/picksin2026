@@ -5,7 +5,8 @@
      #/auditoria[/<jueves>[/<liga>-j<N>]]       auditoria de cada liga, pick por pick
      #/escogidos[/<jueves>][?vista=&liga=&por=]  picks escogidos de la semana, por dia o por liga
      #/resultados[/<jueves>]                    auditoria de los picks escogidos
-     #/seleccionadores[/<jueves>]               buenas y malas de cada seleccionador
+     #/resultados[/<jueves>]?ver=ranking         (el ranking de seleccionadores va dentro de Resultados)
+     #/seleccionadores                          lleva a Resultados, al ranking
      #/green[/<jueves>]                         seleccion del dia para el grupo Green Zone (solo modo editor)
      #/historial                                selecciones del dia guardadas, con su resultado (solo modo editor)
      #/reporte?desde=&hasta=                    imagen para redes de hasta 10 dias (solo modo editor)
@@ -127,7 +128,7 @@
     analisis: ['📊', 'Análisis por liga', 'La próxima jornada de cada liga: TOP 5, sugeridos, mercados y partidos.'],
     auditoria: ['🔍', 'Auditoría por liga', 'Cada jornada jugada, contrastada pick por pick con el resultado real.'],
     escogidos: ['✅', 'Picks escogidos', 'La selección de la semana, ordenada por el día en que se juega.'],
-    resultados: ['🏅', 'Auditoría de picks escogidos', 'Cómo le fue a la selección de cada semana.'],
+    resultados: ['🏅', 'Resultados y ranking', 'Cómo le fue a la selección de cada semana y a cada seleccionador.'],
     seleccionadores: ['👥', 'Seleccionadores', 'Quién escogió cada pick y cuántas buenas y malas lleva cada uno.'],
     green: ['🟢', 'Selección del día', 'Arma la jugada para Green Zone con los picks escogidos: directa o parlay, con su momio, la apuesta y el nivel.']
   };
@@ -304,7 +305,6 @@
         ? '<span class="estado-error">⚠️ No se guardó: ' + esc(Editor.mensaje) + '</span><button type="button" data-accion="reintentar">Reintentar</button>'
         : '<span class="estado-ok">✓ Todo guardado</span>';
     b.innerHTML = '<span class="etiqueta-editor">✏️ Escoges como</span>' + persona(Editor.persona) + e +
-      '<a class="gz-enlace" href="#/green">🟢 Selección del día</a>' +
       '<button type="button" data-accion="editor-salir">Salir</button>';
     b.hidden = false;
   }
@@ -549,10 +549,11 @@
             aR ? pct(aR.acierto) + ' en ' + aR.picks + ' picks' : 'Aún sin auditorías', ''],
           ['escogidos', '✅', 'Picks escogidos', 'La selección de la semana, por día.',
             E.picks.length ? plural(E.picks.length, 'pick escogido', 'picks escogidos') : 'Sin picks escogidos aún', 'verde'],
-          ['resultados', '🏅', 'Auditoría de picks escogidos', 'Cómo le fue a cada selección.',
-            mR && (mR.ok + mR.ko) ? mR.ok + ' de ' + (mR.ok + mR.ko) + ' acertados' : 'Sin resultados todavía', 'verde'],
-          ['seleccionadores', '👥', 'Seleccionadores', 'Buenas y malas de cada quien.',
-            lider && tS[lider].comp ? '🥇 ' + esc(lider) + ' · ' + tS[lider].ok + '–' + tS[lider].ko : plural(Object.keys(tS).length, 'seleccionador', 'seleccionadores'), '']
+          ['green', '🟢', 'Selección del día', 'Arma, guarda y reporta la jugada de Green Zone.',
+            Editor.activo ? 'Armar la jugada' : 'Para seleccionadores', 'verde'],
+          ['resultados', '🏅', 'Resultados y ranking', 'Cómo le fue a la selección y a cada seleccionador.',
+            (mR && (mR.ok + mR.ko) ? mR.ok + ' de ' + (mR.ok + mR.ko) + ' acertados' : 'Sin resultados todavía') +
+            (lider && tS[lider].comp ? ' · 🥇 ' + esc(lider) : ''), '']
         ];
         h += '<div class="mosaico">' + baldosas.map(function (b) {
           return '<a class="baldosa ' + b[5] + '" href="#/' + b[0] + '"><span class="icono" aria-hidden="true">' + b[1] + '</span><b>' +
@@ -987,11 +988,12 @@
           pct(c.prometido) + '</td></tr>';
       }).join('') + '</tbody></table></div>';
   }
-  function vResultados(partes) {
+  function vResultados(partes, q) {
     return indice().then(function (idx) {
       var sem = partes[0] || semanaDefecto(idx, 'resultados') || semanaDefecto(idx, 'analisis');
       if (!sem) { return pintar(cabecera('resultados') + vacio('🏅', 'Todavía no hay semanas publicadas.'), 'Resultados'); }
-      return cargarSemana(sem).then(function (w) {
+      return Promise.all([cargarSemana(sem), cargarTodas(idx)]).then(function (x) {
+        var w = x[0], todas = x[1];
         var mapas = w.mapas, picks = w.picks.slice().sort(ordenPicks), n = contar(picks, mapas);
         var h = cabecera('resultados') + selectorSemana(idx, sem, 'resultados');
         if (!picks.length) {
@@ -1004,7 +1006,7 @@
             '</span><span>⏳ ' + n.pend + ' por jugarse</span></p>';
           var t = porSeleccionador([w]);
           h += '<h2><span class="emoji">👥</span>Por seleccionador</h2>' + tablaSeleccionadores(t, ordenTabla(t)) +
-            '<p class="criterio">Un pick escogido por dos personas cuenta para las dos. <a href="#/seleccionadores">Ver la tabla de todas las semanas ›</a></p>';
+            '<p class="criterio">Un pick escogido por dos personas cuenta para las dos. <a href="#" data-accion="ir" data-id="s-ranking">Ver el ranking de todas las semanas ›</a></p>';
           h += '<h2><span class="emoji">🗓️</span>Por día</h2>' + porDia(picks, function (p) { return tarjetaEscogido(p, mapas, { pendiente: true }); });
           var ligas = unicos(picks.map(function (p) { return p.liga; }));
           h += '<h2><span class="emoji">⚽</span>Por liga</h2><div class="tabla-caja tabla-scroll"><table><thead><tr><th>Liga</th><th class="num">Escogidos</th>' +
@@ -1017,7 +1019,12 @@
         }
         h += '<h2><span class="emoji">📈</span>Historial de la selección</h2><details class="caja" data-k="historial" data-accion-toggle="historial">' +
           '<summary>Todas las semanas</summary><div class="cuerpo" id="historial"><p class="criterio">Cargando…</p></div></details>';
-        pintar(h, 'Auditoría de picks escogidos');
+        h += '<section id="s-ranking"><h2><span class="emoji">👥</span>Ranking de seleccionadores <span class="cuenta">todas las semanas</span></h2>' +
+          rankingHTML(idx, todas) + '</section>';
+        pintar(h, 'Resultados y ranking');
+        if (q && q.get('ver') === 'ranking') {
+          setTimeout(function () { var el = $('#s-ranking'); if (el) { el.scrollIntoView({ block: 'start' }); } }, 60);
+        }
       });
     });
   }
@@ -1044,44 +1051,42 @@
     }).catch(function (e) { caja.innerHTML = '<p class="error">' + esc(e.message) + '</p>'; });
   }
 
-  /* ================================================================== 5. seleccionadores */
-  function vSeleccionadores() {
-    return indice().then(function (idx) {
-      return cargarTodas(idx).then(function (semanas) {
-        var t = porSeleccionador(semanas), orden = ordenTabla(t), medallas = ['🥇', '🥈', '🥉'];
-        var semA = semanaDefecto(idx, 'analisis') || semanaDe(hoy());
-        var h = cabecera('seleccionadores');
-        h += '<div class="podio">' + orden.map(function (n, i) {
-          var c = t[n];
-          return '<article class="tarjeta-sel" style="--c:' + colorDe(n) + '">' +
-            '<div class="sel-cab"><span class="medalla" aria-hidden="true">' + (c.comp ? (medallas[i] || '🎖️') : '🆕') + '</span>' + persona(n) +
-            (n === 'picksin' ? '<span class="chip neutro">principal</span>' : '') + '</div>' +
-            '<div class="sel-record"><span class="buenas">✅ ' + c.ok + '<small>buenas</small></span><span class="malas">❌ ' + c.ko + '<small>malas</small></span>' +
-            '<span class="balance">' + (c.balance > 0 ? '+' : '') + c.balance + '<small>balance</small></span></div>' +
-            tira(c) +
-            '<p class="sel-datos">🎯 Acierto <b>' + pct(c.acierto) + '</b> · 📈 prometido ' + pct(c.prometido) + '</p>' +
-            '<p class="sel-datos">' + plural(c.total, 'pick escogido', 'picks escogidos') + (c.pend ? ' · ⏳ ' + c.pend + ' por jugarse' : '') +
-            (c.nulo ? ' · ➖ ' + c.nulo + ' anulados' : '') + '</p>' +
-            '<a class="migas" href="#/escogidos/' + semA + '?por=' + encodeURIComponent(n) + '">Ver sus picks de la semana ›</a></article>';
-        }).join('') + '</div>';
-        h += '<p class="criterio">Ordenados por balance (buenas menos malas). Los anulados, los no comprobables y los que están por jugarse no cuentan; ' +
-          'si dos escogen el mismo pick, cuenta para los dos.</p>';
-        var conPicks = semanas.filter(function (w) { return w.picks.length; });
-        h += '<h2><span class="emoji">📅</span>Semana a semana</h2>' + (conPicks.length
-          ? '<div class="tabla-caja tabla-scroll"><table><thead><tr><th>Semana</th>' + orden.map(function (n) { return '<th class="num">' + persona(n) + '</th>'; }).join('') +
-            '</tr></thead><tbody>' + conPicks.map(function (w) {
-              var tw = porSeleccionador([w]);
-              return '<tr><td><a href="#/resultados/' + w.s + '">' + rangoSemana(w.s) + '</a></td>' + orden.map(function (n) {
-                var c = tw[n];
-                return '<td class="num">' + (c && c.total ? '<b>' + c.ok + '</b>–' + c.ko + (c.pend ? ' <small>⏳' + c.pend + '</small>' : '') : '—') + '</td>';
-              }).join('') + '</tr>';
-            }).join('') + '<tr class="total"><td>Total</td>' + orden.map(function (n) { return '<td class="num">' + t[n].ok + '–' + t[n].ko + '</td>'; }).join('') +
-            '</tr></tbody></table></div><p class="criterio">Buenas–malas de cada semana.</p>'
-          : vacio('📭', 'Todavía no hay picks escogidos.'));
-        h += '<h2><span class="emoji">📋</span>Detalle de todas las semanas</h2>' + tablaSeleccionadores(t, orden);
-        pintar(h, 'Seleccionadores');
-      });
-    });
+  /* ================================================================== 5. ranking de seleccionadores
+     (desde el 29/09 va dentro de Resultados: casi siempre escoge picksin; #/seleccionadores lleva ahi) */
+  function vSeleccionadores() { location.replace('#/resultados?ver=ranking'); return Promise.resolve(); }
+  function rankingHTML(idx, semanas) {
+    var t = porSeleccionador(semanas), orden = ordenTabla(t), medallas = ['🥇', '🥈', '🥉'];
+    var semA = semanaDefecto(idx, 'analisis') || semanaDe(hoy());
+    var h = '<div class="podio">' + orden.map(function (n, i) {
+      var c = t[n];
+      return '<article class="tarjeta-sel" style="--c:' + colorDe(n) + '">' +
+        '<div class="sel-cab"><span class="medalla" aria-hidden="true">' + (c.comp ? (medallas[i] || '🎖️') : '🆕') + '</span>' + persona(n) +
+        (n === 'picksin' ? '<span class="chip neutro">principal</span>' : '') + '</div>' +
+        '<div class="sel-record"><span class="buenas">✅ ' + c.ok + '<small>buenas</small></span><span class="malas">❌ ' + c.ko + '<small>malas</small></span>' +
+        '<span class="balance">' + (c.balance > 0 ? '+' : '') + c.balance + '<small>balance</small></span></div>' +
+        tira(c) +
+        '<p class="sel-datos">🎯 Acierto <b>' + pct(c.acierto) + '</b> · 📈 prometido ' + pct(c.prometido) + '</p>' +
+        '<p class="sel-datos">' + plural(c.total, 'pick escogido', 'picks escogidos') + (c.pend ? ' · ⏳ ' + c.pend + ' por jugarse' : '') +
+        (c.nulo ? ' · ➖ ' + c.nulo + ' anulados' : '') + '</p>' +
+        '<a class="migas" href="#/escogidos/' + semA + '?por=' + encodeURIComponent(n) + '">Ver sus picks de la semana ›</a></article>';
+    }).join('') + '</div>';
+    h += '<p class="criterio">Ordenados por balance (buenas menos malas). Los anulados, los no comprobables y los que están por jugarse no cuentan; ' +
+      'si dos escogen el mismo pick, cuenta para los dos.</p>';
+    var conPicks = semanas.filter(function (w) { return w.picks.length; });
+    h += '<details class="caja" data-k="rk-semanas"><summary><span class="emoji">📅</span>Semana a semana</summary><div class="cuerpo">' + (conPicks.length
+      ? '<div class="tabla-scroll"><table><thead><tr><th>Semana</th>' + orden.map(function (n) { return '<th class="num">' + persona(n) + '</th>'; }).join('') +
+        '</tr></thead><tbody>' + conPicks.map(function (w) {
+          var tw = porSeleccionador([w]);
+          return '<tr><td><a href="#/resultados/' + w.s + '">' + rangoSemana(w.s) + '</a></td>' + orden.map(function (n) {
+            var c = tw[n];
+            return '<td class="num">' + (c && c.total ? '<b>' + c.ok + '</b>–' + c.ko + (c.pend ? ' <small>⏳' + c.pend + '</small>' : '') : '—') + '</td>';
+          }).join('') + '</tr>';
+        }).join('') + '<tr class="total"><td>Total</td>' + orden.map(function (n) { return '<td class="num">' + t[n].ok + '–' + t[n].ko + '</td>'; }).join('') +
+        '</tr></tbody></table></div><p class="criterio">Buenas–malas de cada semana.</p>'
+      : '<p class="criterio">Todavía no hay picks escogidos.</p>') + '</div></details>';
+    h += '<details class="caja" data-k="rk-detalle"><summary><span class="emoji">📋</span>Detalle de todas las semanas</summary><div class="cuerpo">' +
+      tablaSeleccionadores(t, orden) + '</div></details>';
+    return h;
   }
 
   /* ================================================================== 6. seleccion del dia (Green Zone) */
@@ -1232,8 +1237,8 @@
       ? document.fonts.load('40px "Banderas Picksin"', '🇲🇽').catch(function () { return null; }) : null;
     return Promise.all([imagen('assets/logo.webp'), imagen('assets/avatar.webp'), f]).then(function (r) { return { logo: r[0], avatar: r[1] }; });
   }
-  function letra(c, peso, tam) {
-    c.font = peso + ' ' + tam + 'px ' + (document.documentElement.classList.contains('banderas-fuente') ? '"Banderas Picksin", ' : '') + LETRA;
+  function letra(c, peso, tam, estilo) {                    // estilo: 'italic' (opcional)
+    c.font = (estilo ? estilo + ' ' : '') + peso + ' ' + tam + 'px ' + (document.documentElement.classList.contains('banderas-fuente') ? '"Banderas Picksin", ' : '') + LETRA;
   }
   function espaciado(c, px) { if ('letterSpacing' in c) { c.letterSpacing = px + 'px'; } }
   function redondo(c, x, y, w, h, r) {
@@ -1825,7 +1830,7 @@
   function cabeceraGZ(activa) {
     var t = { armar: ['🟢', SECC.green[1], SECC.green[2]],
       historial: ['📚', 'Historial de selecciones', 'Todas las selecciones del día guardadas, con su resultado.'],
-      reporte: ['📊', 'Reporte para redes', 'Tus días ganados y perdidos en una imagen: elige del día al día (hasta 10).'] }[activa];
+      reporte: ['📊', 'Reportes', 'Tu control por días (hasta 10) o por mes. La imagen para redes, solo cuando la pidas.'] }[activa];
     return '<div class="titulo-seccion gz-titulo"><img class="gz-avatar" src="assets/avatar.webp" alt="" width="46" height="68">' +
       '<div><h1>' + t[0] + ' ' + t[1] + '</h1><p class="sub">' + t[2] + '</p></div></div>' +
       '<nav class="gz-tabs" aria-label="Green Zone">' + [['armar', '#/green', '🟢 Armar'], ['historial', '#/historial', '📚 Historial'],
@@ -1923,13 +1928,19 @@
             '<b>💾 Guardar en el historial</b>.'), 'Historial');
         }
         h += marcadorHist(contarHist(sels, mapas)) +
-          '<p class="criterio">Márcalas al terminar sus partidos. Las que son solo de picks del análisis se resuelven solas cuando ' +
-          'se audita su jornada («según la auditoría»); las que llevan una selección propia se marcan a mano.</p>';
-        var dias = unicos(sels.map(function (x) { return x.fecha; })).sort().reverse();
-        h += dias.map(function (d) {
-          var del = sels.filter(function (x) { return x.fecha === d; });
-          return '<div class="dia-cab">🗓️ ' + fLarga(d) + '<span class="cuenta">' + plural(del.length, 'selección', 'selecciones') + '</span></div>' +
-            '<div class="hs-grid">' + del.map(function (x, i) { return tarjetaHist(x, mapas, del.length, i + 1); }).join('') + '</div>';
+          '<p class="criterio">Toca una selección para ver su detalle y marcar si fue ganada, perdida o nula. Las que son solo de picks del ' +
+          'análisis se resuelven solas cuando se audita su jornada («según la auditoría»); las que llevan una selección propia se marcan a mano.</p>';
+        var meses = unicos(sels.map(function (x) { return x.fecha.slice(0, 7); })).sort().reverse();
+        h += meses.map(function (m) {
+          var del = sels.filter(function (x) { return x.fecha.slice(0, 7) === m; }).reverse(), c = contarHist(del, mapas);
+          return '<h2 class="hs-mes"><span class="emoji">🗓️</span>' + nombreMes(m) + ' ' + m.slice(0, 4) + '<span class="cuenta">' + c.ganada + '–' + c.perdida +
+            (c.nula ? ' · ' + plural(c.nula, 'nula', 'nulas') : '') + (c.pendiente ? ' · ' + c.pendiente + ' ⏳' : '') + '</span></h2>' +
+            '<div class="hs-lista">' + del.map(function (x) {
+              var delDia = sels.filter(function (y) { return y.fecha === x.fecha; }), k = delDia.indexOf(x) + 1, st = estadoSel(x, mapas).e;
+              return '<details class="hs-item r-' + st + '" data-k="hs-' + esc(x.id) + '"><summary><span class="hs-fecha">' + fCorta(x.fecha) +
+                (delDia.length > 1 ? ' <small>· ' + k + ' de ' + delDia.length + '</small>' : '') + '</span>' +
+                '<span class="hs-chip">' + RES[st][0] + ' ' + RES[st][1] + '</span></summary>' + tarjetaHist(x, mapas, delDia.length, k) + '</details>';
+            }).join('') + '</div>';
         }).join('');
         pintar(h, 'Historial');
       });
@@ -1977,11 +1988,10 @@
         h += marcadorHist(n) +
           (n.pendiente ? '<p class="nota">⏳ ' + plural(n.pendiente, 'selección sigue pendiente', 'selecciones siguen pendientes') +
             ': márcalas en <a href="#/historial">📚 Historial</a> para que el reporte salga completo.</p>' : '') +
-          '<div class="gz-vista rep-vista preparando"><img id="rep-img" alt="Reporte para redes"></div>' +
-          '<button type="button" class="boton gz-compartir" data-accion="gz-rep-compartir">📤 Compartir reporte</button>' +
-          '<div class="gz-mas"><button type="button" class="boton secundario" data-accion="gz-rep-descargar">⬇️ Descargar imagen</button></div>';
+          tablasRep(sels, mapas, false) + bloqueImagenRep();
+        repActual = { R: { sels: sels, mapas: mapas, desde: desde, hasta: hasta, n: n }, planear: planReporte, pintar: pintarReporte,
+          nombre: 'reporte-green-zone-' + desde + '-al-' + hasta + '.png' };
         pintar(h, 'Reporte');
-        dibujarReporte({ sels: sels, mapas: mapas, desde: desde, hasta: hasta, n: n });
       });
     });
   }
@@ -2191,8 +2201,61 @@
       c.restore();
     });
   }
-  function dibujarReporte(R) {
-    generarRep(R, planReporte, pintarReporte, 'reporte-green-zone-' + R.desde + '-al-' + R.hasta + '.png');
+  /* ---------------------------------------------------------------- tablas del reporte (control personal) */
+  var repActual = null;
+  function netoSel(s, e) {
+    if (e === 'ganada') { return s.apuesta && s.pago ? s.pago - s.apuesta : null; }
+    if (e === 'perdida') { return s.apuesta ? -s.apuesta : null; }
+    return e === 'nula' ? 0 : null;
+  }
+  function netoTxt(x) { return x == null ? '—' : (x > 0 ? '+' : x < 0 ? '−' : '') + dinero(Math.abs(x)); }
+  function filaConteo(etq, sels, mapas) {
+    var c = contarHist(sels, mapas);
+    return '<tr><td>' + etq + '</td><td class="num">' + c.total + '</td><td class="num">' + c.ganada + '</td><td class="num">' + c.perdida +
+      '</td><td class="num">' + c.nula + '</td><td class="num">' + c.pendiente + '</td><td class="num"><b>' + pct(c.efectividad) + '</b></td>' +
+      '<td class="num neto ' + (c.balance > 0 ? 'mas' : c.balance < 0 ? 'menos' : '') + '">' + (c.apostado ? netoTxt(c.balance) : '—') + '</td></tr>';
+  }
+  function tablasRep(sels, mapas, porSemana) {
+    var cab = '<thead><tr><th></th><th class="num">Jugadas</th><th class="num">✅</th><th class="num">❌</th><th class="num">➖</th><th class="num">⏳</th>' +
+      '<th class="num">Efectividad</th><th class="num">Neto</th></tr></thead>';
+    var tot = contarHist(sels, mapas);
+    var h = '<h2><span class="emoji">📋</span>Selección por selección</h2><div class="tabla-caja tabla-scroll"><table class="rep-tabla"><thead><tr>' +
+      '<th>Día</th><th>Resultado</th><th class="num">Neto</th><th>Jugada</th><th>Nivel</th><th class="num">Momio</th><th class="num">Apuesta</th></tr></thead><tbody>' +
+      sels.map(function (s) {
+        var e = estadoSel(s, mapas).e, niv = NIVELES[s.nivel] || NIVELES.fuerte, neto = netoSel(s, e);
+        return '<tr class="r-' + e + '"><td class="rep-dia">' + fCorta(s.fecha) + '</td><td><span class="rep-res">' + RES[e][0] + ' ' + RES[e][1] + '</span></td>' +
+          '<td class="num neto ' + (neto > 0 ? 'mas' : neto < 0 ? 'menos' : '') + '">' + netoTxt(neto) + '</td><td class="rep-jugada">' +
+          (s.tipo === 'parlay' ? '<b>🔗 Parlay de ' + s.patas.length + '</b>' : '') +
+          s.patas.map(function (p) { return '<span>' + deporteDe(p)[0] + ' ' + esc(p.mercado) + '</span>'; }).join('') + '</td>' +
+          '<td>' + niv.e + ' ' + niv.t + '</td><td class="num">' + esc(s.momio || '—') + '</td><td class="num">' + (s.apuesta ? dinero(s.apuesta) : '—') + '</td></tr>';
+      }).join('') +
+      '<tr class="total"><td>Total</td><td>' + tot.ganada + '–' + tot.perdida + ' · ' + pct(tot.efectividad) + '</td>' +
+      '<td class="num neto ' + (tot.balance > 0 ? 'mas' : tot.balance < 0 ? 'menos' : '') + '">' + netoTxt(tot.balance) + '</td><td>' +
+      plural(tot.total, 'jugada', 'jugadas') + (tot.nula ? ' · ' + plural(tot.nula, 'nula', 'nulas') : '') + (tot.pendiente ? ' · ' + tot.pendiente + ' ⏳' : '') +
+      '</td><td></td><td></td><td class="num">' + dinero(tot.apostado) + '</td></tr></tbody></table></div>' +
+      '<p class="criterio">Neto: lo que se ganó encima de la apuesta en las ganadas, menos lo apostado en las perdidas; la apuesta total cuenta solo las ya resueltas.</p>';
+    h += '<h2><span class="emoji">🎚️</span>Por nivel</h2><div class="tabla-caja tabla-scroll"><table>' + cab + '<tbody>' +
+      Object.keys(NIVELES).map(function (k) {
+        var del = sels.filter(function (s) { return (s.nivel || 'fuerte') === k; });
+        return del.length ? filaConteo(NIVELES[k].e + ' ' + NIVELES[k].t, del, mapas) : '';
+      }).join('') + '</tbody></table></div>';
+    if (porSemana) {
+      var sems = unicos(sels.map(function (s) { return semanaDe(s.fecha); })).sort();
+      h += '<h2><span class="emoji">📅</span>Por semana <span class="cuenta">jueves a miércoles</span></h2><div class="tabla-caja tabla-scroll"><table>' + cab + '<tbody>' +
+        sems.map(function (w) {
+          return filaConteo(rangoSemana(w), sels.filter(function (s) { return semanaDe(s.fecha) === w; }), mapas);
+        }).join('') + '</tbody></table></div>';
+    }
+    return h;
+  }
+  /* la imagen para redes ya no se hace sola: solo cuando se pide */
+  function bloqueImagenRep() {
+    repBlob = null;
+    return '<h2><span class="emoji">🖼️</span>Imagen para redes</h2><p class="criterio">No se crea sola: tócala cuando quieras publicar.</p>' +
+      '<button type="button" class="boton secundario rep-crear" data-accion="gz-rep-imagen">🖼️ Crear imagen para redes</button>' +
+      '<div id="rep-salida" hidden><div class="gz-vista rep-vista preparando"><img id="rep-img" alt="Imagen para redes"></div>' +
+      '<button type="button" class="boton gz-compartir" data-accion="gz-rep-compartir">📤 Compartir</button>' +
+      '<div class="gz-mas"><button type="button" class="boton secundario" data-accion="gz-rep-descargar">⬇️ Descargar imagen</button></div></div>';
   }
   /* ---------------------------------------------------------------- historial mensual (como el calendario
      de temporada que mando Javier): mes en letra manuscrita, "HISTORIAL MENSUAL", una casilla por
@@ -2222,120 +2285,144 @@
         }
         h += marcadorHist(n) +
           (n.pendiente ? '<p class="nota">⏳ ' + plural(n.pendiente, 'selección sigue pendiente', 'selecciones siguen pendientes') +
-            ': márcalas en <a href="#/historial">📚 Historial</a> para que el mes salga completo.</p>' : '') +
-          '<div class="gz-vista rep-vista preparando"><img id="rep-img" alt="Historial mensual para redes"></div>' +
-          '<button type="button" class="boton gz-compartir" data-accion="gz-rep-compartir">📤 Compartir historial del mes</button>' +
-          '<div class="gz-mas"><button type="button" class="boton secundario" data-accion="gz-rep-descargar">⬇️ Descargar imagen</button></div>';
+            ': márcalas en <a href="#/historial">📚 Historial</a> (en la imagen del mes no salen las pendientes).</p>' : '') +
+          tablasRep(sels, mapas, true) + bloqueImagenRep();
+        repActual = { R: { sels: sels, mapas: mapas, mes: mes, n: n }, planear: planMes, pintar: pintarMes, nombre: 'historial-green-zone-' + mes + '.png' };
         pintar(h, 'Reporte mensual');
-        generarRep({ sels: sels, mapas: mapas, mes: mes, n: n }, planMes, pintarMes, 'historial-green-zone-' + mes + '.png');
       });
     });
   }
-  var COLOR_MES = { ganada: REP.VERDE, perdida: '#16191d', nula: '#8796a8', pendiente: '#ffffff' };
+  /* casillas del mes (sin las pendientes): verde ganada, negra perdida, gris nula; en cada una solo
+     el dia, los deportes que se apostaron y el nivel */
+  var COLOR_MES = { ganada: REP.VERDE, perdida: '#16191d', nula: '#8f99a5' };
+  function angosto(c, t, x, y, k, alin) {           // letra "condensada": el sistema no la trae, se estrecha
+    var w = c.measureText(t).width * k, x0 = alin === 'center' ? x - w / 2 : alin === 'right' ? x - w : x;
+    c.save(); c.translate(x0, y); c.scale(k, 1); c.textAlign = 'left'; c.fillText(t, 0, 0); c.restore();
+    return w;
+  }
+  var contornos = {};
+  function emojiConContorno(c, e, xDer, yCentro, tam) {       // devuelve el ancho; se alinea a la derecha
+    var k = e + '|' + tam;
+    if (!contornos[k]) {
+      var g = Math.ceil(tam * 1.5), borde = Math.max(2, Math.round(tam / 11));
+      var a = document.createElement('canvas'); a.width = a.height = g;
+      var x = a.getContext('2d');
+      letra(x, 400, tam); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(e, g / 2, g / 2);
+      var ancho = Math.min(g, x.measureText(e).width);
+      var b = document.createElement('canvas'); b.width = b.height = g + 2 * borde;
+      var y = b.getContext('2d');
+      for (var ang = 0; ang < 16; ang++) {
+        y.drawImage(a, borde + Math.cos(ang * Math.PI / 8) * borde, borde + Math.sin(ang * Math.PI / 8) * borde);
+      }
+      y.globalCompositeOperation = 'source-in'; y.fillStyle = '#16191d'; y.fillRect(0, 0, b.width, b.height);
+      y.globalCompositeOperation = 'source-over'; y.drawImage(a, borde, borde);
+      contornos[k] = { lienzo: b, ancho: ancho + 2 * borde };
+    }
+    var q = contornos[k];
+    c.drawImage(q.lienzo, xDer - q.ancho / 2 - q.lienzo.width / 2, yCentro - q.lienzo.height / 2);
+    return q.ancho;
+  }
   function planMes(c, R) {
-    var W = 1080, n = R.sels.length, cols = n <= 8 ? 4 : n <= 35 ? 5 : 6;
-    var MX = { 4: 112, 5: 92, 6: 62 }[cols], GX = { 4: 38, 5: 34, 6: 24 }[cols], GY = 28;
-    var tw = (W - 2 * MX - (cols - 1) * GX) / cols, th = Math.round(tw * 0.6);
-    var estados = R.sels.map(function (s) { return estadoSel(s, R.mapas).e; });
-    var leyenda = ['ganada', 'perdida', 'nula', 'pendiente'].filter(function (k, i) { return i < 2 || estados.indexOf(k) >= 0; });
-    var filas = Math.ceil(n / cols), libres = filas * cols - n;
-    var enCasilla = leyenda.length <= 2 && libres >= 1;            // como en la referencia: en el hueco de la ultima fila
-    var y0 = 392, fin = y0 + filas * (th + GY) - GY + (enCasilla ? 0 : 70);
-    var bt = fin + 250, H = bt + 410;                             // entre la leyenda y el marco va el record
-    if (H < 1350) { var extra = 1350 - H; y0 += extra * 0.3; bt += extra * 0.3; H = 1350; }   // lo que sobra agranda el marco
-    return { W: W, H: H, cols: cols, MX: MX, GX: GX, GY: GY, tw: tw, th: th, y0: y0, bt: bt, estados: estados, leyenda: leyenda,
-      enCasilla: enCasilla, finGrid: y0 + filas * (th + GY) - GY, finLeyenda: y0 + filas * (th + GY) - GY + (enCasilla ? 0 : 70) };
+    var W = 1080, sels = R.sels.filter(function (s) { return estadoSel(s, R.mapas).e !== 'pendiente'; }), n = sels.length;
+    var cols = n <= 32 ? 4 : n <= 50 ? 5 : 6;
+    var MX = { 4: 92, 5: 72, 6: 56 }[cols], GX = { 4: 30, 5: 24, 6: 18 }[cols], GY = 24;
+    var tw = (W - 2 * MX - (cols - 1) * GX) / cols, th = Math.round(tw * 0.52), filas = Math.max(1, Math.ceil(n / cols));
+    var y0 = 350, alto = y0 + filas * (th + GY) - GY + 34 + 88 + 50 + 92 + 60 + 70;
+    var extra = Math.max(0, 1200 - alto);                        // un mes corto no queda apretado arriba
+    y0 += extra * 0.4;
+    var finGrid = y0 + filas * (th + GY) - GY, yLey = finGrid + 34, yRec = yLey + 88 + 50 + extra * 0.3, yFrase = yRec + 92 + 60 + extra * 0.3;
+    return { W: W, H: yFrase + 70, sels: sels, cols: cols, MX: MX, GX: GX, GY: GY, tw: tw, th: th, y0: y0,
+      yLey: yLey, yRec: yRec, yFrase: yFrase };
   }
   function pintarMes(c, A, R, P) {
     var W = P.W, H = P.H, NEGRO = '#16191d';
     c.fillStyle = '#f4f6f8'; c.fillRect(0, 0, W, H);
-    var r = azar(7 + R.sels.length);
+    var r = azar(7 + P.sels.length);
     for (var i = 0; i < W * H / 90; i++) {                       // textura suave, como el papel de la referencia
       c.globalAlpha = 0.25 + r() * 0.4; c.fillStyle = r() < 0.5 ? '#ffffff' : '#dfe4ea';
       c.fillRect(r() * W, r() * H, 1 + r() * 2, 1 + r() * 2);
     }
     c.globalAlpha = 1; c.textBaseline = 'alphabetic';
-    /* la pestana de arriba: logo | GREEN ZONE */
+    /* la pestana de arriba, en verde: logo | GREEN ZONE */
     letra(c, 900, 30); espaciado(c, 1);
     var tw0 = c.measureText('GREEN ZONE').width, lh = 58, lw = A.logo ? lh * A.logo.width / A.logo.height : 0, bw = 24 + lw + 36 + tw0 + 30;
     var bx = (W - bw) / 2;
-    c.fillStyle = REP.AZUL; redondo(c, bx, -24, bw, 110, 20); c.fill();
+    c.fillStyle = REP.VERDE_OSC; redondo(c, bx, -24, bw, 110, 20); c.fill();
     c.lineWidth = 3; c.strokeStyle = NEGRO; redondo(c, bx, -24, bw, 110, 20); c.stroke();
     if (A.logo) { c.drawImage(A.logo, bx + 24, 12, lw, lh); }
     c.fillStyle = 'rgba(255, 255, 255, .7)'; c.fillRect(bx + 24 + lw + 17, 16, 2, 50);
     c.fillStyle = '#fff'; c.textAlign = 'left'; c.fillText('GREEN ZONE', bx + 24 + lw + 36, 52);
-    /* el mes en letra manuscrita, detras del titulo */
-    var mes = nombreMes(R.mes), t = 240;
-    c.font = '400 ' + t + 'px ' + MANUSCRITA; espaciado(c, 0);
-    while (t > 90 && c.measureText(mes).width > 590) { t -= 6; c.font = '400 ' + t + 'px ' + MANUSCRITA; }
-    c.fillStyle = REP.AZUL; c.textAlign = 'left'; c.fillText(mes, 50, 258);
-    letra(c, 800, 20); espaciado(c, 6); c.textAlign = 'right'; c.fillStyle = REP.AZUL;
-    c.fillText('GREEN ZONE · ' + R.mes.slice(0, 4), W - 54, 228);
-    espaciado(c, -3);
-    var tt = ajustar(c, 900, 96, 50, 'HISTORIAL MENSUAL', W - 150);
-    letra(c, 900, tt); espaciado(c, -3); c.fillStyle = NEGRO; c.fillText('HISTORIAL MENSUAL', W - 50, 336);
     espaciado(c, 0);
-    /* una casilla por seleccion del dia */
-    R.sels.forEach(function (s, k) {
-      var x = P.MX + (k % P.cols) * (P.tw + P.GX), y = P.y0 + Math.floor(k / P.cols) * (P.th + P.GY), e = P.estados[k];
-      var tinta = e === 'pendiente' ? NEGRO : '#ffffff', d = fecha(s.fecha);
+    /* el titulo: el mes y el ano, grandes, en cursiva condensada */
+    letra(c, 800, 26, 'italic'); espaciado(c, 7); c.fillStyle = REP.VERDE_OSC; c.textAlign = 'center';
+    c.fillText('HISTORIAL MENSUAL · BY PICKSIN', W / 2, 160); espaciado(c, 0);
+    var titulo = nombreMes(R.mes).toUpperCase() + ' ' + R.mes.slice(0, 4), tt = 170;
+    letra(c, 900, tt, 'italic');
+    while (tt > 60 && c.measureText(titulo).width * 0.78 > W - 150) { tt -= 4; letra(c, 900, tt, 'italic'); }
+    c.fillStyle = REP.AZUL; espaciado(c, -2); angosto(c, titulo, W / 2, 160 + Math.round(tt * 0.84), 0.78, 'center'); espaciado(c, 0);
+    /* las casillas: la ultima fila va centrada */
+    var n = P.sels.length;
+    P.sels.forEach(function (s, k) {
+      var fila = Math.floor(k / P.cols), enFila = Math.min(P.cols, n - fila * P.cols), col = k % P.cols;
+      var x = P.MX + ((P.cols - enFila) * (P.tw + P.GX)) / 2 + col * (P.tw + P.GX), y = P.y0 + fila * (P.th + P.GY);
+      var e = estadoSel(s, R.mapas).e, niv = NIVELES[s.nivel] || NIVELES.fuerte;
       c.fillStyle = COLOR_MES[e]; redondo(c, x, y, P.tw, P.th, 12); c.fill();
       c.lineWidth = 3; c.strokeStyle = NEGRO; redondo(c, x, y, P.tw, P.th, 12); c.stroke();
-      var cx = x + P.th * 0.5, cy = y + P.th / 2, rr = P.th * (P.cols === 6 ? 0.27 : 0.31);
-      c.save(); c.strokeStyle = tinta; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, rr, 0, 2 * Math.PI); c.stroke(); c.restore();
-      c.save(); c.translate(cx, cy); c.scale(rr * 0.5 / 11, rr * 0.5 / 11); iconoRes(c, e, 0, 0, tinta); c.restore();
-      c.textAlign = 'right'; c.fillStyle = tinta;
-      letra(c, 900, Math.round(P.th * 0.3)); c.fillText(MESES_C[d.getUTCMonth()].toUpperCase(), x + P.tw - 14, y + P.th * 0.44);
-      letra(c, 900, Math.round(P.th * 0.42)); c.fillText(String(d.getUTCDate()), x + P.tw - 14, y + P.th * 0.84);
+      var cx = x + P.th * 0.36, cy = y + P.th / 2, rr = P.th * 0.24;
+      c.save(); c.strokeStyle = '#ffffff'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, rr, 0, 2 * Math.PI); c.stroke(); c.restore();
+      c.save(); c.translate(cx, cy); c.scale(rr * 0.55 / 11, rr * 0.55 / 11); iconoRes(c, e, 0, 0, '#ffffff'); c.restore();
+      letra(c, 900, Math.round(P.th * 0.54)); c.fillStyle = '#ffffff';
+      angosto(c, String(fecha(s.fecha).getUTCDate()), x + P.th * 0.7, y + P.th * 0.72, P.cols > 4 ? 0.78 : 0.86, 'left');
+      var deportes = unicos(s.patas.map(function (p) { return deporteDe(p)[0]; })).slice(0, P.cols > 4 ? 2 : 3);
+      var te = Math.round(P.th * (deportes.length > 1 ? 0.21 : 0.26)), xe = x + P.tw - 10;
+      for (var d = deportes.length - 1; d >= 0; d--) { xe -= emojiConContorno(c, deportes[d], xe, y + P.th * 0.3, te) + 2; }
+      emojiConContorno(c, niv.e, x + P.tw - 10, y + P.th * 0.72, Math.round(P.th * 0.28));
     });
-    /* la leyenda */
-    var nombres = { ganada: 'GANADA', perdida: 'PERDIDA', nula: 'NULA', pendiente: 'PENDIENTE' };
-    var n = R.sels.length, lx, ly, paso = 34;
-    if (P.enCasilla) { lx = P.MX + (n % P.cols) * (P.tw + P.GX) + 4; ly = P.y0 + Math.floor(n / P.cols) * (P.th + P.GY) + 6; }
-    else { lx = P.MX; ly = P.finGrid + 26; }
-    P.leyenda.forEach(function (k, i) {
-      var x = P.enCasilla ? lx : lx + i * 200, y = P.enCasilla ? ly + i * paso : ly;
-      c.fillStyle = COLOR_MES[k]; redondo(c, x, y, 48, 24, 5); c.fill();
-      c.lineWidth = 2; c.strokeStyle = NEGRO; redondo(c, x, y, 48, 24, 5); c.stroke();
-      letra(c, 900, 22); c.fillStyle = NEGRO; c.textAlign = 'left'; c.fillText(nombres[k], x + 60, y + 21);
+    /* la explicacion de los colores y de los niveles, en pequeno */
+    var ley = [['ganada', 'GANADA'], ['perdida', 'PERDIDA'], ['nula', 'NULA']];
+    letra(c, 900, 20);
+    var anchos = ley.map(function (l) { return 38 + 10 + c.measureText(l[1]).width; }), total = anchos.reduce(function (a, b) { return a + b; }, 0) + 34 * 2;
+    var lx = (W - total) / 2, ly = P.yLey;
+    ley.forEach(function (l, i) {
+      c.fillStyle = COLOR_MES[l[0]]; redondo(c, lx, ly, 38, 20, 5); c.fill();
+      c.lineWidth = 2; c.strokeStyle = NEGRO; redondo(c, lx, ly, 38, 20, 5); c.stroke();
+      letra(c, 900, 20); c.fillStyle = NEGRO; c.textAlign = 'left'; c.fillText(l[1], lx + 48, ly + 18);
+      lx += anchos[i] + 34;
     });
-    letra(c, 700, 11); espaciado(c, 2); c.fillStyle = NEGRO; c.textAlign = 'left';
-    c.fillText('SELECCIÓN DEL DÍA · GREEN ZONE', lx, P.enCasilla ? ly + P.leyenda.length * paso + 12 : ly + 44);
+    letra(c, 800, 19); espaciado(c, 1);
+    var nv = Object.keys(NIVELES).map(function (k) { return [NIVELES[k].e, NIVELES[k].t.toUpperCase()]; });
+    var an = nv.map(function (v) { return 30 + c.measureText(v[1]).width; }), tot = an.reduce(function (a, b) { return a + b; }, 0) + 40 * (nv.length - 1);
+    var nx = (W - tot) / 2;
+    nv.forEach(function (v, i) {
+      emojiConContorno(c, v[0], nx + 24, ly + 50, 22);
+      letra(c, 800, 19); espaciado(c, 1); c.fillStyle = '#56677c'; c.textAlign = 'left'; c.fillText(v[1], nx + 30, ly + 57);
+      nx += an[i] + 40;
+    });
     espaciado(c, 0);
-    /* el record del mes, en una pastilla negra centrada */
+    /* el record del mes, en la pastilla negra */
     var nn = R.n, ef = nn.efectividad == null ? '—' : Math.round(nn.efectividad * 100) + '%';
     var partes = [['RÉCORD DEL MES', 800, 19, 'rgba(255, 255, 255, .75)', 4], [nn.ganada + '–' + nn.perdida, 900, 54, '#ffffff', 0],
       ['·', 900, 40, 'rgba(255, 255, 255, .5)', 0], [ef, 900, 54, REP.VERDE, 0], ['EFECTIVIDAD', 800, 19, 'rgba(255, 255, 255, .75)', 4]];
-    var anchos = partes.map(function (p) { letra(c, p[1], p[2]); espaciado(c, p[4]); return c.measureText(p[0]).width; });
+    var anchos2 = partes.map(function (p) { letra(c, p[1], p[2]); espaciado(c, p[4]); return c.measureText(p[0]).width; });
     espaciado(c, 0);
-    var pw = anchos.reduce(function (a, b) { return a + b; }, 0) + 22 * (partes.length - 1) + 80, ph = 92;
-    var px = (W - pw) / 2, py = P.finLeyenda + 44;
+    var pw = anchos2.reduce(function (a, b) { return a + b; }, 0) + 22 * (partes.length - 1) + 80, ph = 92;
+    var px = (W - pw) / 2, py = P.yRec;
     c.fillStyle = NEGRO; redondo(c, px, py, pw, ph, ph / 2); c.fill();
     var xx = px + 40;
     partes.forEach(function (p, i) {
       letra(c, p[1], p[2]); espaciado(c, p[4]); c.fillStyle = p[3]; c.textAlign = 'left';
-      c.fillText(p[0], xx, py + ph / 2 + p[2] * 0.36); xx += anchos[i] + 22;
+      c.fillText(p[0], xx, py + ph / 2 + p[2] * 0.36); xx += anchos2[i] + 22;
     });
     espaciado(c, 0);
-    /* el marco de abajo con las tres poses del avatar; la del centro se asoma por arriba */
-    var fx = 92, fw = W - 184, bt = P.bt;
-    var g = c.createLinearGradient(fx, bt, fx + fw, H); g.addColorStop(0, REP.NOCHE); g.addColorStop(0.6, REP.MARINO); g.addColorStop(1, REP.AZUL);
-    c.save();
-    redondo(c, fx, bt, fw, H - bt + 60, 44); c.fillStyle = g; c.fill();
-    c.lineWidth = 4; c.strokeStyle = NEGRO; c.stroke();
-    c.clip();
-    c.save(); c.translate(fx + fw / 2, bt + (H - bt) / 2); c.rotate(-Math.PI / 12);
-    letra(c, 900, 46); c.fillStyle = 'rgba(255, 255, 255, .06)'; c.textAlign = 'center';
-    for (var j = -3; j <= 3; j++) { c.fillText('NO ES SUERTE, ES CIENCIA  ·  NO ES SUERTE, ES CIENCIA', (j % 2) * 120, j * 86); }
-    c.restore();
-    var BH = H - bt, k = Math.min(1.3, BH / 410);
-    if (A.brazos) { var hb = 330 * k, wb = hb * A.brazos.width / A.brazos.height; c.drawImage(A.brazos, 300 - wb / 2, H - hb + 16, wb, hb); }
-    if (A.parado) { var hp = 330 * k, wp = hp * A.parado.width / A.parado.height; c.drawImage(A.parado, 790 - wp / 2, H - hp + 16, wp, hp); }
-    c.restore();
-    if (A.festejo) {                                              // el del centro sale del marco, como en la referencia
-      var ah = BH + 70, aw = ah * A.festejo.width / A.festejo.height;
-      c.drawImage(A.festejo, W / 2 - aw / 2, H - ah + 14, aw, ah);
-    }
+    /* abajo, la frase: "ES CIENCIA" mas marcado */
+    var f1 = 'NO ES SUERTE,  ', f2 = 'ES CIENCIA';
+    letra(c, 700, 34, 'italic'); espaciado(c, 4); var w1 = c.measureText(f1).width;
+    letra(c, 900, 46, 'italic'); espaciado(c, 4); var w2 = c.measureText(f2).width;
+    var fx2 = (W - w1 - w2) / 2, fy = P.yFrase + 44;
+    c.textAlign = 'left';
+    letra(c, 700, 34, 'italic'); espaciado(c, 4); c.fillStyle = '#6b7a8c'; c.fillText(f1, fx2, fy);
+    letra(c, 900, 46, 'italic'); espaciado(c, 4); c.fillStyle = REP.VERDE_OSC; c.fillText(f2, fx2 + w1, fy);
+    espaciado(c, 0);
   }
   function generarRep(R, planear, pintarCon, nombre) {
     var turno = ++repTurno;
@@ -2395,8 +2482,9 @@
     var seccion = partes.shift() || '';
     var vista = VISTAS[seccion];
     if (!vista) { location.replace('#/'); return Promise.resolve(); }
+    var enMenu = { historial: 'green', reporte: 'green', seleccionadores: 'resultados' }[seccion] || seccion;
     $$('.nav a').forEach(function (a) {
-      if (a.getAttribute('data-nav') === seccion) { a.setAttribute('aria-current', 'page'); } else { a.removeAttribute('aria-current'); }
+      if (a.getAttribute('data-nav') === enMenu) { a.setAttribute('aria-current', 'page'); } else { a.removeAttribute('aria-current'); }
     });
     var y = window.scrollY, abiertos = $$('details[data-k][open]').map(function (d) { return d.getAttribute('data-k'); });
     REG = {};
@@ -2447,6 +2535,13 @@
     else if (a === 'gz-hs-resultado') { accionHist(t, 'resultado'); }
     else if (a === 'gz-hs-borrar') { accionHist(t, 'quitar'); }
     else if (a === 'gz-rep-compartir') { compartirRep(); }
+    else if (a === 'gz-rep-imagen') {
+      if (repActual && $('#rep-salida')) {
+        t.hidden = true;
+        $('#rep-salida').hidden = false;
+        generarRep(repActual.R, repActual.planear, repActual.pintar, repActual.nombre);
+      }
+    }
     else if (a === 'gz-rep-descargar') {
       if (repBlob) { descargarUrl(repUrl, repNombre); } else { avisar('⏳ El reporte se está preparando: vuelve a tocar en un segundo.'); }
     }
