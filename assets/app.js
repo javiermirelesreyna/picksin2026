@@ -9,6 +9,7 @@
      #/green[/<jueves>]                         seleccion del dia para el grupo Green Zone (solo modo editor)
      #/historial                                selecciones del dia guardadas, con su resultado (solo modo editor)
      #/reporte?desde=&hasta=                    imagen para redes de hasta 10 dias (solo modo editor)
+     #/reporte?mes=AAAA-MM                      historial mensual en imagen, tipo calendario (solo modo editor)
 
    Todo sale de data/*.json, que genera publicar_sitio.py: aqui no se calcula ninguna
    probabilidad. Lo unico que se cuenta en la pagina es el marcador de los picks escogidos,
@@ -1952,6 +1953,7 @@
   /* ---------------------------------------------------------------- reporte para redes */
   function vReporte(partes, q) {
     if (!Editor.activo) { return pintar(cabeceraGZ('reporte') + CANDADO, 'Reporte'); }
+    if (/^\d{4}-\d{2}$/.test(q.get('mes') || '')) { return vReporteMes(q.get('mes')); }
     var ok = function (x) { return /^\d{4}-\d{2}-\d{2}$/.test(x || '') ? x : null; };
     var hasta = ok(q.get('hasta')) || hoy(), desde = ok(q.get('desde')) || masDias(hasta, -6), nota = '';
     if (desde > hasta) { var t = desde; desde = hasta; hasta = t; }
@@ -1960,7 +1962,7 @@
     return Hist.cargar(semanas).then(function () {
       var sels = Hist.lista(semanas).filter(function (s) { return s.fecha >= desde && s.fecha <= hasta; });
       return mapasHist(sels).then(function (mapas) {
-        var n = contarHist(sels, mapas), h = cabeceraGZ('reporte');
+        var n = contarHist(sels, mapas), h = cabeceraGZ('reporte') + modosRep('dias');
         h += '<form class="rep-form" id="rep-form"><label class="gz-campo"><span>Del</span><input type="date" name="desde" value="' + desde + '"></label>' +
           '<label class="gz-campo"><span>al</span><input type="date" name="hasta" value="' + hasta + '"></label>' +
           '<button type="submit" class="boton">Ver reporte</button></form>' +
@@ -2190,21 +2192,167 @@
     });
   }
   function dibujarReporte(R) {
+    generarRep(R, planReporte, pintarReporte, 'reporte-green-zone-' + R.desde + '-al-' + R.hasta + '.png');
+  }
+  /* ---------------------------------------------------------------- historial mensual (como el calendario
+     de temporada que mando Javier): mes en letra manuscrita, "HISTORIAL MENSUAL", una casilla por
+     seleccion del dia (verde ganada, negra perdida) y abajo el marco con el record y el avatar */
+  function azar(k) { return function () { k = (k * 16807) % 2147483647; return (k - 1) / 2147483646; }; }   // con semilla
+  var MANUSCRITA = '"Snell Roundhand", "Segoe Script", "Dancing Script", "Brush Script MT", cursive';
+  function finDeMes(m) { var d = fecha(m + '-01'); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return iso(d); }
+  function mesMas(m, k) { var d = fecha(m + '-01'); d.setUTCMonth(d.getUTCMonth() + k); return iso(d).slice(0, 7); }
+  function nombreMes(m) { var t = MESES[+m.slice(5, 7) - 1]; return t.charAt(0).toUpperCase() + t.slice(1); }
+  function modosRep(activo) {
+    return '<div class="conmutador rep-modos" role="group" aria-label="Tipo de reporte">' +
+      '<a href="#/reporte" aria-current="' + (activo === 'dias') + '">📆 Por días (hasta 10)</a>' +
+      '<a href="#/reporte?mes=' + hoy().slice(0, 7) + '" aria-current="' + (activo === 'mes') + '">🗓️ Mensual</a></div>';
+  }
+  function vReporteMes(mes) {
+    var desde = mes + '-01', hasta = finDeMes(mes), semanas = semanasEntre(desde, hasta), m0 = hoy().slice(0, 7);
+    return Hist.cargar(semanas).then(function () {
+      var sels = Hist.lista(semanas).filter(function (s) { return s.fecha >= desde && s.fecha <= hasta; });
+      return mapasHist(sels).then(function (mapas) {
+        var n = contarHist(sels, mapas), h = cabeceraGZ('reporte') + modosRep('mes');
+        h += '<form class="rep-form" id="rep-mes"><label class="gz-campo"><span>Mes</span><input type="month" name="mes" value="' + mes + '"></label>' +
+          '<button type="submit" class="boton">Ver mes</button></form>' +
+          '<nav class="filtros rep-atajos" aria-label="Meses">' + [['Este mes', m0], ['Mes pasado', mesMas(m0, -1)], ['Hace dos meses', mesMas(m0, -2)]]
+            .map(function (x) { return '<a href="#/reporte?mes=' + x[1] + '" aria-current="' + (x[1] === mes) + '">' + x[0] + '</a>'; }).join('') + '</nav>';
+        if (!sels.length) {
+          return pintar(h + vacio('📭', 'No hay selecciones guardadas en ' + nombreMes(mes).toLowerCase() + ' de ' + mes.slice(0, 4) + '.'), 'Reporte mensual');
+        }
+        h += marcadorHist(n) +
+          (n.pendiente ? '<p class="nota">⏳ ' + plural(n.pendiente, 'selección sigue pendiente', 'selecciones siguen pendientes') +
+            ': márcalas en <a href="#/historial">📚 Historial</a> para que el mes salga completo.</p>' : '') +
+          '<div class="gz-vista rep-vista preparando"><img id="rep-img" alt="Historial mensual para redes"></div>' +
+          '<button type="button" class="boton gz-compartir" data-accion="gz-rep-compartir">📤 Compartir historial del mes</button>' +
+          '<div class="gz-mas"><button type="button" class="boton secundario" data-accion="gz-rep-descargar">⬇️ Descargar imagen</button></div>';
+        pintar(h, 'Reporte mensual');
+        generarRep({ sels: sels, mapas: mapas, mes: mes, n: n }, planMes, pintarMes, 'historial-green-zone-' + mes + '.png');
+      });
+    });
+  }
+  var COLOR_MES = { ganada: REP.VERDE, perdida: '#16191d', nula: '#8796a8', pendiente: '#ffffff' };
+  function planMes(c, R) {
+    var W = 1080, n = R.sels.length, cols = n <= 8 ? 4 : n <= 35 ? 5 : 6;
+    var MX = { 4: 112, 5: 92, 6: 62 }[cols], GX = { 4: 38, 5: 34, 6: 24 }[cols], GY = 28;
+    var tw = (W - 2 * MX - (cols - 1) * GX) / cols, th = Math.round(tw * 0.6);
+    var estados = R.sels.map(function (s) { return estadoSel(s, R.mapas).e; });
+    var leyenda = ['ganada', 'perdida', 'nula', 'pendiente'].filter(function (k, i) { return i < 2 || estados.indexOf(k) >= 0; });
+    var filas = Math.ceil(n / cols), libres = filas * cols - n;
+    var enCasilla = leyenda.length <= 2 && libres >= 1;            // como en la referencia: en el hueco de la ultima fila
+    var y0 = 392, fin = y0 + filas * (th + GY) - GY + (enCasilla ? 0 : 70);
+    var bt = fin + 250, H = bt + 410;                             // entre la leyenda y el marco va el record
+    if (H < 1350) { var extra = 1350 - H; y0 += extra * 0.3; bt += extra * 0.3; H = 1350; }   // lo que sobra agranda el marco
+    return { W: W, H: H, cols: cols, MX: MX, GX: GX, GY: GY, tw: tw, th: th, y0: y0, bt: bt, estados: estados, leyenda: leyenda,
+      enCasilla: enCasilla, finGrid: y0 + filas * (th + GY) - GY, finLeyenda: y0 + filas * (th + GY) - GY + (enCasilla ? 0 : 70) };
+  }
+  function pintarMes(c, A, R, P) {
+    var W = P.W, H = P.H, NEGRO = '#16191d';
+    c.fillStyle = '#f4f6f8'; c.fillRect(0, 0, W, H);
+    var r = azar(7 + R.sels.length);
+    for (var i = 0; i < W * H / 90; i++) {                       // textura suave, como el papel de la referencia
+      c.globalAlpha = 0.25 + r() * 0.4; c.fillStyle = r() < 0.5 ? '#ffffff' : '#dfe4ea';
+      c.fillRect(r() * W, r() * H, 1 + r() * 2, 1 + r() * 2);
+    }
+    c.globalAlpha = 1; c.textBaseline = 'alphabetic';
+    /* la pestana de arriba: logo | GREEN ZONE */
+    letra(c, 900, 30); espaciado(c, 1);
+    var tw0 = c.measureText('GREEN ZONE').width, lh = 58, lw = A.logo ? lh * A.logo.width / A.logo.height : 0, bw = 24 + lw + 36 + tw0 + 30;
+    var bx = (W - bw) / 2;
+    c.fillStyle = REP.AZUL; redondo(c, bx, -24, bw, 110, 20); c.fill();
+    c.lineWidth = 3; c.strokeStyle = NEGRO; redondo(c, bx, -24, bw, 110, 20); c.stroke();
+    if (A.logo) { c.drawImage(A.logo, bx + 24, 12, lw, lh); }
+    c.fillStyle = 'rgba(255, 255, 255, .7)'; c.fillRect(bx + 24 + lw + 17, 16, 2, 50);
+    c.fillStyle = '#fff'; c.textAlign = 'left'; c.fillText('GREEN ZONE', bx + 24 + lw + 36, 52);
+    /* el mes en letra manuscrita, detras del titulo */
+    var mes = nombreMes(R.mes), t = 240;
+    c.font = '400 ' + t + 'px ' + MANUSCRITA; espaciado(c, 0);
+    while (t > 90 && c.measureText(mes).width > 590) { t -= 6; c.font = '400 ' + t + 'px ' + MANUSCRITA; }
+    c.fillStyle = REP.AZUL; c.textAlign = 'left'; c.fillText(mes, 50, 258);
+    letra(c, 800, 20); espaciado(c, 6); c.textAlign = 'right'; c.fillStyle = REP.AZUL;
+    c.fillText('GREEN ZONE · ' + R.mes.slice(0, 4), W - 54, 228);
+    espaciado(c, -3);
+    var tt = ajustar(c, 900, 96, 50, 'HISTORIAL MENSUAL', W - 150);
+    letra(c, 900, tt); espaciado(c, -3); c.fillStyle = NEGRO; c.fillText('HISTORIAL MENSUAL', W - 50, 336);
+    espaciado(c, 0);
+    /* una casilla por seleccion del dia */
+    R.sels.forEach(function (s, k) {
+      var x = P.MX + (k % P.cols) * (P.tw + P.GX), y = P.y0 + Math.floor(k / P.cols) * (P.th + P.GY), e = P.estados[k];
+      var tinta = e === 'pendiente' ? NEGRO : '#ffffff', d = fecha(s.fecha);
+      c.fillStyle = COLOR_MES[e]; redondo(c, x, y, P.tw, P.th, 12); c.fill();
+      c.lineWidth = 3; c.strokeStyle = NEGRO; redondo(c, x, y, P.tw, P.th, 12); c.stroke();
+      var cx = x + P.th * 0.5, cy = y + P.th / 2, rr = P.th * (P.cols === 6 ? 0.27 : 0.31);
+      c.save(); c.strokeStyle = tinta; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, rr, 0, 2 * Math.PI); c.stroke(); c.restore();
+      c.save(); c.translate(cx, cy); c.scale(rr * 0.5 / 11, rr * 0.5 / 11); iconoRes(c, e, 0, 0, tinta); c.restore();
+      c.textAlign = 'right'; c.fillStyle = tinta;
+      letra(c, 900, Math.round(P.th * 0.3)); c.fillText(MESES_C[d.getUTCMonth()].toUpperCase(), x + P.tw - 14, y + P.th * 0.44);
+      letra(c, 900, Math.round(P.th * 0.42)); c.fillText(String(d.getUTCDate()), x + P.tw - 14, y + P.th * 0.84);
+    });
+    /* la leyenda */
+    var nombres = { ganada: 'GANADA', perdida: 'PERDIDA', nula: 'NULA', pendiente: 'PENDIENTE' };
+    var n = R.sels.length, lx, ly, paso = 34;
+    if (P.enCasilla) { lx = P.MX + (n % P.cols) * (P.tw + P.GX) + 4; ly = P.y0 + Math.floor(n / P.cols) * (P.th + P.GY) + 6; }
+    else { lx = P.MX; ly = P.finGrid + 26; }
+    P.leyenda.forEach(function (k, i) {
+      var x = P.enCasilla ? lx : lx + i * 200, y = P.enCasilla ? ly + i * paso : ly;
+      c.fillStyle = COLOR_MES[k]; redondo(c, x, y, 48, 24, 5); c.fill();
+      c.lineWidth = 2; c.strokeStyle = NEGRO; redondo(c, x, y, 48, 24, 5); c.stroke();
+      letra(c, 900, 22); c.fillStyle = NEGRO; c.textAlign = 'left'; c.fillText(nombres[k], x + 60, y + 21);
+    });
+    letra(c, 700, 11); espaciado(c, 2); c.fillStyle = NEGRO; c.textAlign = 'left';
+    c.fillText('SELECCIÓN DEL DÍA · GREEN ZONE', lx, P.enCasilla ? ly + P.leyenda.length * paso + 12 : ly + 44);
+    espaciado(c, 0);
+    /* el record del mes, en una pastilla negra centrada */
+    var nn = R.n, ef = nn.efectividad == null ? '—' : Math.round(nn.efectividad * 100) + '%';
+    var partes = [['RÉCORD DEL MES', 800, 19, 'rgba(255, 255, 255, .75)', 4], [nn.ganada + '–' + nn.perdida, 900, 54, '#ffffff', 0],
+      ['·', 900, 40, 'rgba(255, 255, 255, .5)', 0], [ef, 900, 54, REP.VERDE, 0], ['EFECTIVIDAD', 800, 19, 'rgba(255, 255, 255, .75)', 4]];
+    var anchos = partes.map(function (p) { letra(c, p[1], p[2]); espaciado(c, p[4]); return c.measureText(p[0]).width; });
+    espaciado(c, 0);
+    var pw = anchos.reduce(function (a, b) { return a + b; }, 0) + 22 * (partes.length - 1) + 80, ph = 92;
+    var px = (W - pw) / 2, py = P.finLeyenda + 44;
+    c.fillStyle = NEGRO; redondo(c, px, py, pw, ph, ph / 2); c.fill();
+    var xx = px + 40;
+    partes.forEach(function (p, i) {
+      letra(c, p[1], p[2]); espaciado(c, p[4]); c.fillStyle = p[3]; c.textAlign = 'left';
+      c.fillText(p[0], xx, py + ph / 2 + p[2] * 0.36); xx += anchos[i] + 22;
+    });
+    espaciado(c, 0);
+    /* el marco de abajo con las tres poses del avatar; la del centro se asoma por arriba */
+    var fx = 92, fw = W - 184, bt = P.bt;
+    var g = c.createLinearGradient(fx, bt, fx + fw, H); g.addColorStop(0, REP.NOCHE); g.addColorStop(0.6, REP.MARINO); g.addColorStop(1, REP.AZUL);
+    c.save();
+    redondo(c, fx, bt, fw, H - bt + 60, 44); c.fillStyle = g; c.fill();
+    c.lineWidth = 4; c.strokeStyle = NEGRO; c.stroke();
+    c.clip();
+    c.save(); c.translate(fx + fw / 2, bt + (H - bt) / 2); c.rotate(-Math.PI / 12);
+    letra(c, 900, 46); c.fillStyle = 'rgba(255, 255, 255, .06)'; c.textAlign = 'center';
+    for (var j = -3; j <= 3; j++) { c.fillText('NO ES SUERTE, ES CIENCIA  ·  NO ES SUERTE, ES CIENCIA', (j % 2) * 120, j * 86); }
+    c.restore();
+    var BH = H - bt, k = Math.min(1.3, BH / 410);
+    if (A.brazos) { var hb = 330 * k, wb = hb * A.brazos.width / A.brazos.height; c.drawImage(A.brazos, 300 - wb / 2, H - hb + 16, wb, hb); }
+    if (A.parado) { var hp = 330 * k, wp = hp * A.parado.width / A.parado.height; c.drawImage(A.parado, 790 - wp / 2, H - hp + 16, wp, hp); }
+    c.restore();
+    if (A.festejo) {                                              // el del centro sale del marco, como en la referencia
+      var ah = BH + 70, aw = ah * A.festejo.width / A.festejo.height;
+      c.drawImage(A.festejo, W / 2 - aw / 2, H - ah + 14, aw, ah);
+    }
+  }
+  function generarRep(R, planear, pintarCon, nombre) {
     var turno = ++repTurno;
     repBlob = null;
     recursosRep().then(function (A) {
       var l = document.createElement('canvas');
       l.width = 1080; l.height = 16;
-      var plan = planReporte(l.getContext('2d'), R);
+      var plan = planear(l.getContext('2d'), R);
       l.height = plan.H;
-      pintarReporte(l.getContext('2d'), A, R, plan);
+      pintarCon(l.getContext('2d'), A, R, plan);
       return new Promise(function (ok) { l.toBlob(ok, 'image/png'); });
     }).then(function (b) {
       if (turno !== repTurno || !b) { return; }
       repBlob = b;
       if (repUrl) { URL.revokeObjectURL(repUrl); }
       repUrl = URL.createObjectURL(b);
-      repNombre = 'reporte-green-zone-' + R.desde + '-al-' + R.hasta + '.png';
+      repNombre = nombre;
       var img = $('#rep-img');
       if (img) { img.src = repUrl; img.closest('.gz-vista').classList.remove('preparando'); }
     });
@@ -2341,6 +2489,11 @@
     }
   }
   document.addEventListener('submit', function (e) {
+    if (e.target.id === 'rep-mes') {
+      e.preventDefault();
+      if (/^\d{4}-\d{2}$/.test(e.target.mes.value)) { location.hash = '#/reporte?mes=' + e.target.mes.value; }
+      return;
+    }
     if (e.target.id !== 'rep-form') { return; }
     e.preventDefault();
     location.hash = '#/reporte?desde=' + e.target.desde.value + '&hasta=' + e.target.hasta.value;
