@@ -7,14 +7,14 @@
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#ffffff">
   <title>Picksin</title>
-  <meta name="description" content="Picks de fútbol con respaldo estadístico: análisis por liga, picks escogidos y auditoría de cada semana.">
+  <meta name="description" content="Picks con respaldo estadístico: los de hoy de todas las ligas, análisis, picks escogidos y resultados.">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Picksin">
   <meta property="og:description" content="Picks de fútbol con respaldo estadístico, semana a semana.">
   <meta property="og:image" content="https://javiermirelesreyna.github.io/picksin2026/assets/compartir.png">
   <link rel="icon" type="image/png" href="assets/icono.png">
   <link rel="apple-touch-icon" href="assets/icono-apple.png">
-  <link rel="stylesheet" href="assets/estilo.css?v=9">
+  <link rel="stylesheet" href="assets/estilo.css?v=10">
   <script>
     /* Windows no dibuja las banderas en emoji (salen dos letras): ahi se usa la fuente propia. */
     (function () {
@@ -34,19 +34,19 @@
   <a class="saltar" href="#app">Ir al contenido</a>
   <header class="barra">
     <div class="barra-in">
-      <a class="marca" href="#/" aria-label="Picksin, inicio">
+      <a class="marca" href="#/inicio" data-accion="logo" aria-label="Picksin, inicio">
         <img src="assets/logo-mini.webp" alt="" width="34" height="40">
         <span>Picksin</span>
       </a>
+      <div id="editor-barra" class="editor-barra" hidden></div>
       <nav class="nav" aria-label="Secciones">
+        <a href="#/hoy" data-nav="hoy"><span class="nav-emoji" aria-hidden="true">🏠</span><span>Hoy</span></a>
         <a href="#/analisis" data-nav="analisis"><span class="nav-emoji" aria-hidden="true">📊</span><span>Análisis</span></a>
-        <a href="#/auditoria" data-nav="auditoria"><span class="nav-emoji" aria-hidden="true">🔍</span><span>Auditoría</span></a>
         <a href="#/escogidos" data-nav="escogidos"><span class="nav-emoji" aria-hidden="true">✅</span><span>Escogidos</span></a>
         <a href="#/green" data-nav="green"><span class="nav-emoji" aria-hidden="true">🟢</span><span class="nav-largo">Selección del día</span><span class="nav-corto">Del día</span></a>
-        <a href="#/resultados" data-nav="resultados"><span class="nav-emoji" aria-hidden="true">🏅</span><span class="nav-largo">Resultados y ranking</span><span class="nav-corto">Resultados</span></a>
+        <a href="#/resultados" data-nav="resultados"><span class="nav-emoji" aria-hidden="true">🏅</span><span class="nav-badge" hidden></span><span>Resultados</span></a>
       </nav>
     </div>
-    <div id="editor-barra" class="editor-barra" hidden></div>
   </header>
 
   <main id="app" class="contenedor" tabindex="-1">
@@ -56,9 +56,9 @@
   <footer class="pie">
     <p>Pronósticos estadísticos del Motor Picksin 2.0: probabilidades, no certezas. Cada pick muestra su
       respaldo bilateral: lo que hace cada equipo y lo que permite su rival.</p>
-    <p>Semanas de jueves a miércoles · fechas y horas del centro de México · banderas de
-      <a href="https://github.com/twitter/twemoji" rel="noopener">Twemoji</a> (CC BY 4.0).</p>
-    <p><button type="button" class="enlace-editor" data-accion="editor">🔑 Modo editor</button></p>
+    <p>Reportes de lunes a domingo · análisis y auditoría por el ciclo de cada deporte · fechas y horas del
+      centro de México · banderas de <a href="https://github.com/twitter/twemoji" rel="noopener">Twemoji</a> (CC BY 4.0).</p>
+    <p><a href="#/inicio">🧭 Inicio y cómo leer un pick</a> · <button type="button" class="enlace-editor" data-accion="editor">🔑 Modo editor</button></p>
   </footer>
 
   <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
@@ -80,6 +80,6 @@
     </form>
   </dialog>
 
-  <script src="assets/app.js?v=9"></script>
+  <script src="assets/app.js?v=10"></script>
 </body>
 </html>
