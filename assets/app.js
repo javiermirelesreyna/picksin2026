@@ -186,7 +186,12 @@
   /* otros deportes (desde el 01/10/2026, la NHL): cada DIA de partidos se publica como una jornada
      (archivo <liga>-<AAAA-MM-DD>, sin numero de jornada) para que salga en Hoy, Escogidos y
      Resultados igual que el futbol; su pestana los agrupa por el ciclo de su motor (martes a lunes) */
-  function depDe(x) { return (x && (x.deporte || (/^[a-z]+-\d{4}-\d{2}-\d{2}$/.test(x.archivo || '') ? 'hockey' : ''))) || 'futbol'; }
+  var DEP_PREFIJO = { nhl: 'hockey', nba: 'basquetbol', nfl: 'americano' };       // escogidos de antes del 02/10 sin deporte
+  function depDe(x) {
+    if (x && x.deporte) { return x.deporte; }
+    var m = /^([a-z0-9_]+)-\d{4}-\d{2}-\d{2}$/.exec((x && x.archivo) || '');
+    return m ? (DEP_PREFIJO[m[1]] || 'otro') : 'futbol';
+  }
   function esFutbol(x) { return depDe(x) === 'futbol'; }
   function emojiDe(x) { return (x && x.emoji) || ({ hockey: '🏒', basquetbol: '🏀', americano: '🏈' })[depDe(x)] || '⚽'; }
   function etqJornada(x) { return x.jornada != null ? 'J' + x.jornada : (x.fecha ? fCorta(x.fecha) : ''); }
