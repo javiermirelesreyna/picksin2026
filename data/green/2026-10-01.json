@@ -1,0 +1,49 @@
+{
+ "semana": "2026-10-01",
+ "actualizado": "2026-10-05T19:31:47.681Z",
+ "selecciones": [
+  {
+   "id": "muvnbnyw-u1f01s",
+   "fecha": "2026-10-05",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "+104",
+   "dec": 2.0411,
+   "apuesta": 1000,
+   "pago": 2041.1392,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇦🇷",
+     "nombre": "Liga Profesional Argentina",
+     "partido": "Deportivo Riestra vs Central Cordoba",
+     "mercado": "Under 1.5 Goles 1H",
+     "fecha": "2026-10-05",
+     "hora": "13:45",
+     "momio": "-400",
+     "dec": 1.25,
+     "p": 0.833,
+     "archivo": "argentina__profesional-j11",
+     "sa": "2026-10-01"
+    },
+    {
+     "manual": true,
+     "deporte": "futbol",
+     "bandera": "🇦🇷",
+     "nombre": "Liga Profesional Argentina",
+     "partido": "Velez Sarsfield vs Club Atletico Platense",
+     "mercado": "Velez Remates totales a porteria",
+     "fecha": "2026-10-05",
+     "hora": "16:00",
+     "momio": "-158",
+     "dec": 1.6329,
+     "p": null
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-10-05T19:31:47.681Z",
+   "resultado": null
+  }
+ ]
+}
