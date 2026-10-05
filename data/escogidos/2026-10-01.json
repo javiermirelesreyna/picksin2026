@@ -1,0 +1,35 @@
+{
+ "semana": "2026-10-01",
+ "actualizado": "2026-10-05T19:26:51.120Z",
+ "picks": [
+  {
+   "id": "argentina__profesional-j11|Deportivo Riestra vs Central Cordoba|Under 1.5 Goles 1H",
+   "archivo": "argentina__profesional-j11",
+   "liga": "argentina__profesional",
+   "nombre": "Liga Profesional Argentina",
+   "pais": "Argentina",
+   "bandera": "🇦🇷",
+   "jornada": 11,
+   "sa": "2026-10-01",
+   "origen": "La Bóveda",
+   "partido": "Deportivo Riestra vs Central Cordoba",
+   "mercado": "Under 1.5 Goles 1H",
+   "fecha": "2026-10-05",
+   "dia": "lunes",
+   "hora": "13:45",
+   "ts": 1791229500,
+   "sem": "2026-10-01",
+   "p": 0.833,
+   "cuota": 1.25,
+   "confianza": "Alta",
+   "respaldo": "3/4 a favor, 1 en contra",
+   "familia": "Goles por mitad",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-05T19:26:51.120Z"
+   }
+  }
+ ]
+}
