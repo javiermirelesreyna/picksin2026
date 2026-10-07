@@ -1,0 +1,39 @@
+{
+ "semana": "2026-10-08",
+ "actualizado": "2026-10-07T19:20:35.677Z",
+ "picks": [
+  {
+   "id": "nfl-2026-10-11|New Orleans Saints vs Minnesota Vikings|Puntos del visitante menos de 34.5",
+   "archivo": "nfl-2026-10-11",
+   "liga": "nfl",
+   "nombre": "NFL",
+   "pais": "Estados Unidos",
+   "bandera": "🇺🇸",
+   "jornada": null,
+   "sa": "2026-10-08",
+   "origen": "TOP 5",
+   "deporte": "americano",
+   "emoji": "🏈",
+   "partido": "New Orleans Saints vs Minnesota Vikings",
+   "mercado": "Puntos del visitante menos de 34.5",
+   "fecha": "2026-10-11",
+   "dia": "domingo",
+   "hora": "11:00",
+   "ts": 1791738000,
+   "sem": "2026-10-08",
+   "p": 0.8685,
+   "cuota": 1.2,
+   "confianza": "Baja",
+   "respaldo": "1/2 a favor, 1 en contra",
+   "familia": "Puntos del visitante",
+   "ciclo": "2026-10-06",
+   "liquidacion": "con prorroga",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-07T19:20:35.677Z"
+   }
+  }
+ ]
+}
