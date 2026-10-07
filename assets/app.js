@@ -676,7 +676,8 @@
       ' · ' + esc(p.partido) + ' ' : '') + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
-      (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">⚠️ no validable</span>' : '');
+      (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
+        '</span>' : '');
     return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria });
   }
   /* un partido con sus picks: a la vista los del TOP 5 y los sugeridos (o el mejor, si no tiene);
@@ -790,7 +791,7 @@
      (01/10): las pestanas de todos los deportes en este orden; los que aun no estan listos dicen
      "Proximamente" mientras se preparan sus motores (listo = true cuando se conecte cada uno). */
   var DEPORTES_PAGINA = [{ id: 'futbol', e: '⚽', t: 'Fútbol', listo: true }, { id: 'nba', e: '🏀', t: 'NBA', listo: false },
-    { id: 'nfl', e: '🏈', t: 'NFL', listo: false }, { id: 'nhl', e: '🏒', t: 'NHL', listo: true }];
+    { id: 'nfl', e: '🏈', t: 'NFL', listo: true }, { id: 'nhl', e: '🏒', t: 'NHL', listo: true }];
   function cabAnalisis(tipo, sem, dep) {
     dep = dep || 'futbol';
     var s = sem ? '/' + sem : '', qd = dep === 'futbol' ? '' : '?deporte=' + dep;
@@ -1073,7 +1074,8 @@
       }
       var h0 = hoy();
       h += '<p class="sub">' + e + ' <b>' + esc(D.nombre) + '</b> · cada día de partidos tiene su análisis · el motor corre ' +
-        'una vez por ciclo, de <b>martes a lunes</b> · los goles cuentan con tiempo extra y penales (+1 gol al ganador de la tanda)</p>';
+        'una vez por ciclo, de <b>martes a lunes</b> · ' + (dep === 'nfl' ? 'los puntos cuentan con prórroga (el ganador empatado se devuelve)' :
+        'los goles cuentan con tiempo extra y penales (+1 gol al ganador de la tanda)') + '</p>';
       if (tipo === 'auditoria' && D.acierto) {
         var a = D.acierto;
         h += marcadorCajas([['🎯 Picks comprobables', a.picks], ['✅ Acierto real', pct(a.acierto), 'verde'],
@@ -1183,6 +1185,7 @@
     var k = 'f-' + d.archivo + f.local;
     var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' + esc(f.local) + ' vs ' + esc(f.visita) +
       '<span class="cuenta">' + (f.hora ? '🕐 ' + esc(f.hora) : '') + '</span></summary><div class="cuerpo">';
+    if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
       return cab + '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p></div></details>';
     }
@@ -1203,6 +1206,45 @@
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">Hace ' + esc(f.local) + '</th><th class="num">Permite ' +
       esc(f.visita) + '</th><th class="num">Hace ' + esc(f.visita) + '</th><th class="num">Permite ' + esc(f.local) + '</th></tr></thead><tbody>' +
       filas + '</tbody></table></div></div></details>';
+  }
+
+  /* ficha de un partido NFL: lo esperado (puntos, touchdowns, yardas por tierra, probabilidad de ganar),
+     las lineas limite de las yardas de cada equipo (la casa pone una por partido) y todas las metricas */
+  function fichaAmericano(f) {
+    var e = f.esperado, pp = f.partidos_previos || {}, L = f.yardas_lineas || {}, S = f.siglas || {};
+    var sL = esc(S.local || f.local), sV = esc(S.visita || f.visita);
+    var x = function (v) { return v == null ? '—' : num(v, 2); };
+    /* "mas de" llega a 60/70% si la linea de la casa es la limite o menos; "menos de", si es la limite o mas */
+    var lin = function (eq, o) {
+      o = o || {};
+      var parte = function (t, a60, a70, cmp) {
+        var r = [];
+        if (a60 != null) { r.push('a 60% si la casa pone ' + num(a60, 1) + ' o ' + cmp); }
+        if (a70 != null) { r.push('a 70% con ' + num(a70, 1) + ' o ' + cmp); }
+        return r.length ? '«' + t + '» llega ' + r.join(', y ') : '';
+      };
+      var p = [parte('más de', o.mas_hasta_60, o.mas_hasta_70, 'menos'), parte('menos de', o.menos_desde_60, o.menos_desde_70, 'más')].filter(Boolean);
+      return '<p class="criterio">📏 <b>Yardas por tierra de ' + esc(eq) + '</b> (la casa pone su propia línea): ' +
+        (p.length ? p.join('; ') : 'ninguna línea llega a 60%') + '.</p>';
+    };
+    var filas = (f.espejo || []).map(function (m) {
+      return '<tr><td style="white-space:normal">' + esc(m.metrica) + '</td><td class="num">' + x(m.hace_local) + '</td><td class="num">' + x(m.permite_visita) +
+        '</td><td class="num">' + x(m.hace_visita) + '</td><td class="num">' + x(m.permite_local) + '</td></tr>';
+    }).join('');
+    return '<div class="datos"><div><span>🏠 Puntos esperados de ' + esc(f.local) + '</span> <b>' + num(e.puntos_local, 1) + '</b></div>' +
+      '<div><span>✈️ Puntos esperados de ' + esc(f.visita) + '</span> <b>' + num(e.puntos_visita, 1) + '</b></div>' +
+      '<div><span>🏈 Touchdowns esperados (' + sL + ' · ' + sV + ')</span> <b>' + num(e.td_local, 2) + ' · ' + num(e.td_visita, 2) + '</b></div>' +
+      '<div><span>🏃 Yardas por tierra esperadas (' + sL + ' · ' + sV + ')</span> <b>' + num(e.yardas_local, 0) + ' · ' + num(e.yardas_visita, 0) + '</b></div>' +
+      '<div><span>📈 Probabilidad de que gane ' + esc(f.local) + '</span> <b>' + pct(e.p_local) + '</b></div></div>' +
+      lin(f.local, L.local) + lin(f.visita, L.visita) +
+      (f.campo_neutral ? '<p class="criterio">🌍 Campo neutral: sin ventaja de local.</p>' : '') +
+      '<p class="criterio">Lo que <b>hace</b> cada equipo contra lo que <b>permite</b> su rival, en cada métrica (1.00 = media de la liga). ' +
+      'Lo de ' + esc(f.local) + ' (' + sL + ') sale de lo que hace ' + sL + ' y lo que permite ' + esc(f.visita) + ' (' + sV + '), y al revés. ' +
+      'Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) + '. Los índices de las justificaciones de los picks combinan ' +
+      'estas métricas con los pesos del motor.</p>' +
+      '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
+      '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
+      filas + '</tbody></table></div>';
   }
 
   /* ================================================================== 3. escogidos */
