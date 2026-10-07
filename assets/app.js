@@ -144,6 +144,8 @@
   var semanaIdx = function (s) { return cargar('data/semanas/' + s + '/index.json', true); };
   var docLiga = function (s, a) { return cargar('data/semanas/' + s + '/' + a + '.json'); };
   var resultados = function (s) { return cargar('data/semanas/' + s + '/resultados.json', true); };
+  /* el top de tops de cada dia: solo QUE picks y en que orden (lo calcula publicar_sitio.py) */
+  var topDeTops = function () { return cargar('data/top_de_tops.json', true); };
 
   function semanaDefecto(idx, tipo) {
     var campo = (tipo === 'auditoria' || tipo === 'resultados') ? 'auditadas' : 'analisis';
@@ -670,9 +672,10 @@
     if (!t.length && x.rk.length) { t.push('<span class="chip neutro">📊 ' + esc(x.rk[0]) + '</span>'); }
     return t.join('');
   }
-  function renglonHoy(x, conPartido) {
+  function renglonHoy(x, conPartido, lugar) {
     var p = x.p, d = x.d;
-    var sub = (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
+    var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
+      (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
       ' · ' + esc(p.partido) + ' ' : '') + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
@@ -715,18 +718,20 @@
     var a = [];
     if (dia && dia !== hoy()) { a.push('dia=' + dia); }
     if (f && f !== 'todos') { a.push('f=' + f); }
-    if (orden === 'p') { a.push('orden=p'); }
+    if (orden === 'p' || orden === 'top') { a.push('orden=' + orden); }
     return '#/hoy' + (a.length ? '?' + a.join('&') : '');
   }
   function vHoy(partes, q) {
     var h0 = hoy(), dias = [h0, masDias(h0, 1), masDias(h0, 2)];
     var dia = dias.indexOf(q.get('dia')) >= 0 ? q.get('dia') : h0;
-    var filtro = ['top5', 'sug', 'esc'].indexOf(q.get('f')) >= 0 ? q.get('f') : 'todos', orden = q.get('orden') === 'p' ? 'p' : 'partido';
+    var filtro = ['top5', 'sug', 'esc'].indexOf(q.get('f')) >= 0 ? q.get('f') : 'todos';
+    var orden = ['p', 'top'].indexOf(q.get('orden')) >= 0 ? q.get('orden') : 'partido';
     var sems = ventanaHist();
     return Promise.all([indice(), docsDeDias(dias[0], dias[2]), Esc.rango(dias[0], dias[2]),
-      Editor.activo ? Hist.cargar(sems, true).then(function () { return Hist.lista(sems); }, function () { return null; }) : null
+      Editor.activo ? Hist.cargar(sems, true).then(function () { return Hist.lista(sems); }, function () { return null; }) : null,
+      topDeTops().catch(function () { return null; })
     ]).then(function (x) {
-      var idx = x[0], docs = x[1], escs = x[2], sels = x[3];
+      var idx = x[0], docs = x[1], escs = x[2], sels = x[3], top = x[4];
       return (sels && sels.length ? mapasHist(sels) : Promise.resolve({})).then(function (mapas) {
         var ordenLiga = {};
         idx.ligas.forEach(function (L, i) { ordenLiga[L.id] = i; });
@@ -757,13 +762,25 @@
         if (!lista.length) {
           h += vacio('📭', 'No hay picks analizados para este día.');
         } else {
-          h += '<div class="hoy-filtros"><nav class="filtros" aria-label="Qué picks">' + [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']]
-            .map(function (f) {
+          /* el top de tops (pedido de Javier, 07/10): los picks mas seguros del dia de todos los deportes,
+             en el orden que publico publicar_sitio.py; aqui solo se buscan y se muestran */
+          var refs = ((top && top.dias) || {})[dia] || [], porPid = {};
+          lista.forEach(function (x) { porPid[x.pid] = x; });
+          var tops = refs.map(function (r) { return porPid[r.archivo + '|' + r.partido + '|' + r.mercado]; }).filter(Boolean);
+          h += '<div class="hoy-filtros">' + (orden === 'top' ? '' : '<nav class="filtros" aria-label="Qué picks">' +
+            [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
               return '<a href="' + urlHoy(dia, f[0], orden) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + cuenta(f[0]).length + '</b></a>';
-            }).join('') + '</nav><div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
+            }).join('') + '</nav>') + '<div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
             '" aria-current="' + (orden === 'partido') + '">🕐 Por partido</a><a href="' + urlHoy(dia, filtro, 'p') + '" aria-current="' + (orden === 'p') +
-            '">📈 Por probabilidad</a></div></div>';
-          if (!ver.length) {
+            '">📈 Por probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
+            '">⭐ Top de tops</a></div></div>';
+          if (orden === 'top') {
+            h += '<p class="criterio top-explica">⭐ <b>Los picks más seguros del día de todos los deportes.</b> Entran los que el motor da en ' +
+              (top ? pct(top.piso) : '—') + ' o más, ordenados por lo que su familia de mercados ha demostrado cumplir; sin los de confianza baja, ' +
+              'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') + '.</p>' +
+              (tops.length ? '<ul class="lista tabla-caja top-tops">' + tops.map(function (x, i) { return renglonHoy(x, true, i + 1); }).join('') + '</ul>'
+                : vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.'));
+          } else if (!ver.length) {
             h += vacio('📭', 'Ningún pick de este día con ese filtro.');
           } else if (orden === 'p') {
             var todos = ver.slice().sort(function (a, b) { return (b.p.p || 0) - (a.p.p || 0); });
@@ -3082,7 +3099,7 @@
   function guiaHTML() {
     var fila = function (x) { return '<li class="fila"><span class="m">' + x[0] + ' ' + x[1] + '</span><span></span><span class="pt">' + x[2] + '</span></li>'; };
     return '<h2 id="s-ordenada"><span class="emoji">🗺️</span>Cómo está ordenada la página</h2><div class="tabla-caja"><ul class="lista">' +
-      [['🏠', 'Hoy', 'todos los picks de hoy, mañana y pasado mañana de todas las ligas, por partido; los escogidos del día y lo pendiente.'],
+      [['🏠', 'Hoy', 'todos los picks de hoy, mañana y pasado mañana de todas las ligas, por partido, por probabilidad o en el ⭐ Top de tops (los más seguros del día); los escogidos del día y lo pendiente.'],
         ['📊', 'Análisis', 'cada liga con su jornada (semana del ciclo de su deporte: fútbol de jueves a miércoles) y su auditoría.'],
         ['✅', 'Escogidos', 'los picks escogidos de hoy en adelante, por día o por liga.'],
         ['🟢', 'Del día', 'arma la selección del día de Green Zone: primero se guarda y luego se comparte.'],

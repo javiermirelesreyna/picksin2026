@@ -779,6 +779,13 @@ td.neto.menos { color: var(--rojo-texto); }
 .hs-item.r-marcar .hs-chip { background: var(--rojo); color: #fff; }
 .hoy-filtros { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; margin: 6px 0 12px; }
 .hoy-filtros .filtros { margin: 0; flex: 1 1 260px; }
+/* top de tops (07/10/2026): el lugar de cada pick y el conmutador de tres botones en celular */
+.chip.top-lugar { background: var(--verde); color: #fff; }
+.top-explica { margin: 0 0 10px; }
+@media (max-width: 520px) {
+  .hoy-filtros .conmutador { display: flex; width: 100%; }
+  .hoy-filtros .conmutador a { flex: 1 1 0; text-align: center; padding: 6px 4px; font-size: .8rem; line-height: 1.25; }
+}
 .partidos-hoy { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); align-items: start; }
 @media (max-width: 400px) { .partidos-hoy { grid-template-columns: minmax(0, 1fr); } }
 .partido-hoy {
