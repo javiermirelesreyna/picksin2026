@@ -672,7 +672,7 @@
     if (!t.length && x.rk.length) { t.push('<span class="chip neutro">📊 ' + esc(x.rk[0]) + '</span>'); }
     return t.join('');
   }
-  function renglonHoy(x, conPartido, lugar) {
+  function renglonHoy(x, conPartido, lugar, res) {
     var p = x.p, d = x.d;
     var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
@@ -681,7 +681,7 @@
       (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
         '</span>' : '');
-    return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria });
+    return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res });
   }
   /* un partido con sus picks: a la vista los del TOP 5 y los sugeridos (o el mejor, si no tiene);
      los demas de sus rankings, al tocar "mas picks" */
@@ -766,7 +766,12 @@
              en el orden que publico publicar_sitio.py; aqui solo se buscan y se muestran */
           var refs = ((top && top.dias) || {})[dia] || [], porPid = {};
           lista.forEach(function (x) { porPid[x.pid] = x; });
-          var tops = refs.map(function (r) { return porPid[r.archivo + '|' + r.partido + '|' + r.mercado]; }).filter(Boolean);
+          var tops = refs.map(function (r) {
+            var x = porPid[r.archivo + '|' + r.partido + '|' + r.mercado];
+            if (x) { x.top = r; }
+            return x;
+          }).filter(Boolean);
+          var rsTop = ((top && top.resumen) || {})[dia];
           h += '<div class="hoy-filtros">' + (orden === 'top' ? '' : '<nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
               return '<a href="' + urlHoy(dia, f[0], orden) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + cuenta(f[0]).length + '</b></a>';
@@ -777,8 +782,15 @@
           if (orden === 'top') {
             h += '<p class="criterio top-explica">⭐ <b>Los picks más seguros del día de todos los deportes.</b> Entran los que el motor da en ' +
               (top ? pct(top.piso) : '—') + ' o más, ordenados por lo que su familia de mercados ha demostrado cumplir; sin los de confianza baja, ' +
-              'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') + '.</p>' +
-              (tops.length ? '<ul class="lista tabla-caja top-tops">' + tops.map(function (x, i) { return renglonHoy(x, true, i + 1); }).join('') + '</ul>'
+              'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') +
+              '. Cuando empieza su partido, un pick ya no entra ni sale: así se audita lo que estaba aquí antes de jugarse ' +
+              '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
+              (rsTop && rsTop.comprobables ? '<p class="leyenda"><span>✅ ' + plural(rsTop.aciertos, 'acertado', 'acertados') + '</span><span>❌ ' +
+                plural(rsTop.fallos, 'fallado', 'fallados') + '</span>' + (rsTop.anulados ? '<span>➖ ' + rsTop.anulados + ' anulados o no comprobables</span>' : '') +
+                (rsTop.sin_resultado ? '<span>⏳ ' + rsTop.sin_resultado + ' sin resultado</span>' : '') + '<span>🎯 ' + pct(rsTop.acierto) + ' de acierto</span></p>' : '') +
+              (tops.length ? '<ul class="lista tabla-caja top-tops">' + tops.map(function (x, i) {
+                return renglonHoy(x, true, i + 1, x.top && x.top.estado ? [x.top.estado, x.top.detalle || ''] : null);
+              }).join('') + '</ul>'
                 : vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.'));
           } else if (!ver.length) {
             h += vacio('📭', 'Ningún pick de este día con ese filtro.');
@@ -1435,10 +1447,52 @@
         return '<option value="' + x + '"' + (x === sem ? ' selected' : '') + '>' + rangoSemana(x) + (e ? ' · ' + e : '') + '</option>';
       }).join('') + '</select></label>' + flecha(nueva, '›', 'Semana siguiente') + '</div>';
   }
+  /* la auditoria del top de tops (pedido de Javier, 07/10): cuentas y resultados salen de
+     top_de_tops.json (publicar_sitio.py); aqui solo se muestran */
+  function renglonTop(r, lugar) {
+    var res = r.estado ? [r.estado, r.detalle || ''] : [jugado(r) ? 'por_auditar' : 'pendiente', ''];
+    var sub = '<span class="chip top-lugar">⭐ ' + lugar + '</span> <span class="cuando">🕐 ' + esc(r.hora || '—') + '</span> · ' +
+      bandera(r.bandera) + ' <a href="#/analisis/' + esc(r.semana) + '/' + esc(r.archivo) + '">' + esc(r.nombre) + '</a> · ' + esc(r.partido);
+    return renglon(r, { doc: { archivo: r.archivo }, sub: sub, resultado: res, auditada: !!r.estado, escoger: false, sinSello: true });
+  }
+  function bloqueTop(top, sem) {
+    var h = '<h2 id="s-top"><span class="emoji">⭐</span>Top de tops <span class="cuenta">los más seguros de cada día</span></h2>';
+    var c = top && top.semanas && top.semanas[sem];
+    if (!c) {
+      return h + '<p class="criterio">' + (top && top.desde && masDias(sem, 6) < top.desde
+        ? 'El top de tops se audita desde el ' + fLarga(top.desde) + '.' : 'No hubo top de tops esta semana.') + '</p>';
+    }
+    h += marcadorCajas([['✅ Acertados', c.aciertos + ' de ' + c.comprobables, 'verde'], ['🎯 Acierto real', pct(c.acierto), 'verde'],
+      ['📈 Prometido (media)', pct(c.prometido), 'azul'], ['⏳ Sin resultado', c.sin_resultado, c.sin_resultado ? 'azul' : '']]) +
+      tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado });
+    var dias = Object.keys(top.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6); }).sort();
+    h += '<details class="caja" data-k="top-dias" open><summary><span class="emoji">🗓️</span>Por día <span class="cuenta">' +
+      plural(c.picks, 'pick', 'picks') + '</span></summary><div class="cuerpo">' + dias.map(function (f) {
+        var rs = (top.resumen || {})[f] || {};
+        return '<div class="dia-cab">🗓️ ' + fLarga(f) + '<span class="cuenta">' + (rs.comprobables ? '✅ ' + rs.aciertos + ' · ❌ ' + rs.fallos
+          : plural(top.dias[f].length, 'pick', 'picks')) + '</span></div><ul class="lista">' +
+          top.dias[f].map(function (r, i) { return renglonTop(r, i + 1); }).join('') + '</ul>';
+      }).join('') + '</div></details>';
+    var ls = Object.keys(top.semanas).sort().reverse();
+    var fila = function (x) {
+      return '<td class="num">' + x.picks + '</td><td class="num">' + x.aciertos + '</td><td class="num">' + x.fallos + '</td><td class="num">' +
+        x.anulados + '</td><td class="num">' + x.sin_resultado + '</td><td class="num"><b>' + pct(x.acierto) + '</b></td><td class="num">' + pct(x.prometido) + '</td>';
+    };
+    h += '<details class="caja" data-k="top-semanas"><summary><span class="emoji">📈</span>Todas las semanas <span class="cuenta">' + ls.length +
+      '</span></summary><div class="cuerpo"><div class="tabla-scroll"><table><thead><tr><th>Semana</th><th class="num">Picks</th><th class="num">✅</th>' +
+      '<th class="num">❌</th><th class="num">➖</th><th class="num">⏳</th><th class="num">Acierto</th><th class="num">Prometido</th></tr></thead><tbody>' +
+      ls.map(function (l) { return '<tr><td><a href="#/resultados/' + l + '">' + rangoSemana(l) + '</a></td>' + fila(top.semanas[l]) + '</tr>'; }).join('') +
+      (top.acumulado ? '<tr class="total"><td>Total' + (top.desde ? ' desde el ' + fCorta(top.desde) : '') + '</td>' + fila(top.acumulado) + '</tr>' : '') +
+      '</tbody></table></div></div></details>' +
+      '<p class="criterio">Se audita lo que estaba en el top antes de cada partido: cuando un partido empieza, su pick ya no entra ni sale. ' +
+      'Cada resultado es el de la auditoría de su liga; los anulados y no comprobables no cuentan.</p>';
+    return h;
+  }
   function vResultados(partes, q) {
     if (q && q.get('ver') === 'ranking') { location.replace('#/ranking'); return Promise.resolve(); }
     var sem = /^\d{4}-\d{2}-\d{2}$/.test(partes[0] || '') ? lunesDe(partes[0]) : lunesDe(hoy());
-    return cargarTodo().then(function (T) {
+    return Promise.all([cargarTodo(), topDeTops().catch(function () { return null; })]).then(function (x) {
+      var T = x[0], top = x[1];
       var ult = T.picks.map(function (p) { return p.fecha || ''; }).sort().pop() || hoy();
       var min = lunesDe(PRIMERA_ESC), max = lunesDe(ult > hoy() ? ult : hoy());
       var mapas = T.mapas, picks = T.picks.filter(function (p) { return p.fecha && p.fecha >= sem && p.fecha <= masDias(sem, 6); });
@@ -1464,6 +1518,7 @@
               '</td><td class="num">' + c.ko + '</td><td class="num">' + c.nulo + '</td><td class="num">' + c.pend + '</td><td class="num"><b>' + pct(c.acierto) + '</b></td></tr>';
           }).join('') + '</tbody></table></div>';
       }
+      h += bloqueTop(top, sem);
       h += '<h2><span class="emoji">📈</span>Historial de la selección <span class="cuenta">lunes a domingo</span></h2>' + historialSemanas(T);
       if (picks.length) {                  // la tabla de seleccionadores, hasta el final (pedido de Javier)
         var t = porSeleccionador([{ picks: picks, mapas: mapas }]);
