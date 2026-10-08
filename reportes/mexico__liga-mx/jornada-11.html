@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PICK$IN Analytics — Liga MX · Jornada 11</title>
+<style>
+:root{--dorado:#FFD700;--azul:#007BFF;--gris:#808080;--morado:#A855F7;--txt:#111;--muted:#666;--line:#e5e5e5}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;padding:0;background:#FFFFFF;color:var(--txt);font-family:'Inter','Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.35}
+.wrap{max-width:1100px;margin:0 auto;padding:10px 10px 40px}
+header{border-bottom:3px solid #111;padding:12px 0 10px;margin-bottom:12px}
+header h1{margin:0;font-size:19px;font-weight:800;letter-spacing:-.3px}
+header .sub{color:var(--muted);font-size:12px;margin-top:3px}
+.meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:10px;background:#f4f4f4;border:1px solid var(--line);border-radius:20px;padding:3px 9px;color:#333}
+.chip b{color:#000}
+details{border:1px solid var(--line);border-radius:10px;margin-bottom:9px;background:#fff;overflow:hidden}
+details[open]{box-shadow:0 1px 3px rgba(0,0,0,.06)}
+summary{cursor:pointer;list-style:none;padding:11px 12px;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;background:#fafafa;border-bottom:1px solid transparent}
+details[open]>summary{border-bottom-color:var(--line)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'▾';margin-left:auto;color:var(--muted);font-size:12px;transition:transform .15s}
+details[open]>summary::after{transform:rotate(180deg)}
+summary .num{min-width:22px;height:22px;border-radius:6px;background:#111;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex:0 0 auto}
+.body{padding:11px 12px}
+.hint{font-size:11px;color:var(--muted);margin:0 0 9px;font-style:italic}
+.pick{border:1px solid var(--line);border-left-width:10px;border-radius:8px;padding:8px 10px;margin-bottom:8px;background:#fff;transition:box-shadow .12s,border-color .12s}
+.pick.selectable{cursor:pointer}
+.pick[data-color="dorado"]{border-left-color:var(--dorado)}
+.pick[data-color="azul"]{border-left-color:var(--azul)}
+.pick[data-color="gris"]{border-left-color:var(--gris)}
+.pick[data-color="morado"]{border-left-color:var(--morado)}
+.pick.sel[data-color="dorado"]{border:5px solid var(--dorado);border-left-width:10px;box-shadow:0 0 0 3px rgba(255,215,0,.28)}
+.pick.sel[data-color="azul"]{border:5px solid var(--azul);border-left-width:10px;box-shadow:0 0 0 3px rgba(0,123,255,.25)}
+.pick.sel[data-color="gris"]{border:5px solid var(--gris);border-left-width:10px;box-shadow:0 0 0 3px rgba(128,128,128,.25)}
+.pick.sel[data-color="morado"]{border:5px solid var(--morado);border-left-width:10px;box-shadow:0 0 0 3px rgba(168,85,247,.25)}
+.pick-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:3px}
+.pick-head .tit{font-weight:800;font-size:12.5px;flex:1 1 auto;min-width:180px}
+.pick-head .tag{font-size:11px;font-weight:800;white-space:nowrap}
+.pick-head .prob{color:#0a7d34}.pick-head .cuota{color:#0b5ea8}.pick-head .conf{color:#7a3ea1}
+.pick-head .delta{color:#b45309}
+.pick-head .prev{color:#5B21B6;background:#EDE9FE;border-radius:5px;padding:0 5px}
+.subsec{margin:18px 0 8px;padding-top:13px;border-top:2px dashed var(--azul);font-size:12.5px;font-weight:800;color:#0b5ea8}
+.pick-head .match{font-size:10.5px;color:var(--muted);font-weight:600;width:100%}
+.pick-just{font-size:11.5px;line-height:1.25;color:#222;margin:0}
+.vacio{border:1px dashed #d4d4d4;border-radius:8px;padding:11px;background:#fcfcfc;font-size:12px;color:#555}
+.vacio b{color:#991b1b}
+.tabla-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1560px;font-size:10.5px;font-family:'Roboto Condensed','Segoe UI',sans-serif}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:5px 6px;text-align:center;white-space:nowrap}
+th{background:#111;color:#fff;font-size:9.5px;font-weight:700;position:sticky;top:0;text-transform:uppercase;letter-spacing:.2px}
+td.part{text-align:left;font-weight:700;font-size:10.5px;background:#fafafa;position:sticky;left:0;z-index:2}
+th.part{position:sticky;left:0;z-index:3}
+tbody tr:nth-child(even) td{background:#fcfcfc}
+tbody tr:nth-child(even) td.part{background:#f5f5f5}
+.expl{border-left:4px solid #111;padding:6px 10px;margin-bottom:8px;background:#fafafa;border-radius:0 6px 6px 0}
+.expl h4{margin:0 0 2px;font-size:12.5px}
+.expl p{margin:0;font-size:11.5px;line-height:1.3;color:#222}
+.mini{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0 10px;min-width:0}
+.mini th,.mini td{border:1px solid var(--line);padding:4px 7px;text-align:left;white-space:normal}
+.mini th{background:#f4f4f4;font-size:10px;text-transform:uppercase}
+.trampa{border-left:5px solid #dc2626;background:#fef7f7;padding:7px 10px;margin-bottom:7px;border-radius:0 6px 6px 0;font-size:11.5px;line-height:1.3}
+.trampa b{color:#991b1b}
+h3.sub{font-size:12.5px;margin:12px 0 5px;padding-bottom:3px;border-bottom:2px solid #111}
+#auditoria{margin-top:22px;border:3px solid #111;border-radius:12px;overflow:hidden}
+#auditoria .cab{background:#111;color:#fff;padding:11px 12px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+#auditoria .cab h2{margin:0;font-size:14px;font-weight:800}
+#auditoria .cab .cnt{margin-left:auto;font-size:11px;background:#fff;color:#111;border-radius:20px;padding:2px 10px;font-weight:800}
+#auditoria .inner{padding:10px}
+.dia-tit{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#111;margin:9px 0 5px;text-align:left;border-bottom:1px solid var(--line);padding-bottom:2px}
+.dia-tit:first-child{margin-top:0}
+.apick{border:1px solid var(--line);border-left-width:10px;border-radius:6px;padding:5px;margin-bottom:4px;cursor:pointer;background:#fff}
+.apick[data-color="dorado"]{border-left-color:var(--dorado)}
+.apick[data-color="azul"]{border-left-color:var(--azul)}
+.apick[data-color="gris"]{border-left-color:var(--gris)}
+.apick[data-color="morado"]{border-left-color:var(--morado)}
+.apick.ok{background:#D1FAE5}.apick.ko{background:#FEE2E2}
+.apick .ah{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.apick .ah .tit{font-weight:800;font-size:11.5px;flex:1 1 auto;min-width:150px}
+.apick .ah .tag{font-size:10.5px;font-weight:800;white-space:nowrap}
+.apick .ah .st{font-size:11px;font-weight:800;margin-left:auto}
+.apick .aj{font-size:11px;line-height:1.1;margin:2px 0 0;color:#222}
+.apick .am{font-size:9.5px;color:var(--muted);font-weight:700;width:100%}
+.vacio-aud{font-size:12px;color:var(--muted);text-align:center;padding:16px;font-style:italic}
+.barra{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:7px 0;margin-bottom:6px;display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.btn{font-size:11px;font-weight:800;border:1.5px solid #111;background:#fff;color:#111;border-radius:20px;padding:5px 12px;cursor:pointer}
+.btn.pri{background:#111;color:#fff}
+.leyenda{margin-left:auto;display:flex;gap:8px;font-size:9.5px;align-items:center;color:var(--muted);flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:middle}
+@media (max-width:620px){.wrap{padding:8px 7px 30px}header h1{font-size:16px}summary{font-size:12.5px;padding:10px}.leyenda{width:100%;margin-left:0;margin-top:4px}}
+@media print{.barra,summary::after{display:none!important}details{border:1px solid #999;break-inside:avoid}details>.body{display:block!important}.pick,.apick,.expl,.trampa{break-inside:avoid}body{font-size:10px}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}table{min-width:0;font-size:7.5px}@page{margin:8mm}}
+</style></head><body><div class="wrap">
+<div class="barra">
+  <button class="btn pri" onclick="window.print()">🖨️ Guardar como PDF</button>
+  <button class="btn" onclick="setAll(true)">Abrir todo</button>
+  <button class="btn" onclick="setAll(false)">Cerrar todo</button>
+  <button class="btn" onclick="limpiar()">Limpiar selección</button>
+  <span class="leyenda">
+    <span><span class="dot" style="background:#FFD700"></span>Picks Sugeridos</span>
+    <span><span class="dot" style="background:#007BFF"></span>Top 5 Real</span>
+    <span><span class="dot" style="background:#808080"></span>Tendencias</span>
+    <span><span class="dot" style="background:#A855F7"></span>Especializados</span>
+  </span>
+</div>
+<header><h1>PICK$IN Analytics — Liga MX</h1>
+<div class="sub">Apertura 2026 · <b>Jornada 11</b> · 9 partidos</div>
+<div class="meta"><span class="chip">Procesados <b>88/88</b> ✓</span><span class="chip">Dixon-Coles γ<sub>L</sub>=<b>0.9386</b> γ<sub>V</sub>=<b>0.7459</b> ρ=<b>-0.0879</b></span><span class="chip">🌐 Liga joven con previos entre ligas: <b>27</b> ligas donantes · <b>10</b> jornadas propias · peso propio <b>29%</b> · <b>10</b> familias con veredicto de las otras ligas</span><span class="chip">Banda <b>P 60–86.96%</b> · cuota <b>1.20–1.72</b></span><span class="chip">Familias: excluida <b>10</b> · fiable <b>46</b> · no_validable <b>3</b></span><span class="chip">EXCLUIDO: <b>doble, dom_faltas, mitad_mas_goles, faltas_1t (over), faltas_2t (under), goles_1t (under), goles_tot (under), sot_1t (under), sot_tot (under), resultado</b></span></div></header>
+<details open><summary><span class="num">1</span>📊 Tabla de pronósticos consolidada</summary><div class="body"><p class="hint">Desliza horizontalmente para ver las 18 columnas técnicas. Sección de solo visualización.</p><div class="tabla-scroll"><table><thead><tr><th>Día</th><th class="part">Partido</th><th>%L/E/V</th><th>Goles L/V</th><th>Tarjetas L/V</th><th>Remates L/V</th><th>Rem.Arco L/V</th><th>Córners L/V</th><th>Offsides L/V</th><th>Faltas L/V</th><th>BTTS Sí%</th><th>O/U Goles</th><th>O/U Tarjetas</th><th>O/U Remates</th><th>O/U Rem.Arco</th><th>O/U Córners</th><th>O/U Offsides</th><th>O/U Faltas</th></tr></thead><tbody><tr><td>vie</td><td class="part">Club Puebla vs Club Leon</td><td>34/29/37</td><td>1.22/1.28</td><td>1.76/1.77</td><td>15.18/13.97</td><td>4.63/4.65</td><td>5.44/4.95</td><td>1.66/1.30</td><td>11.29/10.73</td><td>52</td><td>2.5→49/51</td><td>3.5→48/52</td><td>29.5→55/45</td><td>9.5→48/52</td><td>10.5→49/51</td><td>2.5→58/42</td><td>22.5→40/60</td></tr><tr><td>vie</td><td class="part">Tigres UANL vs CD Toluca</td><td>36/27/37</td><td>1.41/1.44</td><td>2.01/2.06</td><td>16.60/14.04</td><td>4.60/4.82</td><td>6.50/4.55</td><td>1.48/1.61</td><td>11.75/11.38</td><td>59</td><td>2.5→54/46</td><td>4.5→39/61</td><td>30.5→57/43</td><td>9.5→50/50</td><td>11.5→46/54</td><td>3.5→40/60</td><td>23.5→41/59</td></tr><tr><td>sáb</td><td class="part">FC Juarez vs Club Tijuana</td><td>27/25/49</td><td>1.29/1.81</td><td>2.10/1.91</td><td>14.08/13.24</td><td>4.50/4.84</td><td>5.40/4.86</td><td>1.27/2.44</td><td>12.02/11.53</td><td>62</td><td>2.5→60/40</td><td>4.5→38/62</td><td>27.5→56/44</td><td>9.5→49/51</td><td>10.5→48/52</td><td>3.5→52/48</td><td>23.5→44/56</td></tr><tr><td>sáb</td><td class="part">Queretaro FC vs Atlante FC</td><td>50/25/25</td><td>1.79/1.21</td><td>2.20/2.11</td><td>16.93/14.44</td><td>5.47/4.17</td><td>6.13/5.20</td><td>2.48/1.23</td><td>11.79/11.50</td><td>59</td><td>2.5→58/42</td><td>4.5→44/56</td><td>31.5→56/44</td><td>9.5→52/48</td><td>11.5→49/51</td><td>3.5→52/48</td><td>23.5→42/58</td></tr><tr><td>sáb</td><td class="part">Atlas FC vs CD Guadalajara</td><td>31/28/41</td><td>1.26/1.48</td><td>1.93/1.86</td><td>14.37/13.82</td><td>4.70/4.92</td><td>5.31/5.25</td><td>1.32/1.35</td><td>11.22/11.40</td><td>56</td><td>2.5→51/49</td><td>3.5→53/47</td><td>28.5→55/45</td><td>9.5→52/48</td><td>10.5→51/49</td><td>2.5→52/48</td><td>22.5→45/55</td></tr><tr><td>sáb</td><td class="part">Club America vs CF Monterrey</td><td>48/24/29</td><td>1.96/1.49</td><td>1.88/2.29</td><td>18.11/13.60</td><td>6.25/5.08</td><td>6.17/4.94</td><td>1.57/1.53</td><td>11.86/11.87</td><td>67</td><td>2.5→67/33</td><td>4.5→41/59</td><td>31.5→58/42</td><td>11.5→49/51</td><td>11.5→47/53</td><td>3.5→40/60</td><td>23.5→46/54</td></tr><tr><td>dom</td><td class="part">Atletico San Luis vs Santos Laguna</td><td>47/26/27</td><td>1.70/1.24</td><td>1.62/1.89</td><td>16.19/13.47</td><td>5.53/4.29</td><td>5.46/5.33</td><td>2.04/1.39</td><td>10.74/10.70</td><td>59</td><td>2.5→56/44</td><td>3.5→47/53</td><td>29.5→57/43</td><td>9.5→54/46</td><td>10.5→51/49</td><td>3.5→47/53</td><td>21.5→43/57</td></tr><tr><td>dom</td><td class="part">CF Pachuca vs Club Necaxa</td><td>48/24/28</td><td>1.91/1.44</td><td>2.08/2.29</td><td>19.00/13.13</td><td>5.67/4.37</td><td>6.24/4.51</td><td>1.62/1.60</td><td>12.90/11.37</td><td>66</td><td>2.5→65/35</td><td>4.5→45/55</td><td>32.5→55/45</td><td>10.5→46/54</td><td>10.5→53/47</td><td>3.5→43/57</td><td>24.5→42/58</td></tr><tr><td>dom</td><td class="part">Pumas UNAM vs Cruz Azul</td><td>30/27/43</td><td>1.24/1.55</td><td>1.75/1.85</td><td>15.53/14.71</td><td>5.10/5.36</td><td>5.98/4.88</td><td>1.99/2.20</td><td>11.05/10.07</td><td>57</td><td>2.5→53/47</td><td>3.5→49/51</td><td>30.5→55/45</td><td>10.5→50/50</td><td>10.5→51/49</td><td>4.5→43/57</td><td>21.5→41/59</td></tr></tbody></table></div><p class="hint"><b>Nota de procesamiento de datos:</b> en toda métrica <b>L/V</b>, el valor a la izquierda corresponde estrictamente al <b>Local</b> y el de la derecha al <b>Visitante</b>, tratados como variables independientes. Tarjetas: tarjetas que RECIBE cada equipo. Los O/U se leen <b>línea → Over%/Under%</b>.</p><p class="hint">Tabla J1-J10: 88 partidos procesados de 88. La J7 tiene 7 partidos (dos aplazados, reprogramados al 28/10 y al 14/11): Monterrey, Tijuana, Querétaro y América llegan con 9 partidos.</p><p class="hint">Liga joven con previos entre ligas: 27 ligas donantes, 10 jornadas propias, peso propio medio 29%; ningún pick del TOP 5 depende del veredicto de las otras ligas.</p></div></details><details open><summary><span class="num">2</span>📝 Explicación breve de cada partido</summary><div class="body"><p class="hint">Sección de solo visualización.</p><div class="expl"><h4>Club Puebla vs Club Leon</h4><p>El total de goles más bajo de la jornada: λ 1.222 vs 1.282 (2.504), 1X2 34.0% / 29.2% / 36.8%; Puebla hace solo 0.549 de la media de goles de la liga (PO 0.971). Puebla recibe 1.02 tarjetas por partido (0.503) y sus rivales 0.60 (0.306): λ de tarjetas 1.76 vs 1.77. Patrón confirmado: el 75.0% de las tarjetas de Puebla llegan en el segundo tiempo y León concede el 85.2% en esa mitad.</p></div><div class="expl"><h4>Tigres UANL vs CD Toluca</h4><p>Duelo parejo: λ 1.405 vs 1.444 (total 2.849), 1X2 35.6% / 27.1% / 37.3%. Toluca hace 1.383 de la media de goles (PO 2.447), permite 0.716 (VD 1.267) y remata al arco 6.41 veces por partido (1.320). Tigres saca 7.01 corners (1.326) y permite 3.54 (0.631): λ 6.50 vs 4.55; convierte solo el 6.21% de sus remates (sub-rendimiento).</p></div><div class="expl"><h4>FC Juarez vs Club Tijuana</h4><p>Tijuana parte arriba: λ 1.294 vs 1.806 (total 3.100), 1X2 26.6% / 24.9% / 48.5%. Juárez permite 1.501 de la media de goles (VD 2.656), hace 0.606 y remata al arco solo 2.07 veces por partido (0.421). Tijuana cae en fuera de juego 3.00 veces (1.785) y los rivales de Juárez 2.55 (1.558): λ de offsides 1.27 vs 2.44.</p></div><div class="expl"><h4>Queretaro FC vs Atlante FC</h4><p>Querétaro parte arriba: λ 1.792 vs 1.208 (total 3.000), 1X2 50.1% / 25.1% / 24.8%, con los cuatro componentes de goles a su favor (1.099 / 1.059 / 0.948 / 0.883). Querétaro recibe 3.97 tarjetas por partido (2.019, el más alto de la jornada) y cae en fuera de juego 2.64 veces (1.607), ante un Atlante que permite 2.44 (1.492): λ de offsides 2.48 vs 1.23.</p></div><div class="expl"><h4>Atlas FC vs CD Guadalajara</h4><p>Guadalajara parte arriba: λ 1.255 vs 1.478 (total 2.733), 1X2 31.1% / 27.6% / 41.3%, sostenido por su defensa (permite 0.678 de la media de goles, VD 1.200). Guadalajara saca 7.68 corners por partido (1.426). En tarjetas, Atlas recibe 2.74 (1.402) y Guadalajara 1.04 (0.537); patrón confirmado: el 91.7% de las de Guadalajara llegan en el segundo tiempo.</p></div><div class="expl"><h4>Club America vs CF Monterrey</h4><p>El total de goles más alto de la jornada: λ 1.957 vs 1.485 (3.442), 1X2 47.9% / 23.5% / 28.6%, BTTS 67.2%, escenario de alta volatilidad (Over 2.5 / BTTS); los cuatro componentes de goles están sobre la media (1.246 / 1.111 / 1.126 / 1.125). América remata 20.76 veces por partido (1.426), 7.37 al arco (1.558), y sus rivales reciben 3.09 tarjetas (1.590).</p></div><div class="expl"><h4>Atletico San Luis vs Santos Laguna</h4><p>San Luis parte arriba: λ 1.698 vs 1.243 (total 2.941), 1X2 47.1% / 25.8% / 27.1%; Santos permite 1.149 de la media de goles (VD 2.032) y convierte el 6.94% de sus remates (sub-rendimiento). En corners se invierte: Santos saca 7.59 por partido (1.404) y San Luis 2.84 (0.532), λ 5.46 vs 5.33.</p></div><div class="expl"><h4>CF Pachuca vs Club Necaxa</h4><p>Partido de goles: los cuatro componentes están sobre la media (1.145 / 1.156 / 1.092 / 1.085), λ 1.911 vs 1.436 (total 3.347), 1X2 47.9% / 23.9% / 28.2%, BTTS 65.8%, escenario de alta volatilidad (Over 2.5 / BTTS). Necaxa recibe 3.00 tarjetas por partido (1.508).</p></div><div class="expl"><h4>Pumas UNAM vs Cruz Azul</h4><p>Cruz Azul parte arriba: λ 1.241 vs 1.548 (total 2.790), 1X2 29.5% / 27.1% / 43.4%. Pumas hace 0.563 de la media de goles (PO 0.996); Cruz Azul hace 1.348 (PO 2.385) y remata al arco 7.73 veces por partido (1.589). Los rivales de Pumas caen en fuera de juego 3.23 veces (1.981).</p></div></div></details><details open><summary><span class="num">3</span>💎 PICKS SUGERIDOS CON CUOTAS IMPLÍCITAS</summary><div class="body"><p class="hint">Toca cualquier pick para seleccionarlo y enviarlo a «PICKS DE LA JORNADA».</p><div class="pick selectable" data-color="dorado" data-dia="domingo" data-id="d1">
+  <div class="pick-head"><span class="tit">[EL MURO] Pumas UNAM vs Cruz Azul — Under 25.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Confianza: Alta</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">Máxima convergencia: confianza Alta, respaldo bilateral neto +4 (los cuatro componentes a favor), muestra robusta y ninguna alerta. λ 11.05 + 10.07 = <b>21.12</b> faltas, 4.38 por debajo de la línea; rango del 80% entre 15 y 28, mediana 21. Pumas comete 11.38 por partido (0.960) y permite 8.59 (0.728); Cruz Azul comete 11.26 (0.954) y permite 11.14 (0.943). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+<div class="pick selectable" data-color="dorado" data-dia="sabado" data-id="d2">
+  <div class="pick-head"><span class="tit">[LA DISPARIDAD] Queretaro FC vs Atlante FC — Handicap Asiatico Queretaro FC +1.0</span><span class="tag prob">86.9%</span><span class="tag cuota">Cuota 1.20</span><span class="tag conf">Confianza: Alta</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">La mayor distancia de λ de la jornada: 1.792 vs 1.208, diferencia 0.584. Querétaro gana o empata el 75.2% y la apuesta se devuelve el 14.4% (derrota por un gol); sin contar la devolución, 87.9% en el modelo, 86.9% publicado tras la auditoría interna (-0.94 pt). Respaldo bilateral 4/4: Querétaro hace 1.099 de la media de goles y permite 0.883; Atlante permite 1.059 y hace 0.948.</p>
+</div>
+<div class="pick selectable" data-color="dorado" data-dia="sabado" data-id="d3">
+  <div class="pick-head"><span class="tit">[LA BÓVEDA] Club America vs CF Monterrey — Over 1.5 Goles</span><span class="tag prob">85.6%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Confianza: Alta</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">Más del 80% con la menor dispersión entre los candidatos. λ total 3.442, 1.94 goles por encima de la línea; reparto: 1 gol 9.4%, 2 goles 19.8%, 3 goles 21.8%, 4 goles 18.7%, 5 goles 12.9%. Modelo 86.3%, auditoría interna -0.63 pt. Respaldo bilateral 4/4: América hace 1.246 de la media de goles y permite 1.125; Monterrey hace 1.126 y permite 1.111.</p>
+</div>
+<div class="pick selectable" data-color="dorado" data-dia="viernes" data-id="d4">
+  <div class="pick-head"><span class="tit">[EL ESPEJISMO] Tigres UANL vs CD Toluca — Handicap Asiatico CD Toluca +1.5</span><span class="tag prob">82.1%</span><span class="tag cuota">Cuota 1.27</span><span class="tag conf">Confianza: Alta</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">El partido con la conversión más fuera de banda: Tigres convierte el 6.21% de sus remates (1.67 pt por debajo del p15 de la liga, 7.88%) y Toluca el 12.85% (0.95 pt por encima del p85, 11.90%). Toluca no pierde por dos o más el 83.1% de las veces en el modelo, 82.1% publicado (-0.94 pt de auditoría interna); λ 1.405 vs 1.444. Respaldo bilateral 2/4 a favor y 1 en contra: Toluca hace 1.383 de la media de goles y permite 0.716; en contra, Tigres permite 0.805.</p>
+</div>
+<div class="pick selectable" data-color="dorado" data-dia="viernes" data-id="d5">
+  <div class="pick-head"><span class="tit">[EL RADAR] Club Puebla vs Club Leon — Under 26.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Confianza: Alta</span><span class="match">viernes · Club Puebla vs Club Leon</span></div>
+  <p class="pick-just">El mejor mercado alternativo de la jornada. λ 11.29 + 10.73 = <b>22.02</b> faltas, 4.48 por debajo de la línea; rango del 80% entre 16 y 29, mediana 22. Respaldo bilateral 2/4 a favor y 1 en contra: Puebla comete 9.89 por partido (0.838) y permite 10.40 (0.881); en contra, León permite 13.34 (1.125). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+</div></details><details open><summary><span class="num">4</span>🏆 TOP 5 REAL FINAL Multi-Mercado</summary><div class="body"><p class="hint">Cruce de los tres bloques, con diversidad obligatoria (máximo 2 picks por mercado).</p><div class="pick selectable" data-color="azul" data-dia="domingo" data-id="a6">
+  <div class="pick-head"><span class="tit">1 · Pumas UNAM vs Cruz Azul — Under 25.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Confianza: Alta</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">λ 11.05 + 10.07 = <b>21.12</b> faltas, 4.38 por debajo de la línea; rango del 80% entre 15 y 28, mediana 21. Respaldo bilateral 4/4: Pumas comete 11.38 por partido (0.960) y permite 8.59 (0.728); Cruz Azul comete 11.26 (0.954) y permite 11.14 (0.943). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="viernes" data-id="a7">
+  <div class="pick-head"><span class="tit">2 · Club Puebla vs Club Leon — Under 26.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Confianza: Alta</span><span class="match">viernes · Club Puebla vs Club Leon</span></div>
+  <p class="pick-just">λ 11.29 + 10.73 = <b>22.02</b> faltas, 4.48 por debajo de la línea; rango del 80% entre 16 y 29, mediana 22. Respaldo bilateral 2/4 a favor y 1 en contra: Puebla comete 9.89 por partido (0.838) y permite 10.40 (0.881); en contra, León permite 13.34 (1.125). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a8">
+  <div class="pick-head"><span class="tit">3 · Queretaro FC vs Atlante FC — Handicap Asiatico Queretaro FC +1.0</span><span class="tag prob">86.9%</span><span class="tag cuota">Cuota 1.20</span><span class="tag conf">Confianza: Alta</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">Querétaro gana o empata el 75.2% y la apuesta se devuelve el 14.4% (derrota por un gol); sin contar la devolución, 87.9% en el modelo, 86.9% publicado tras la auditoría interna (-0.94 pt). λ 1.792 vs 1.208. Respaldo bilateral 4/4: Querétaro hace 1.099 de la media de goles y permite 0.883; Atlante permite 1.059 y hace 0.948.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="domingo" data-id="a9">
+  <div class="pick-head"><span class="tit">4 · CF Pachuca vs Club Necaxa — Handicap Asiatico Club Necaxa +2.5</span><span class="tag prob">86.3%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Alta</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">Pachuca gana por tres o más solo el 12.7% de las veces: Necaxa +2.5 da 87.3% en el modelo y 86.3% publicado tras la auditoría interna (-0.94 pt). λ 1.911 vs 1.436 (total 3.347). Respaldo bilateral 2/4 a favor y 2 en contra: Necaxa hace 1.092 de la media de goles y Pachuca permite 1.085; en contra, Pachuca hace 1.145 y Necaxa permite 1.156.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a10">
+  <div class="pick-head"><span class="tit">5 · Atlas FC vs CD Guadalajara — Over 6.5 Corners</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Alta</span><span class="match">sábado · Atlas FC vs CD Guadalajara</span></div>
+  <p class="pick-just">λ 5.31 + 5.25 = <b>10.56</b> corners, 4.06 por encima de la línea; rango del 80% entre 6 y 15, mediana 10. Respaldo bilateral 2/4 a favor y 1 en contra: Atlas saca 5.62 por partido (1.051) y Guadalajara 7.68 (1.426); en contra, Guadalajara permite 3.66 (0.677). Modelo 86.5%, auditoría interna -0.30 pt.</p>
+</div>
+<h4 class="subsec">⤵ Desplazados por diversidad — 4 picks válidos apartados por el tope</h4><p class="hint">No son descartes por calidad: están dentro de la banda operativa, su familia superó la validación y su confianza es la real. Perdieron el sitio únicamente por el tope de diversidad. El valor en naranja es la diferencia de probabilidad frente al pick nº5 del TOP 5 (86.2%), es decir el precio exacto de haber diversificado. Son seleccionables como cualquier otro pick.</p><div class="pick selectable" data-color="azul" data-dia="domingo" data-id="a11">
+  <div class="pick-head"><span class="tit">⤵ Pumas UNAM vs Cruz Azul — Handicap Asiatico Cruz Azul +1.5</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Alta</span><span class="tag delta">-0.02 pt</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de resultado en el TOP 5). Pumas gana por dos o más solo el 12.8% de las veces: Cruz Azul +1.5 da 87.2% en el modelo y 86.2% publicado (-0.94 pt). λ 1.241 vs 1.548. Respaldo bilateral 3/4 a favor y ninguno en contra: Pumas hace 0.563 de la media de goles, Cruz Azul permite 0.932 y hace 1.348; lo que permite Pumas (0.999) queda en zona neutra. · Apartado porque <b>ya hay 2 picks de resultado</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="domingo" data-id="a12">
+  <div class="pick-head"><span class="tit">⤵ Atletico San Luis vs Santos Laguna — Under 25.5 Faltas</span><span class="tag prob">84.2%</span><span class="tag cuota">Cuota 1.24</span><span class="tag conf">Confianza: Alta</span><span class="tag delta">-2.04 pt</span><span class="match">domingo · Atletico San Luis vs Santos Laguna</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de faltas en el TOP 5). λ 10.74 + 10.70 = <b>21.44</b> faltas, 4.06 por debajo de la línea; rango del 80% entre 15 y 28, mediana 21. Respaldo bilateral 3/4 a favor y ninguno en contra: San Luis comete 10.10 por partido (0.855), Santos permite 11.44 (0.969) y comete 10.05 (0.850); lo que permite San Luis (0.994) queda en zona neutra. Modelo 82.7%, auditoría interna +1.52 pt. · Apartado porque <b>ya hay 2 picks de faltas</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="sabado" data-id="a13">
+  <div class="pick-head"><span class="tit">⤵ Club America vs CF Monterrey — Handicap Asiatico CF Monterrey +2.5</span><span class="tag prob">86.0%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Alta</span><span class="tag delta">-0.21 pt</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de resultado en el TOP 5). América gana por tres o más el 13.0% de las veces: Monterrey +2.5 da 87.0% en el modelo y 86.0% publicado (-0.94 pt). λ 1.957 vs 1.485. Respaldo bilateral 2/4 a favor y 2 en contra: Monterrey hace 1.126 de la media de goles y América permite 1.125; en contra, América hace 1.246 y Monterrey permite 1.111. · Apartado porque <b>ya hay 2 picks de resultado</b>.</p>
+</div>
+<div class="pick selectable" data-color="azul" data-dia="domingo" data-id="a14">
+  <div class="pick-head"><span class="tit">⤵ CF Pachuca vs Club Necaxa — Handicap Asiatico CF Pachuca +1.5</span><span class="tag prob">86.0%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Confianza: Alta</span><span class="tag delta">-0.23 pt</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de resultado en el TOP 5). Necaxa gana por dos o más el 13.1% de las veces: Pachuca +1.5 da 87.0% en el modelo y 86.0% publicado (-0.94 pt). λ 1.911 vs 1.436. Respaldo bilateral 2/4 a favor y 2 en contra: Pachuca hace 1.145 de la media de goles y Necaxa permite 1.156; en contra, Necaxa hace 1.092 y Pachuca permite 1.085. · Apartado porque <b>ya hay 2 picks de resultado</b>.</p>
+</div>
+</div></details><details><summary><span class="num">5</span>🎯 Tendencia Maestra por Partido (Análisis Individual)</summary><div class="body"><p class="hint">La mejor tendencia dentro de la banda operativa entre los mercados comparables de cada partido, calculada por el motor.</p><div class="pick selectable" data-color="gris" data-dia="viernes" data-id="g15">
+  <div class="pick-head"><span class="tit">Club Puebla vs Club Leon — Under 26.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Alta</span><span class="match">viernes · Club Puebla vs Club Leon</span></div>
+  <p class="pick-just">λ 11.29 + 10.73 = <b>22.02</b> faltas, 4.48 por debajo de la línea; rango del 80% entre 16 y 29, mediana 22. Respaldo bilateral 2/4 a favor y 1 en contra: Puebla comete 9.89 por partido (0.838) y permite 10.40 (0.881); en contra, León permite 13.34 (1.125). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="viernes" data-id="g16">
+  <div class="pick-head"><span class="tit">Tigres UANL vs CD Toluca — Handicap Asiatico CD Toluca +1.5</span><span class="tag prob">82.1%</span><span class="tag cuota">Cuota 1.27</span><span class="tag conf">Alta</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">Toluca no pierde por dos o más el 83.1% de las veces en el modelo, 82.1% publicado (-0.94 pt de auditoría interna); λ 1.405 vs 1.444. Respaldo bilateral 2/4 a favor y 1 en contra: Toluca hace 1.383 de la media de goles y permite 0.716; en contra, Tigres permite 0.805. Tigres convierte el 6.21% de sus remates (sub-rendimiento) y Toluca el 12.85% (sobre-rendimiento).</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="g17">
+  <div class="pick-head"><span class="tit">FC Juarez vs Club Tijuana — Handicap Asiatico Club Tijuana +1.0</span><span class="tag prob">85.4%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Alta</span><span class="match">sábado · FC Juarez vs Club Tijuana</span></div>
+  <p class="pick-just">Tijuana gana o empata el 73.4% y la apuesta se devuelve el 15.0% (derrota por un gol); sin contar la devolución, 86.3% en el modelo, 85.4% publicado (-0.94 pt). λ 1.294 vs 1.806. Respaldo bilateral 4/4: Juárez hace 0.606 de la media de goles y permite 1.501; Tijuana hace 1.236 y permite 0.953.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="g18">
+  <div class="pick-head"><span class="tit">Queretaro FC vs Atlante FC — Handicap Asiatico Queretaro FC +1.0</span><span class="tag prob">86.9%</span><span class="tag cuota">Cuota 1.20</span><span class="tag conf">Alta</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">Querétaro gana o empata el 75.2% y la apuesta se devuelve el 14.4% (derrota por un gol); sin contar la devolución, 87.9% en el modelo, 86.9% publicado tras la auditoría interna (-0.94 pt). λ 1.792 vs 1.208. Respaldo bilateral 4/4: Querétaro hace 1.099 de la media de goles y permite 0.883; Atlante permite 1.059 y hace 0.948.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="g19">
+  <div class="pick-head"><span class="tit">Atlas FC vs CD Guadalajara — Over 6.5 Corners</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">sábado · Atlas FC vs CD Guadalajara</span></div>
+  <p class="pick-just">λ 5.31 + 5.25 = <b>10.56</b> corners, 4.06 por encima de la línea; rango del 80% entre 6 y 15, mediana 10. Respaldo bilateral 2/4 a favor y 1 en contra: Atlas saca 5.62 por partido (1.051) y Guadalajara 7.68 (1.426); en contra, Guadalajara permite 3.66 (0.677). Modelo 86.5%, auditoría interna -0.30 pt.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="g20">
+  <div class="pick-head"><span class="tit">Club America vs CF Monterrey — Handicap Asiatico CF Monterrey +2.5</span><span class="tag prob">86.0%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de resultado en el TOP 5). América gana por tres o más el 13.0% de las veces: Monterrey +2.5 da 87.0% en el modelo y 86.0% publicado (-0.94 pt). λ 1.957 vs 1.485. Respaldo bilateral 2/4 a favor y 2 en contra: Monterrey hace 1.126 de la media de goles y América permite 1.125; en contra, América hace 1.246 y Monterrey permite 1.111.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="domingo" data-id="g21">
+  <div class="pick-head"><span class="tit">Atletico San Luis vs Santos Laguna — Under 25.5 Faltas</span><span class="tag prob">84.2%</span><span class="tag cuota">Cuota 1.24</span><span class="tag conf">Alta</span><span class="match">domingo · Atletico San Luis vs Santos Laguna</span></div>
+  <p class="pick-just">Desplazado por diversidad (ya hay 2 picks de faltas en el TOP 5). λ 10.74 + 10.70 = <b>21.44</b> faltas, 4.06 por debajo de la línea; rango del 80% entre 15 y 28, mediana 21. Respaldo bilateral 3/4 a favor y ninguno en contra: San Luis comete 10.10 por partido (0.855), Santos permite 11.44 (0.969) y comete 10.05 (0.850); lo que permite San Luis (0.994) queda en zona neutra. Modelo 82.7%, auditoría interna +1.52 pt.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="domingo" data-id="g22">
+  <div class="pick-head"><span class="tit">CF Pachuca vs Club Necaxa — Handicap Asiatico Club Necaxa +2.5</span><span class="tag prob">86.3%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">Pachuca gana por tres o más solo el 12.7% de las veces: Necaxa +2.5 da 87.3% en el modelo y 86.3% publicado tras la auditoría interna (-0.94 pt). λ 1.911 vs 1.436 (total 3.347). Respaldo bilateral 2/4 a favor y 2 en contra: Necaxa hace 1.092 de la media de goles y Pachuca permite 1.085; en contra, Pachuca hace 1.145 y Necaxa permite 1.156.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="domingo" data-id="g23">
+  <div class="pick-head"><span class="tit">Pumas UNAM vs Cruz Azul — Under 25.5 Faltas</span><span class="tag prob">85.8%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Alta</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">λ 11.05 + 10.07 = <b>21.12</b> faltas, 4.38 por debajo de la línea; rango del 80% entre 15 y 28, mediana 21. Respaldo bilateral 4/4: Pumas comete 11.38 por partido (0.960) y permite 8.59 (0.728); Cruz Azul comete 11.26 (0.954) y permite 11.14 (0.943). Modelo 84.3%, auditoría interna +1.52 pt.</p>
+</div>
+</div></details><details><summary><span class="num">6</span>[A] TOP 3 (A) — Moneyline / Hándicap / BTTS</summary><div class="body"><div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s6_24">
+  <div class="pick-head"><span class="tit">1 · Queretaro FC vs Atlante FC — Handicap Asiatico Queretaro FC +1.0</span><span class="tag prob">86.9%</span><span class="tag cuota">Cuota 1.20</span><span class="tag conf">Alta</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">Querétaro gana o empata el 75.2% y la apuesta se devuelve el 14.4% (derrota por un gol); sin contar la devolución, 87.9% en el modelo, 86.9% publicado tras la auditoría interna (-0.94 pt). λ 1.792 vs 1.208. Respaldo bilateral 4/4: Querétaro hace 1.099 de la media de goles y permite 0.883; Atlante permite 1.059 y hace 0.948.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s6_25">
+  <div class="pick-head"><span class="tit">2 · Queretaro FC vs Atlante FC — DNB Queretaro FC</span><span class="tag prob">68.4%</span><span class="tag cuota">Cuota 1.51</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">λ 1.792 vs 1.208 · diferencial 0.584 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +1.5 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s6_26">
+  <div class="pick-head"><span class="tit">3 · Club America vs CF Monterrey — BTTS Si</span><span class="tag prob">65.7%</span><span class="tag cuota">Cuota 1.57</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">λ 1.957 vs 1.485 · diferencial 0.472 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna -1.6 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+</div></details><details><summary><span class="num">7</span>[B] TOP 3 (B) — Over/Under Goles / Remates / Tiros a Puerta</summary><div class="body"><div class="pick selectable" data-color="gris" data-dia="viernes" data-id="s7_27">
+  <div class="pick-head"><span class="tit">1 · Tigres UANL vs CD Toluca — Over 6.5 Remates al Arco</span><span class="tag prob">86.4%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">λ_Total = 9.419 · λ 4.596 vs 4.823 · Respaldo bilateral 1/4 a favor, 3 en contra · auditoría interna +1.4 pt</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s7_28">
+  <div class="pick-head"><span class="tit">2 · Club America vs CF Monterrey — Over 1.5 Goles</span><span class="tag prob">85.6%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Alta</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">λ total 3.442, 1.94 goles por encima de la línea; reparto: 1 gol 9.4%, 2 goles 19.8%, 3 goles 21.8%, 4 goles 18.7%, 5 goles 12.9%. Modelo 86.3%, auditoría interna -0.63 pt. Respaldo bilateral 4/4: América hace 1.246 de la media de goles y permite 1.125; Monterrey hace 1.126 y permite 1.111.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="domingo" data-id="s7_29">
+  <div class="pick-head"><span class="tit">3 · Atletico San Luis vs Santos Laguna — Over 24.5 Remates</span><span class="tag prob">79.4%</span><span class="tag cuota">Cuota 1.31</span><span class="tag conf">Alta</span><span class="match">domingo · Atletico San Luis vs Santos Laguna</span></div>
+  <p class="pick-just">λ_Total = 29.666 · λ 16.192 vs 13.474 · Respaldo bilateral 2/4 a favor, 2 en contra · auditoría interna -2.0 pt</p>
+</div>
+</div></details><details><summary><span class="num">8</span>[C] TOP 3 (C) — Over/Under Tarjetas / Córners / Faltas</summary><div class="body"><div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s8_30">
+  <div class="pick-head"><span class="tit">1 · Club America vs CF Monterrey — Under 28.5 Faltas</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">λ_Total = 23.729 · λ 11.855 vs 11.874 · Respaldo bilateral 0/4 a favor, 3 en contra · auditoría interna +1.5 pt</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s8_31">
+  <div class="pick-head"><span class="tit">2 · Atlas FC vs CD Guadalajara — Over 6.5 Corners</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">sábado · Atlas FC vs CD Guadalajara</span></div>
+  <p class="pick-just">λ 5.31 + 5.25 = <b>10.56</b> corners, 4.06 por encima de la línea; rango del 80% entre 6 y 15, mediana 10. Respaldo bilateral 2/4 a favor y 1 en contra: Atlas saca 5.62 por partido (1.051) y Guadalajara 7.68 (1.426); en contra, Guadalajara permite 3.66 (0.677). Modelo 86.5%, auditoría interna -0.30 pt.</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="domingo" data-id="s8_32">
+  <div class="pick-head"><span class="tit">3 · Atletico San Luis vs Santos Laguna — Under 5.5 Tarjetas</span><span class="tag prob">86.2%</span><span class="tag cuota">Cuota 1.21</span><span class="tag conf">Alta</span><span class="match">domingo · Atletico San Luis vs Santos Laguna</span></div>
+  <p class="pick-just">λ_Total = 3.511 · λ 1.621 vs 1.89 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +0.5 pt</p>
+</div>
+</div></details><details><summary><span class="num">9</span>[D] TOP 3 (D) — Dominio sin empate: Remates / Remates al Arco / Córners / Faltas</summary><div class="body"><div class="pick selectable" data-color="gris" data-dia="domingo" data-id="s9_33">
+  <div class="pick-head"><span class="tit">1 · CF Pachuca vs Club Necaxa — CF Pachuca gana Remates (sin empate)</span><span class="tag prob">77.1%</span><span class="tag cuota">Cuota 1.35</span><span class="tag conf">Alta</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">λ 18.995 vs 13.126 · diferencial 5.87 · Respaldo bilateral 3/4 a favor, 0 en contra · auditoría interna +1.1 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="sabado" data-id="s9_34">
+  <div class="pick-head"><span class="tit">2 · Queretaro FC vs Atlante FC — Queretaro FC gana Remates al Arco (sin empate)</span><span class="tag prob">69.2%</span><span class="tag cuota">Cuota 1.49</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">λ 5.471 vs 4.174 · diferencial 1.297 · Respaldo bilateral 3/4 a favor, 1 en contra · auditoría interna +1.2 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+<div class="pick selectable" data-color="gris" data-dia="viernes" data-id="s9_35">
+  <div class="pick-head"><span class="tit">3 · Tigres UANL vs CD Toluca — Tigres UANL gana Corners (sin empate)</span><span class="tag prob">67.8%</span><span class="tag cuota">Cuota 1.53</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">λ 6.504 vs 4.545 · diferencial 1.959 · Respaldo bilateral 3/4 a favor, 0 en contra · auditoría interna +0.8 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+</div></details><details><summary><span class="num">10</span>⏱️ TOP 2 Goles en 1H (Over/Under del primer tiempo)</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s10_36">
+  <div class="pick-head"><span class="tit">1 · Club America vs CF Monterrey — Over 0.5 Goles 1H</span><span class="tag prob">78.1%</span><span class="tag cuota">Cuota 1.33</span><span class="tag conf">Alta</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">λ_Total = 1.551 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +0.1 pt</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s10_37">
+  <div class="pick-head"><span class="tit">2 · CF Pachuca vs Club Necaxa — Over 0.5 Goles 1H</span><span class="tag prob">76.5%</span><span class="tag cuota">Cuota 1.36</span><span class="tag conf">Alta</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">λ_Total = 1.468 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +0.2 pt</p>
+</div>
+</div></details><details><summary><span class="num">11</span>⏱️ TOP 2 Tarjetas en 1H (Over/Under del primer tiempo)</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s11_38">
+  <div class="pick-head"><span class="tit">1 · Pumas UNAM vs Cruz Azul — Under 2.5 Tarjetas 1H</span><span class="tag prob">85.2%</span><span class="tag cuota">Cuota 1.22</span><span class="tag conf">Alta</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">λ_Total = 1.3 · λ 0.633 vs 0.666 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna -0.4 pt</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="viernes" data-id="s11_39">
+  <div class="pick-head"><span class="tit">2 · Club Puebla vs Club Leon — Under 2.5 Tarjetas 1H</span><span class="tag prob">85.0%</span><span class="tag cuota">Cuota 1.23</span><span class="tag conf">Alta</span><span class="match">viernes · Club Puebla vs Club Leon</span></div>
+  <p class="pick-just">λ_Total = 1.31 · λ 0.626 vs 0.684 · Respaldo bilateral 3/4 a favor, 1 en contra · auditoría interna -0.4 pt</p>
+</div>
+</div></details><details><summary><span class="num">12</span>⏱️ TOP 2 Carrera a 3 Córners en 1H</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s12_40">
+  <div class="pick-head"><span class="tit">1 · Pumas UNAM vs Cruz Azul — Carrera a 3 Corners 1H: Pumas UNAM (si alguien llega)</span><span class="tag prob">62.1%</span><span class="tag cuota">Cuota 1.66</span><span class="tag conf">Media</span><span class="match">domingo · Pumas UNAM vs Cruz Azul</span></div>
+  <p class="pick-just">λ 2.633 vs 2.003 · IPT 0.63 · Respaldo bilateral 3/4 a favor, 1 en contra · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s12_41">
+  <div class="pick-head"><span class="tit">2 · CF Pachuca vs Club Necaxa — Carrera a 3 Corners 1H: CF Pachuca (si alguien llega)</span><span class="tag prob">61.8%</span><span class="tag cuota">Cuota 1.67</span><span class="tag conf">Media</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">λ 2.609 vs 2 · IPT 0.609 · Respaldo bilateral 3/4 a favor, 1 en contra · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+</div></details><details><summary><span class="num">13</span>📈 TOP 2 Choque Disciplinario (equipo que recibe más tarjetas que su rival)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> Ningún candidato supera el umbral de esta sección dentro de la banda operativa. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">14</span>📈 TOP 2 Predominio de Faltas (equipo que comete más faltas que su rival)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> Familia excluida del ranking por falta de poder predictivo en la validación. Familias excluidas por falta de poder predictivo: doble, dom_faltas, mitad_mas_goles, ou_faltas_1t (over), ou_faltas_2t (under), ou_goles_1t (under), ou_goles_tot (under), ou_sot_1t (under), ou_sot_tot (under), resultado. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">15</span>📈 TOP 2 Supremacía en Fueras de Juego</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s15_42">
+  <div class="pick-head"><span class="tit">1 · FC Juarez vs Club Tijuana — Club Tijuana: mas fueras de juego (sin empate)</span><span class="tag prob">68.0%</span><span class="tag cuota">Cuota 1.52</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · FC Juarez vs Club Tijuana</span></div>
+  <p class="pick-just">λ 1.274 vs 2.436 · diferencial -1.161 · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna -2.5 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s15_43">
+  <div class="pick-head"><span class="tit">2 · Queretaro FC vs Atlante FC — Queretaro FC: mas fueras de juego (sin empate)</span><span class="tag prob">67.8%</span><span class="tag cuota">Cuota 1.53</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · Queretaro FC vs Atlante FC</span></div>
+  <p class="pick-just">λ 2.481 vs 1.226 · diferencial 1.254 · Respaldo bilateral 3/4 a favor, 1 en contra · auditoría interna -2.5 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+</div></details><details><summary><span class="num">16</span>📈 TOP 2 Especialistas en Carreras a 5 Córners</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="viernes" data-id="s16_44">
+  <div class="pick-head"><span class="tit">1 · Tigres UANL vs CD Toluca — Carrera a 5 Corners: Tigres UANL (si alguien llega)</span><span class="tag prob">69.5%</span><span class="tag cuota">Cuota 1.49</span><span class="tag conf">Media</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">λ 6.504 vs 4.545 · IPT 1.959 · Respaldo bilateral 3/4 a favor, 0 en contra · auditoría interna +1.2 pt · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s16_45">
+  <div class="pick-head"><span class="tit">2 · CF Pachuca vs Club Necaxa — Carrera a 5 Corners: CF Pachuca (si alguien llega)</span><span class="tag prob">68.0%</span><span class="tag cuota">Cuota 1.52</span><span class="tag conf">Media</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">λ 6.241 vs 4.506 · IPT 1.735 · Respaldo bilateral 2/4 a favor, 2 en contra · auditoría interna +1.2 pt · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+</div></details><details><summary><span class="num">17</span>📈 TOP 2 Intensidad Disciplinaria Compartida (ambos reciben 2 o más tarjetas)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> Ningún candidato supera el umbral de esta sección dentro de la banda operativa. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">18</span>📈 TOP 2 Consistencia Goleadora (ambas mitades más de 0.5 goles)</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="sabado" data-id="s18_46">
+  <div class="pick-head"><span class="tit">1 · Club America vs CF Monterrey — Gol en ambas mitades</span><span class="tag prob">67.7%</span><span class="tag cuota">Cuota 1.53</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">sábado · Club America vs CF Monterrey</span></div>
+  <p class="pick-just">P(1H) 78.0% · P(2H) 85.5% · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +1.0 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s18_47">
+  <div class="pick-head"><span class="tit">2 · CF Pachuca vs Club Necaxa — Gol en ambas mitades</span><span class="tag prob">66.1%</span><span class="tag cuota">Cuota 1.56</span><span class="tag conf">Media</span><span class="tag prev">🌐 Veredicto de las otras ligas</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">P(1H) 76.2% · P(2H) 85.4% · Respaldo bilateral 4/4 a favor, 0 en contra · auditoría interna +1.0 pt · 🌐 <b>Veredicto de las otras ligas</b>: la familia aún no tiene veredicto propio en esta liga; su estado, su corrección y su techo salen de las auditorías de las otras ligas (liga joven con previos entre ligas).</p>
+</div>
+</div></details><details><summary><span class="num">19</span>📈 TOP 2 Mitad con más goles (1T / 2T / igual)</summary><div class="body"><div class="vacio"><b>SIN CANDIDATOS.</b> Ningún candidato supera el umbral de esta sección dentro de la banda operativa. <b>No se rellena bajando el criterio.</b></div>
+</div></details><details><summary><span class="num">20</span>📈 TOP 2 Carrera a 3 Córners (partido completo)</summary><div class="body"><div class="pick selectable" data-color="morado" data-dia="viernes" data-id="s20_48">
+  <div class="pick-head"><span class="tit">1 · Tigres UANL vs CD Toluca — Carrera a 3 Corners: Tigres UANL (si alguien llega)</span><span class="tag prob">64.5%</span><span class="tag cuota">Cuota 1.60</span><span class="tag conf">Media</span><span class="match">viernes · Tigres UANL vs CD Toluca</span></div>
+  <p class="pick-just">λ 6.504 vs 4.545 · IPT 1.959 · Respaldo bilateral 3/4 a favor, 0 en contra · auditoría interna +0.3 pt · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+<div class="pick selectable" data-color="morado" data-dia="domingo" data-id="s20_49">
+  <div class="pick-head"><span class="tit">2 · CF Pachuca vs Club Necaxa — Carrera a 3 Corners: CF Pachuca (si alguien llega)</span><span class="tag prob">63.3%</span><span class="tag cuota">Cuota 1.63</span><span class="tag conf">Media</span><span class="match">domingo · CF Pachuca vs Club Necaxa</span></div>
+  <p class="pick-just">λ 6.241 vs 4.506 · IPT 1.735 · Respaldo bilateral 2/4 a favor, 2 en contra · auditoría interna +0.3 pt · ⚠️ mercado no validable con la tabla (orden de los corners desconocido)</p>
+</div>
+</div></details><details><summary><span class="num">21</span>🏁 Conclusiones de la jornada y Sección EVITAR</summary><div class="body"><p class="hint">Sección de solo visualización.</p><h3 class="sub">Equipos en forma (últimos 7)</h3><table class="mini"><tr><th>Equipo</th><th>PPP</th><th>Dif. goles</th><th>Dif. xG</th></tr><tr><td>Club America</td><td>2.29</td><td>+10</td><td>+2.08</td></tr><tr><td>CD Toluca</td><td>2</td><td>+8</td><td>+7.09</td></tr><tr><td>CD Guadalajara</td><td>2</td><td>+8</td><td>+2.7</td></tr><tr><td>Club Leon</td><td>2</td><td>+4</td><td>+0.24</td></tr><tr><td>Queretaro FC</td><td>2</td><td>+5</td><td>-0.04</td></tr><tr><td>Atlas FC</td><td>1.57</td><td>-1</td><td>-3.48</td></tr></table><p style="font-size:11.5px;margin:0 0 10px"><b>América llega en la mejor forma:</b> 16 puntos en sus últimos 7 (2.29 por partido), 19 goles a favor y 9 en contra, xG +2.08. Toluca suma 14 (2.00) con el mejor diferencial de goles esperados de la liga (+7.09: 14.99 a 7.90); Guadalajara (xG +2.70), León (+0.24) y Querétaro (-0.04) también suman 14.</p><h3 class="sub">Equipos en dificultades</h3><table class="mini"><tr><th>Equipo</th><th>PPP</th><th>Dif. goles</th><th>Dif. xG</th></tr><tr><td>CF Pachuca</td><td>1.29</td><td>+3</td><td>-1.79</td></tr><tr><td>Club Tijuana</td><td>1.14</td><td>-2</td><td>+1.57</td></tr><tr><td>Atlante FC</td><td>1</td><td>-3</td><td>+2.52</td></tr><tr><td>Pumas UNAM</td><td>0.86</td><td>-4</td><td>-5.21</td></tr><tr><td>FC Juarez</td><td>0.43</td><td>-12</td><td>-6.99</td></tr><tr><td>Club Necaxa</td><td>0.29</td><td>-8</td><td>-2.18</td></tr></table><p style="font-size:11.5px;margin:0 0 10px"><b>Necaxa tiene la peor racha:</b> 2 puntos en 7 partidos (0.29 por partido), 7 goles a favor y 15 en contra, xG -2.18. Juárez suma 3 (0.43) con 18 goles en contra y el peor diferencial de xG (-6.99); Pumas 6 (0.86, xG -5.21). Atlante (7 puntos, xG +2.52) y Tijuana (8 puntos, xG +1.57) generan más de lo que suman.</p><h3 class="sub">🚫 Trampas de la jornada — EVITAR</h3><div class="trampa"><b>1. Ganador del partido (1X2) y doble oportunidad.</b> Excluidas por la auditoría: no discriminan entre bandos en esta liga. Por eso los picks de resultado de la jornada son hándicaps.</div><div class="trampa"><b>2. Under de goles, del partido y del primer tiempo.</b> Excluidos por la auditoría: aun corregidos, en el historial de la liga prometían más de lo que acertaron. Los partidos cerrados de la jornada no se publican por ese lado.</div><div class="trampa"><b>3. Under de remates al arco, del partido y del primer tiempo.</b> Excluidos por la misma causa: aun corregidos, prometían más de lo que acertaron.</div><div class="trampa"><b>4. Mitad con más goles y quién comete más faltas.</b> Excluidas por la auditoría: no discriminan entre bandos. Y en tarjetas (ambos reciben 2+ y quién recibe más) ningún candidato alcanza el piso de 62%.</div><h3 class="sub">Nota de integridad</h3><p style="font-size:11.5px;margin:0">Todos los números salen de una única ejecución del Motor Picksin 2.0 sobre la tabla J1-J10 (round-1-10.csv) con previos entre ligas; nada se recalculó al redactar.</p></div></details>
+<div id="auditoria"><div class="cab"><h2>✅ PICKS DE LA JORNADA</h2>
+<span class="cnt" id="contador">0 seleccionados</span></div>
+<div class="inner"><p class="hint" style="margin-top:0">Toca un pick aquí para marcar resultado:
+1 clic → <b>ACERTADO ✅</b> · 2 clics → <b>FALLADO ❌</b> · 3 clics → neutro.
+La rayita de color de su sección permanece visible siempre.</p>
+<div id="lista"></div></div></div>
+</div><script>
+const ORDEN_DIAS=["viernes", "sabado", "domingo", "lunes", "martes", "miercoles", "jueves"];
+const NOMBRE_DIA={"viernes": "VIERNES", "sabado": "SÁBADO", "domingo": "DOMINGO", "lunes": "LUNES", "martes": "MARTES", "miercoles": "MIÉRCOLES", "jueves": "JUEVES"};
+const estados={};
+document.querySelectorAll('.pick.selectable').forEach(function(p){
+  p.addEventListener('click',function(){p.classList.toggle('sel');render();});
+});
+function render(){
+  const sel=Array.from(document.querySelectorAll('.pick.selectable.sel'));
+  const cont=document.getElementById('lista');
+  document.getElementById('contador').textContent=sel.length+(sel.length===1?' seleccionado':' seleccionados');
+  if(!sel.length){cont.innerHTML='<div class="vacio-aud">Aún no has seleccionado ningún pick. Toca cualquier tarjeta de las secciones 3 a 18.</div>';return;}
+  const porDia={};
+  sel.forEach(function(p){const d=p.dataset.dia;(porDia[d]=porDia[d]||[]).push(p);});
+  let html='';
+  ORDEN_DIAS.forEach(function(dia){
+    if(!porDia[dia]||!porDia[dia].length)return;
+    html+='<div class="dia-tit">'+(NOMBRE_DIA[dia]||dia.toUpperCase())+'</div>';
+    porDia[dia].forEach(function(p){
+      const id=p.dataset.id,color=p.dataset.color;
+      const tit=p.querySelector('.tit').textContent;
+      const match=p.querySelector('.match')?p.querySelector('.match').textContent:'';
+      const tags=Array.from(p.querySelectorAll('.pick-head .tag')).map(function(t){return '<span class="tag">'+t.textContent.trim()+'</span>';}).join('');
+      const just=p.querySelector('.pick-just').innerHTML;
+      const st=estados[id]||0;
+      const cls=st===1?' ok':(st===2?' ko':'');
+      const etq=st===1?'ACERTADO ✅':(st===2?'FALLADO ❌':'');
+      html+='<div class="apick'+cls+'" data-color="'+color+'" data-id="'+id+'" onclick="ciclo(\''+id+'\')">'
+          +'<div class="ah"><span class="tit">'+tit+'</span>'+tags
+          +'<span class="st">'+etq+'</span><span class="am">'+match+'</span></div>'
+          +'<p class="aj">'+just+'</p></div>';
+    });
+  });
+  cont.innerHTML=html;
+}
+function ciclo(id){estados[id]=((estados[id]||0)+1)%3;render();}
+function setAll(a){document.querySelectorAll('details').forEach(function(d){d.open=a;});}
+function limpiar(){document.querySelectorAll('.pick.selectable.sel').forEach(function(p){p.classList.remove('sel');});for(const k in estados)delete estados[k];render();}
+render();
+</script></body></html>
