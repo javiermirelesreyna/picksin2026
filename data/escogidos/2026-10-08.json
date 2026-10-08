@@ -1,39 +1,5 @@
 {
  "semana": "2026-10-08",
- "actualizado": "2026-10-08T03:12:03.725Z",
- "picks": [
-  {
-   "id": "nfl-2026-10-11|Los Angeles Chargers vs Denver Broncos|Yardas por tierra del partido más de 162.5",
-   "archivo": "nfl-2026-10-11",
-   "liga": "nfl",
-   "nombre": "NFL",
-   "pais": "Estados Unidos",
-   "bandera": "🇺🇸",
-   "jornada": null,
-   "sa": "2026-10-08",
-   "origen": "TOP 5",
-   "deporte": "americano",
-   "emoji": "🏈",
-   "partido": "Los Angeles Chargers vs Denver Broncos",
-   "mercado": "Yardas por tierra del partido más de 162.5",
-   "fecha": "2026-10-11",
-   "dia": "domingo",
-   "hora": "14:05",
-   "ts": 1791749100,
-   "sem": "2026-10-08",
-   "p": 0.8597,
-   "cuota": 1.21,
-   "confianza": "Baja",
-   "respaldo": "2/4 a favor, 1 en contra",
-   "familia": "Yardas por tierra del partido",
-   "ciclo": "2026-10-06",
-   "liquidacion": "con prorroga",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-10-08T03:12:03.725Z"
-   }
-  }
- ]
+ "actualizado": "2026-10-08T03:12:56.361Z",
+ "picks": []
 }
