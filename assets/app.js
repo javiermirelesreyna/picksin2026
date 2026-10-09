@@ -681,7 +681,8 @@
       (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
         '</span>' : '');
-    return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res });
+    return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res,
+      escoger: x.escoger });
   }
   /* un partido con sus picks: a la vista los del TOP 5 y los sugeridos (o el mejor, si no tiene);
      los demas de sus rankings, al tocar "mas picks" */
@@ -764,13 +765,23 @@
         } else {
           /* el top de tops (pedido de Javier, 07/10): los picks mas seguros del dia de todos los deportes,
              en el orden que publico publicar_sitio.py; aqui solo se buscan y se muestran */
-          var refs = ((top && top.dias) || {})[dia] || [], porPid = {};
+          var refs = ((top && top.dias) || {})[dia] || [], porPid = {}, porArchivo = {};
           lista.forEach(function (x) { porPid[x.pid] = x; });
+          docs.forEach(function (d) { porArchivo[d.archivo] = d; });
           var tops = refs.map(function (r) {
             var x = porPid[r.archivo + '|' + r.partido + '|' + r.mercado];
+            /* dia de valor (09/10/2026): la linea puede no estar en los rankings de su jornada; se
+               muestra con su propia ficha del top, igual que las demas. No se puede escoger: el
+               intermediario del editor solo acepta picks del analisis publicado */
+            if (!x && r.origen === 'valor' && porArchivo[r.archivo]) {
+              x = { p: { partido: r.partido, mercado: r.mercado, p: r.p, fecha: r.fecha, dia: r.dia, hora: r.hora, ts: r.ts,
+                sem: r.sem, confianza: r.confianza }, d: porArchivo[r.archivo], top5: false, sug: [], rk: [],
+                pid: r.archivo + '|' + r.partido + '|' + r.mercado, escoger: false };
+            }
             if (x) { x.top = r; }
             return x;
           }).filter(Boolean);
+          var deValor = refs.some(function (r) { return r.origen === 'valor'; });
           var rsTop = ((top && top.resumen) || {})[dia];
           h += '<div class="hoy-filtros">' + (orden === 'top' ? '' : '<nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
@@ -780,11 +791,17 @@
             '">📈 Por probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
             '">⭐ Top de tops</a></div></div>';
           if (orden === 'top') {
-            h += '<p class="criterio top-explica">⭐ <b>Los picks más seguros del día de todos los deportes.</b> Entran los que el motor da en ' +
+            h += (deValor
+              ? '<p class="criterio top-explica">⭐ <b>Top de valor del día.</b> Entran los picks que el motor respalda (de 60% a 87%, sin los de ' +
+                'confianza baja) y que el mercado cotiza a 1.45 o más, por encima de su cuota justa aun con la probabilidad prudente del motor. ' +
+                'Primero los más probables; uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' +
+                (top ? esc(top.maximo) : '—') + '. Cuando empieza su partido, un pick ya no entra ni sale ' +
+                '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>'
+              : '<p class="criterio top-explica">⭐ <b>Los picks más seguros del día de todos los deportes.</b> Entran los que el motor da en ' +
               (top ? pct(top.piso) : '—') + ' o más, ordenados por lo que su familia de mercados ha demostrado cumplir; sin los de confianza baja, ' +
               'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') +
               '. Cuando empieza su partido, un pick ya no entra ni sale: así se audita lo que estaba aquí antes de jugarse ' +
-              '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
+              '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>') +
               (rsTop && rsTop.comprobables ? '<p class="leyenda"><span>✅ ' + plural(rsTop.aciertos, 'acertado', 'acertados') + '</span><span>❌ ' +
                 plural(rsTop.fallos, 'fallado', 'fallados') + '</span>' + (rsTop.anulados ? '<span>➖ ' + rsTop.anulados + ' anulados o no comprobables</span>' : '') +
                 (rsTop.sin_resultado ? '<span>⏳ ' + rsTop.sin_resultado + ' sin resultado</span>' : '') + '<span>🎯 ' + pct(rsTop.acierto) + ' de acierto</span></p>' : '') +
