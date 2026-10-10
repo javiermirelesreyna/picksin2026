@@ -781,6 +781,9 @@ td.neto.menos { color: var(--rojo-texto); }
 .hoy-filtros .filtros { margin: 0; flex: 1 1 260px; }
 /* top de tops (07/10/2026): el lugar de cada pick y el conmutador de tres botones en celular */
 .chip.top-lugar { background: var(--verde); color: #fff; }
+/* top de tops con momios de Playdoit (regla R5, 09/10/2026): solo en modo editor */
+.chip.momio { background: var(--azul-suave); color: var(--azul-oscuro); font-weight: 700; }
+.chip.oportunidad { background: var(--ambar-suave); color: var(--ambar-texto); font-weight: 700; }
 .top-explica { margin: 0 0 10px; }
 @media (max-width: 520px) {
   .hoy-filtros .conmutador { display: flex; width: 100%; }

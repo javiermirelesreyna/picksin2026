@@ -262,6 +262,9 @@
   /* los escogidos que se juegan entre dos dias, de los archivos semanales que cubren esos dias; los
      que no tienen fecha salen en los rangos que llegan a hoy, para que no se pierdan */
   var PRIMERA_ESC = '2026-09-24';                 // primera semana con picks escogidos
+  /* los picks del top de tops que no estan en los rankings de su jornada se pueden escoger cuando el
+     intermediario del editor (Cloudflare) ya los acepta: worker.js del 09/10/2026 */
+  var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
   Esc.rango = function (desde, hasta) {
     return Promise.all(semanasEntre(desde, hasta).map(Esc.cargar)).then(function (ws) {
       var vistos = {};
@@ -672,11 +675,23 @@
     if (!t.length && x.rk.length) { t.push('<span class="chip neutro">📊 ' + esc(x.rk[0]) + '</span>'); }
     return t.join('');
   }
+  /* marcas de un pick del top (regla R5, 09/10/2026): el momio de Playdoit y sus avisos solo en modo
+     editor (la pagina publica no habla de apuestas); "no comprobable" (carreras) para todos */
+  function marcasTop(t) {
+    if (!t) { return ''; }
+    return (t.no_comprobable ? '<span class="chip neutro" title="La tabla no trae el minuto de cada corner: el motor no ha podido comprobar que cumple lo que promete">⚠️ No comprobable</span>' : '') +
+      (Editor.activo && t.momio ? '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(t.americano || americano(t.momio)) + '</span>' : '') +
+      (Editor.activo && t.sin_momio ? '<span class="chip neutro" title="Playdoit todavía no lo ofrece">⏳ Sin momio</span>' : '') +
+      (Editor.activo && t.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad encontrada: revisa información</span>' : '') +
+      (Editor.activo && t.diferencia_casa ? '<span class="chip oportunidad" title="' + esc(t.diferencia_casa) + '">🚧 Diferencia motor–casa en esta liga: revisa información</span>' : '') +
+      (Editor.activo && t.ganancia != null ? '<span class="chip ' + (t.ganancia > 0 ? 'verde' : t.ganancia < 0 ? 'baja' : 'neutro') + '">' +
+        (t.ganancia > 0 ? '+' : '') + num(t.ganancia, 2) + ' u</span>' : '');
+  }
   function renglonHoy(x, conPartido, lugar, res) {
     var p = x.p, d = x.d;
     var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
-      ' · ' + esc(p.partido) + ' ' : '') + deDondeSale(x) + chipConfianza(p.confianza) +
+      ' · ' + esc(p.partido) + ' ' : '') + marcasTop(x.top) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
@@ -770,18 +785,18 @@
           docs.forEach(function (d) { porArchivo[d.archivo] = d; });
           var tops = refs.map(function (r) {
             var x = porPid[r.archivo + '|' + r.partido + '|' + r.mercado];
-            /* dia de valor (09/10/2026): la linea puede no estar en los rankings de su jornada; se
-               muestra con su propia ficha del top, igual que las demas. No se puede escoger: el
-               intermediario del editor solo acepta picks del analisis publicado */
-            if (!x && r.origen === 'valor' && porArchivo[r.archivo]) {
+            /* regla R5 (09/10/2026): el top sale de TODAS las lineas del motor; la que no esta en los
+               rankings de su jornada se muestra con su ficha del top, igual que las demas. Se puede
+               escoger cuando el intermediario del editor ya acepta picks del top (TOP_ESCOGIBLE) */
+            if (!x && porArchivo[r.archivo]) {
               x = { p: { partido: r.partido, mercado: r.mercado, p: r.p, fecha: r.fecha, dia: r.dia, hora: r.hora, ts: r.ts,
                 sem: r.sem, confianza: r.confianza }, d: porArchivo[r.archivo], top5: false, sug: [], rk: [],
-                pid: r.archivo + '|' + r.partido + '|' + r.mercado, escoger: false };
+                pid: r.archivo + '|' + r.partido + '|' + r.mercado, escoger: TOP_ESCOGIBLE ? undefined : false };
             }
             if (x) { x.top = r; }
             return x;
           }).filter(Boolean);
-          var deValor = refs.some(function (r) { return r.origen === 'valor'; });
+          var r5 = !!(top && top.regla === 'R5');
           var rsTop = ((top && top.resumen) || {})[dia];
           h += '<div class="hoy-filtros">' + (orden === 'top' ? '' : '<nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
@@ -791,12 +806,16 @@
             '">📈 Por probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
             '">⭐ Top de tops</a></div></div>';
           if (orden === 'top') {
-            h += (deValor
-              ? '<p class="criterio top-explica">⭐ <b>Top de valor del día.</b> Entran los picks que el motor respalda (de 60% a 87%, sin los de ' +
-                'confianza baja) y que el mercado cotiza a 1.45 o más, por encima de su cuota justa aun con la probabilidad prudente del motor. ' +
-                'Primero los más probables; uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' +
-                (top ? esc(top.maximo) : '—') + '. Cuando empieza su partido, un pick ya no entra ni sale ' +
-                '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>'
+            h += (r5
+              ? '<p class="criterio top-explica">⭐ <b>Los mejores picks del día de todos los deportes.</b> Entran los de ' + pct(top.piso) +
+                ' o más que el motor respalda (sin los de confianza baja), de cualquier liga y mercado; primero el más seguro. Máximo ' +
+                esc(top.maximo) + ' por día y ' + esc(top.por_partido || 3) + ' del mismo partido. Cuando empieza su partido, un pick ya no entra ' +
+                'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
+                (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
+                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ' +
+                  '🔎 Oportunidad encontrada: Playdoit lo paga como si fuera mucho menos probable; revisa información antes de jugarlo. ' +
+                  '🚧 Diferencia motor–casa: en esa liga Playdoit pone la línea de ese mercado muy lejos de lo que espera el motor; ' +
+                  'manda el motor, pero revisa información.</p>' : '')
               : '<p class="criterio top-explica">⭐ <b>Los picks más seguros del día de todos los deportes.</b> Entran los que el motor da en ' +
               (top ? pct(top.piso) : '—') + ' o más, ordenados por lo que su familia de mercados ha demostrado cumplir; sin los de confianza baja, ' +
               'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') +
@@ -1469,7 +1488,8 @@
   function renglonTop(r, lugar) {
     var res = r.estado ? [r.estado, r.detalle || ''] : [jugado(r) ? 'por_auditar' : 'pendiente', ''];
     var sub = '<span class="chip top-lugar">⭐ ' + lugar + '</span> <span class="cuando">🕐 ' + esc(r.hora || '—') + '</span> · ' +
-      bandera(r.bandera) + ' <a href="#/analisis/' + esc(r.semana) + '/' + esc(r.archivo) + '">' + esc(r.nombre) + '</a> · ' + esc(r.partido);
+      bandera(r.bandera) + ' <a href="#/analisis/' + esc(r.semana) + '/' + esc(r.archivo) + '">' + esc(r.nombre) + '</a> · ' + esc(r.partido) +
+      ' ' + marcasTop(r);
     return renglon(r, { doc: { archivo: r.archivo }, sub: sub, resultado: res, auditada: !!r.estado, escoger: false, sinSello: true });
   }
   function bloqueTop(top, sem) {
@@ -1481,6 +1501,9 @@
     }
     h += marcadorCajas([['✅ Acertados', c.aciertos + ' de ' + c.comprobables, 'verde'], ['🎯 Acierto real', pct(c.acierto), 'verde'],
       ['📈 Prometido (media)', pct(c.prometido), 'azul'], ['⏳ Sin resultado', c.sin_resultado, c.sin_resultado ? 'azul' : '']]) +
+      (Editor.activo && c.con_momio ? marcadorCajas([['💲 Con momio de Playdoit', c.con_momio, 'azul'],
+        ['💰 Ganancia (a 1 unidad)', (c.ganancia > 0 ? '+' : '') + num(c.ganancia, 2) + ' u', c.ganancia >= 0 ? 'verde' : ''],
+        ['📊 Por pick', (c.ganancia_por_pick > 0 ? '+' : '') + num(c.ganancia_por_pick, 3) + ' u', c.ganancia_por_pick >= 0 ? 'verde' : '']]) : '') +
       tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado });
     var dias = Object.keys(top.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6); }).sort();
     h += '<details class="caja" data-k="top-dias" open><summary><span class="emoji">🗓️</span>Por día <span class="cuenta">' +
@@ -1660,6 +1683,13 @@
   function americano(dec) {
     if (!dec || dec <= 1) { return '—'; }
     return dec >= 2 ? '+' + Math.round((dec - 1) * 100) : '-' + Math.round(100 / (dec - 1));
+  }
+  /* "09/10 18:04" en hora del centro de Mexico (la hora de una lectura de momios) */
+  function horaMx(iso) {
+    try {
+      return new Date(iso).toLocaleString('es-MX', { timeZone: 'America/Mexico_City', day: '2-digit', month: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false }).replace(',', '');
+    } catch (e) { return String(iso || ''); }
   }
   var MXN = (function () {
     try { return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 2, maximumFractionDigits: 2 }); } catch (e) { return null; }
