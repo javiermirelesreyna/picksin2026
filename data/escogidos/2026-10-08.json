@@ -1,6 +1,6 @@
 {
  "semana": "2026-10-08",
- "actualizado": "2026-10-10T22:17:36.923Z",
+ "actualizado": "2026-10-10T22:17:51.185Z",
  "picks": [
   {
    "id": "mexico__liga-mx-j11|Atlas FC vs CD Guadalajara|Under 6.5 Tarjetas",
@@ -26,6 +26,32 @@
    ],
    "escogido": {
     "picksin": "2026-10-10T22:17:28.579Z"
+   }
+  },
+  {
+   "id": "mexico__liga-mx-j11|Atlas FC vs CD Guadalajara|Under 5.5 Tarjetas",
+   "archivo": "mexico__liga-mx-j11",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 11,
+   "sa": "2026-10-08",
+   "origen": "Top de tops",
+   "partido": "Atlas FC vs CD Guadalajara",
+   "mercado": "Under 5.5 Tarjetas",
+   "fecha": "2026-10-10",
+   "dia": "sábado",
+   "hora": "19:00",
+   "ts": 1791680400,
+   "sem": "2026-10-08",
+   "p": 0.822,
+   "confianza": "Alta",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-10T22:17:51.185Z"
    }
   },
   {
