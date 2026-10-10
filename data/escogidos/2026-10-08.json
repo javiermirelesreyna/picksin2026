@@ -1,5 +1,32 @@
 {
  "semana": "2026-10-08",
- "actualizado": "2026-10-08T03:12:56.361Z",
- "picks": []
+ "actualizado": "2026-10-10T22:17:27.086Z",
+ "picks": [
+  {
+   "id": "mexico__liga-mx-j11|Club America vs CF Monterrey|Under 7.5 Tarjetas",
+   "archivo": "mexico__liga-mx-j11",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 11,
+   "sa": "2026-10-08",
+   "origen": "Top de tops",
+   "partido": "Club America vs CF Monterrey",
+   "mercado": "Under 7.5 Tarjetas",
+   "fecha": "2026-10-10",
+   "dia": "sábado",
+   "hora": "21:10",
+   "ts": 1791688200,
+   "sem": "2026-10-08",
+   "p": 0.942,
+   "confianza": "Alta",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-10T22:17:27.086Z"
+   }
+  }
+ ]
 }
