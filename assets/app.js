@@ -1213,7 +1213,6 @@
         h += cabLiga(d, '📅 Jornada ' + esc(d.jornada) + (d.desde ? ' · ' + rango(d.desde, d.hasta) : '') +
           (d.generado ? ' · generado el ' + esc(d.generado) : ''));
         var acc = [];
-        if (d.reporte) { acc.push('<a class="boton" href="' + esc(d.reporte) + '">📖 Reporte completo con narrativa</a>'); }
         if (d.auditoria) { acc.push('<a class="boton secundario" href="#/auditoria/' + esc(d.semana) + '/' + esc(d.archivo) + '">🔍 Ver su auditoría</a>'); }
         if (acc.length) { h += '<div class="acciones">' + acc.join('') + '</div>'; }
         if (d.liga_joven) {
