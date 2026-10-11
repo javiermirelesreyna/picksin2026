@@ -240,7 +240,7 @@ h3 { font-size: 1rem; margin: 22px 0 10px; }
   background: var(--superficie); border: 1px solid var(--borde); border-radius: 999px; padding: 6px 12px;
 }
 .indice a:hover { border-color: var(--azul); color: var(--azul-oscuro); }
-section[id] { scroll-margin-top: 118px; }
+section[id], details[id] { scroll-margin-top: 118px; }
 
 /* ------------------------------------------------------------ picks */
 .grid-picks { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
@@ -934,3 +934,25 @@ body.con-intro { overflow: hidden; }
 @keyframes escribir { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
 @keyframes sello { from { opacity: 0; transform: scale(2.3) rotate(-8deg); } to { opacity: 1; transform: scale(1) rotate(-2deg); } }
 @keyframes aparecer { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ------------------------------------------------------------ ajustes del 10/10/2026 */
+/* analisis: desplegables con una linea de que traen adentro; rankings agrupados */
+details.caja > summary .sum-txt { display: flex; flex-direction: column; min-width: 0; }
+details.caja > summary .sum-txt small { font-weight: 500; font-size: .78rem; color: var(--suave); line-height: 1.3; margin-top: 2px; }
+details.caja .grid-picks { margin-top: 2px; }
+.sub-rk + .sub-rk { margin-top: 14px; }
+.sub-rk h3 {
+  display: flex; align-items: center; gap: 8px; margin: 6px 0 4px; font-size: .92rem; color: var(--azul-oscuro);
+  padding-bottom: 6px; border-bottom: 2px solid var(--borde);
+}
+.sub-rk h3 .cuenta { margin-left: auto; color: var(--tenue); font-weight: 600; font-size: .8rem; white-space: nowrap; }
+.sub-rk .lista .fila:first-child { border-top: 0; }
+/* resultados: cada pestana con su emoji y su nombre en un solo renglon, tambien en telefonos angostos */
+.res-tabs { gap: 3px; padding: 3px; }
+.res-tabs a { flex: 1 1 auto; white-space: nowrap; padding: 8px 4px; }
+.res-tabs .tab-badge { position: absolute; top: -6px; right: -3px; margin: 0; }
+@media (max-width: 440px) { .res-tabs a { font-size: .8rem; padding: 8px 2px; letter-spacing: -.01em; } }
+@media (max-width: 370px) { .res-tabs a { font-size: .74rem; } }
+/* hoy: "Por partido · Probabilidad · Top de tops" en un solo renglon */
+@media (max-width: 520px) { .hoy-filtros .conmutador a { white-space: nowrap; flex: 1 1 auto; padding: 7px 3px; } }
+@media (max-width: 370px) { .hoy-filtros .conmutador a { font-size: .74rem; } }

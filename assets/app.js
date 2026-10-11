@@ -169,7 +169,10 @@
     r9a_choque_disciplinario: '🟥', r9b_predominio_faltas: '🦵', r9c_supremacia_offsides: '🚩',
     r9d_carrera_5_corners: '🏎️', r9e_intensidad_compartida: '🔥', r9f_consistencia_goleadora: '🔁',
     r9g_mitad_mas_goles: '⏳', r9h_carrera_3_corners: '⛳',
-    nhl_total: '🥅', nhl_local: '🏠', nhl_visita: '✈️'
+    nhl_total: '🥅', nhl_local: '🏠', nhl_visita: '✈️',
+    nfl_total: '🏈', nfl_total_local: '🏠', nfl_total_visita: '✈️', nfl_td_partido: '🙌', nfl_td_local: '🏠', nfl_td_visita: '✈️',
+    nfl_td_carrera: '🏃', nfl_yardas_partido: '📏', nfl_yardas_local: '🏠', nfl_yardas_visita: '✈️', nfl_1m_total: '⏱️',
+    nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️'
   };
   var EMOJI_PERSONA = { a_el_muro: '🧱', b_la_disparidad: '⚖️', c_la_boveda: '🔐', d_el_espejismo: '🏜️', e_el_radar: '📡' };
   var EMOJI_METRICA = { remates: '🎯', sot: '🥅', corners: '⛳', tarjetas: '🟨', faltas: '🦵', offsides: '🚩' };
@@ -261,7 +264,10 @@
   Esc.reiniciar = function () { Esc.datos = {}; Esc.cargas = {}; };
   /* los escogidos que se juegan entre dos dias, de los archivos semanales que cubren esos dias; los
      que no tienen fecha salen en los rangos que llegan a hoy, para que no se pierdan */
-  var PRIMERA_ESC = '2026-09-24';                 // primera semana con picks escogidos
+  /* Javier (10/10/2026): "deja en cero los contadores de resultados, empezaremos de nuevo". Resultados,
+     ranking y el Inicio cuentan los escogidos desde este dia; los de antes (desde el 2026-09-24) siguen
+     guardados (en su analisis y su auditoria) y vuelven a contar si se cambia esta fecha. */
+  var CUENTAS_DESDE = '2026-10-10';
   /* los picks del top de tops que no estan en los rankings de su jornada se pueden escoger cuando el
      intermediario del editor (Cloudflare) ya los acepta: worker.js del 09/10/2026 */
   var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
@@ -277,7 +283,8 @@
   };
   /* todo lo escogido desde el principio, con el resultado de cada pick */
   function cargarTodo() {
-    return Esc.rango(PRIMERA_ESC, masDias(hoy(), 21)).then(function (picks) {
+    return Esc.rango(CUENTAS_DESDE, masDias(hoy(), 21)).then(function (picks) {
+      picks = picks.filter(function (p) { return !p.fecha || p.fecha >= CUENTAS_DESDE; });
       return cargarResultados(picks).then(function (m) { return { picks: picks, mapas: m }; });
     });
   }
@@ -495,7 +502,6 @@
     var c = [chipConfianza(p.confianza)];
     if (p.cuota) { c.push('<span class="chip neutro">Cuota implícita ' + esc(num(p.cuota, 2)) + '</span>'); }
     if (p.respaldo) { c.push('<span class="chip neutro" title="Lo que hace cada equipo y lo que permite su rival">⚖️ Respaldo ' + esc(p.respaldo) + '</span>'); }
-    if (p.liga_joven) { c.push('<span class="chip">🌱 Liga joven</span>'); }
     if (o.conOrigen && o.origen) { c.push('<span class="chip">' + emojiOrigen(o.origen) + ' ' + esc(o.origen) + '</span>'); }
     return '<div class="chips">' + c.join('') + '</div>';
   }
@@ -693,7 +699,6 @@
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
       ' · ' + esc(p.partido) + ' ' : '') + marcasTop(x.top) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
-      (p.liga_joven ? '<span class="chip">🌱 Liga joven</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
         '</span>' : '');
     return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res,
@@ -737,6 +742,41 @@
     if (orden === 'p' || orden === 'top') { a.push('orden=' + orden); }
     return '#/hoy' + (a.length ? '?' + a.join('&') : '');
   }
+  /* pedido de Javier (10/10): en las tres vistas de Hoy lo que ya empezo baja al final, plegado;
+     arriba solo lo que todavia se puede escoger */
+  function empezado(p) { return p.ts ? Date.now() >= p.ts * 1000 : !!(p.fecha && p.fecha < hoy()); }
+  function plegadoEmpezados(k, xs, html, partidoDe) {
+    if (!xs.length) { return ''; }
+    var n = unicos(xs.map(partidoDe || function (x) { return x.d.archivo + '|' + x.p.partido; })).length;
+    var ok = xs.filter(function (x) { return x.top && x.top.estado === 'acierto'; }).length;
+    var ko = xs.filter(function (x) { return x.top && x.top.estado === 'fallo'; }).length;
+    return '<details class="caja ph-mas" data-k="' + k + '"><summary>🔒 Ya empezaron · ' + plural(xs.length, 'pick', 'picks') +
+      (n > 1 ? ' de ' + n + ' partidos' : '') + (ok + ko ? ' · ✅ ' + ok + ' · ❌ ' + ko : '') + '</summary><div class="cuerpo">' + html + '</div></details>';
+  }
+  /* el top de tops del dia: cada pick conserva su lugar (⭐ 1...) aunque se filtre o ya haya empezado */
+  function topHoy(tops, ver) {
+    if (!tops.length) { return vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.'); }
+    if (!ver.length) { return vacio('📭', 'Ningún pick del top de tops de este día con ese filtro.'); }
+    var ren = function (x) { return renglonHoy(x, true, tops.indexOf(x) + 1, x.top && x.top.estado ? [x.top.estado, x.top.detalle || ''] : null); };
+    var prox = ver.filter(function (x) { return !empezado(x.p); }), emp = ver.filter(function (x) { return empezado(x.p); });
+    return (prox.length ? '<ul class="lista tabla-caja top-tops">' + prox.map(ren).join('') + '</ul>'
+      : vacio('🔒', 'Todos los picks del top de este día ya empezaron.')) +
+      plegadoEmpezados('hoy-top-empezados', emp, '<ul class="lista top-tops">' + emp.map(ren).join('') + '</ul>');
+  }
+  /* Hoy se reacomoda solo cuando empieza un partido (si la pagina se queda abierta) y al volver a ella */
+  var relojHoy = null, corteHoy = 0;
+  function vigilarHoy(tss) {
+    clearTimeout(relojHoy);
+    var ahora = Date.now(), ruta = location.hash;
+    corteHoy = tss.filter(function (t) { return t && t * 1000 > ahora; }).sort(function (a, b) { return a - b; })[0] || 0;
+    if (!corteHoy) { return; }
+    relojHoy = setTimeout(function () {
+      if (location.hash === ruta && !document.hidden) { router(true); }
+    }, Math.min(corteHoy * 1000 - ahora + 1500, 2147483000));
+  }
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && corteHoy && Date.now() >= corteHoy * 1000 && /^#\/hoy/.test(location.hash)) { router(true); }
+  });
   function vHoy(partes, q) {
     var h0 = hoy(), dias = [h0, masDias(h0, 1), masDias(h0, 2)];
     var dia = dias.indexOf(q.get('dia')) >= 0 ? q.get('dia') : h0;
@@ -763,15 +803,20 @@
         }).join('') + '</nav>';
         if (Editor.activo && sels) { h += bloquePendientes(sels, mapas, dia); }
 
+        /* los escogidos que ya empezaron, al final y plegados (sugerencia aprobada por Javier, 10/10) */
+        var escProx = escDia.filter(function (p) { return !empezado(p); }), escEmp = escDia.filter(empezado);
+        var renE = function (p) { return renglonEscogido(p, null, {}); };
         h += '<h2><span class="emoji">✅</span>Escogidos ' + (dia === h0 ? 'de hoy' : 'del ' + fCorta(dia)) + ' <span class="cuenta">' + escDia.length + '</span></h2>' +
-          (escDia.length ? '<ul class="lista tabla-caja">' + escDia.map(function (p) { return renglonEscogido(p, null, {}); }).join('') + '</ul>'
-            : '<p class="criterio">' + (Editor.activo ? 'Todavía no hay picks escogidos para este día: toca <b>＋</b> en los de abajo.' : 'Todavía no hay picks escogidos para este día.') + '</p>');
+          (escProx.length ? '<ul class="lista tabla-caja">' + escProx.map(renE).join('') + '</ul>'
+            : escDia.length ? '<p class="criterio">Los escogidos de este día ya empezaron.</p>'
+            : '<p class="criterio">' + (Editor.activo ? 'Todavía no hay picks escogidos para este día: toca <b>＋</b> en los de abajo.' : 'Todavía no hay picks escogidos para este día.') + '</p>') +
+          plegadoEmpezados('hoy-esc-empezados', escEmp, '<ul class="lista">' + escEmp.map(renE).join('') + '</ul>', function (p) { return p.archivo + '|' + p.partido; });
 
         var ligas = unicos(lista.map(function (x) { return x.d.liga; })), partidos = partidosDe(lista, ordenLiga);
-        var cuenta = function (f) {
-          return lista.filter(function (x) { return f === 'top5' ? x.top5 : f === 'sug' ? x.sug.length : f === 'esc' ? !!Esc.buscar(x.pid) : true; });
+        var filtrar = function (L, f) {
+          return L.filter(function (x) { return f === 'top5' ? x.top5 : f === 'sug' ? x.sug.length : f === 'esc' ? !!Esc.buscar(x.pid) : true; });
         };
-        var ver = cuenta(filtro);
+        var ver = filtrar(lista, filtro);
         h += '<h2 id="s-picks"><span class="emoji">📋</span>Todos los picks ' + (dia === h0 ? 'de hoy' : 'del ' + fCorta(dia)) + '</h2>' +
           '<p class="sub">' + plural(lista.length, 'pick', 'picks') + ' · ' + plural(partidos.length, 'partido', 'partidos') + ' · ' +
           plural(ligas.length, 'liga', 'ligas') + '</p>';
@@ -798,17 +843,20 @@
           }).filter(Boolean);
           var r5 = !!(top && top.regla === 'R5');
           var rsTop = ((top && top.resumen) || {})[dia];
-          h += '<div class="hoy-filtros">' + (orden === 'top' ? '' : '<nav class="filtros" aria-label="Qué picks">' +
+          /* los filtros tambien en el top de tops (pedido de Javier, 10/10): cuentan entre sus picks */
+          var base = orden === 'top' ? tops : lista;
+          h += '<div class="hoy-filtros"><nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
-              return '<a href="' + urlHoy(dia, f[0], orden) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + cuenta(f[0]).length + '</b></a>';
-            }).join('') + '</nav>') + '<div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
+              return '<a href="' + urlHoy(dia, f[0], orden) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + filtrar(base, f[0]).length + '</b></a>';
+            }).join('') + '</nav><div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
             '" aria-current="' + (orden === 'partido') + '">🕐 Por partido</a><a href="' + urlHoy(dia, filtro, 'p') + '" aria-current="' + (orden === 'p') +
-            '">📈 Por probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
+            '">📈 Probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
             '">⭐ Top de tops</a></div></div>';
           if (orden === 'top') {
-            h += (r5
+            /* la explicacion, plegada (sugerencia aprobada por Javier, 10/10): los picks a la vista */
+            h += '<details class="caja ph-mas top-info" data-k="top-info"><summary>ℹ️ Cómo se eligen</summary><div class="cuerpo">' + (r5
               ? '<p class="criterio top-explica">⭐ <b>Los mejores picks del día de todos los deportes.</b> Entran los de ' + pct(top.piso) +
-                ' o más que el motor respalda (sin los de confianza baja), de cualquier liga y mercado; primero el más seguro. Máximo ' +
+                ' o más que el motor respalda (sin los de confianza baja; en fútbol, desde la jornada 5 también los de equipos que aún no juegan 7 partidos, porque ahí el motor acierta igual), de cualquier liga y mercado; primero el más seguro. Máximo ' +
                 esc(top.maximo) + ' por día y ' + esc(top.por_partido || 3) + ' del mismo partido. Cuando empieza su partido, un pick ya no entra ' +
                 'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
                 (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
@@ -820,21 +868,23 @@
               (top ? pct(top.piso) : '—') + ' o más, ordenados por lo que su familia de mercados ha demostrado cumplir; sin los de confianza baja, ' +
               'uno por partido y no más de tres de la misma liga ni del mismo mercado. Máximo ' + (top ? esc(top.maximo) : '—') +
               '. Cuando empieza su partido, un pick ya no entra ni sale: así se audita lo que estaba aquí antes de jugarse ' +
-              '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>') +
+              '(<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>') + '</div></details>' +
               (rsTop && rsTop.comprobables ? '<p class="leyenda"><span>✅ ' + plural(rsTop.aciertos, 'acertado', 'acertados') + '</span><span>❌ ' +
                 plural(rsTop.fallos, 'fallado', 'fallados') + '</span>' + (rsTop.anulados ? '<span>➖ ' + rsTop.anulados + ' anulados o no comprobables</span>' : '') +
                 (rsTop.sin_resultado ? '<span>⏳ ' + rsTop.sin_resultado + ' sin resultado</span>' : '') + '<span>🎯 ' + pct(rsTop.acierto) + ' de acierto</span></p>' : '') +
-              (tops.length ? '<ul class="lista tabla-caja top-tops">' + tops.map(function (x, i) {
-                return renglonHoy(x, true, i + 1, x.top && x.top.estado ? [x.top.estado, x.top.detalle || ''] : null);
-              }).join('') + '</ul>'
-                : vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.'));
+              topHoy(tops, filtrar(tops, filtro));
           } else if (!ver.length) {
             h += vacio('📭', 'Ningún pick de este día con ese filtro.');
           } else if (orden === 'p') {
+            /* lo que ya empezo, al final y plegado, como en "por partido" (pedido de Javier, 10/10) */
             var todos = ver.slice().sort(function (a, b) { return (b.p.p || 0) - (a.p.p || 0); });
-            h += '<ul class="lista tabla-caja">' + todos.slice(0, 60).map(function (x) { return renglonHoy(x, true); }).join('') + '</ul>' +
-              (todos.length > 60 ? '<details class="caja ph-mas" data-k="hoy-resto"><summary>Ver los otros ' + (todos.length - 60) + ' picks</summary>' +
-                '<ul class="lista">' + todos.slice(60).map(function (x) { return renglonHoy(x, true); }).join('') + '</ul></details>' : '');
+            var proxP = todos.filter(function (x) { return !empezado(x.p); }), empP = todos.filter(function (x) { return empezado(x.p); });
+            var renP = function (x) { return renglonHoy(x, true); };
+            h += (proxP.length ? '<ul class="lista tabla-caja">' + proxP.slice(0, 60).map(renP).join('') + '</ul>' +
+              (proxP.length > 60 ? '<details class="caja ph-mas" data-k="hoy-resto"><summary>Ver los otros ' + (proxP.length - 60) + ' picks</summary>' +
+                '<ul class="lista">' + proxP.slice(60).map(renP).join('') + '</ul></details>' : '')
+              : vacio('🔒', 'Todos los partidos de este día ya empezaron.')) +
+              plegadoEmpezados('hoy-empezados-p', empP, '<ul class="lista">' + empP.map(renP).join('') + '</ul>');
           } else {
             /* los que ya empezaron van al final, plegados: arriba solo lo que todavia se puede escoger */
             var ms = partidosDe(ver, ordenLiga), ya = function (m) { return m.ts ? Date.now() >= m.ts * 1000 : false; };
@@ -847,6 +897,7 @@
           }
         }
         pintar(h, dia === h0 ? 'Hoy' : fLarga(dia));
+        vigilarHoy(lista.concat(tops || []).map(function (x) { return x.p.ts; }).concat(escDia.map(function (p) { return p.ts; })));
       });
     });
   }
@@ -900,7 +951,7 @@
                 return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
                   '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
                   (L.narrativa ? ' <span class="chip">📖 Con narrativa</span>' : '') +
-                  (L.liga_joven ? ' <span class="chip neutro">🌱 Liga joven</span>' : '') + '</div>' +
+                  (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
                   '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
                   '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
                   (n ? ' · <span class="sello">✅ ' + n + ' escogido' + (n === 1 ? '' : 's') + '</span>' : '') + '</div>' +
@@ -954,6 +1005,9 @@
       if (!(k in grupos)) { grupos[k] = []; orden.push(k); }
       grupos[k].push(f);
     });
+    /* los partidos van primero: por dia y por hora */
+    orden.sort(function (a, b) { return (a || '9').localeCompare(b || '9'); });
+    orden.forEach(function (k) { grupos[k].sort(function (a, b) { return (a.hora || '99').localeCompare(b.hora || '99'); }); });
     return orden.map(function (k) {
       return '<div class="dia-cab">🗓️ ' + (k ? fLarga(k) : 'Fecha por confirmar') + '<span class="cuenta">' + grupos[k].length +
         (grupos[k].length === 1 ? ' partido' : ' partidos') + '</span></div>' + grupos[k].map(function (f) { return ficha(f, d); }).join('');
@@ -982,34 +1036,93 @@
         '<th class="num">Local hace más</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '') +
       '</div></details>';
   }
-  /* analisis (o auditoria, con mapaRes) de una jornada: TOP 5, sugeridos y rankings */
+  /* los rankings del futbol en 5 desplegables (pedido de Javier, 10/10); adentro, cada ranking del
+     motor con su orden. Uno que no este en la lista va al ultimo grupo. */
+  var GRUPOS_MERCADO = [
+    { id: 'resultado', e: '🥅', t: 'Resultado y hándicap', d: 'quién gana, hándicap y ambos anotan', s: ['top_a_moneyline_btts'] },
+    { id: 'masmenos', e: '🎯', t: 'Más/menos', d: 'goles, remates, remates al arco, tarjetas, córners y faltas',
+      s: ['top_b_ou_goles_remates_sot', 'top_c_ou_tarjetas_corners_faltas'] },
+    { id: 'dominios', e: '💪', t: 'Dominios', d: 'quién hace más y quién recibe más',
+      s: ['top_d_dominio', 'r9a_choque_disciplinario', 'r9b_predominio_faltas', 'r9c_supremacia_offsides'] },
+    { id: 'pt', e: '⚡', t: 'Primer tiempo', d: 'goles, tarjetas y córners', s: ['r8a_gol_1h', 'r8b_tarjeta_1h', 'r8c_carrera_3_corners_1h'] },
+    { id: 'mitades', e: '🧩', t: 'Mitades y carreras', d: 'gol en ambas mitades, mitad con más goles, carreras a 3 y 5 córners, ambos con 2+ tarjetas',
+      s: ['r9f_consistencia_goleadora', 'r9g_mitad_mas_goles', 'r9h_carrera_3_corners', 'r9d_carrera_5_corners', 'r9e_intensidad_compartida'] }
+  ];
+  /* la NFL igual (sugerencia aprobada por Javier, 10/10): sus 15 rankings en 4 desplegables */
+  var GRUPOS_NFL = [
+    { id: 'puntos', e: '🏈', t: 'Puntos', d: 'del partido, del local y del visitante', s: ['nfl_total', 'nfl_total_local', 'nfl_total_visita'] },
+    { id: 'td', e: '🙌', t: 'Touchdowns', d: 'del partido, de cada equipo y de carrera',
+      s: ['nfl_td_partido', 'nfl_td_local', 'nfl_td_visita', 'nfl_td_carrera'] },
+    { id: 'yardas', e: '🏃', t: 'Yardas por tierra', d: 'del partido y de cada equipo', s: ['nfl_yardas_partido', 'nfl_yardas_local', 'nfl_yardas_visita'] },
+    { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos y touchdowns de la 1ª y la 2ª mitad',
+      s: ['nfl_1m_total', 'nfl_1m_local', 'nfl_1m_visita', 'nfl_td_1m', 'nfl_2m_total'] }
+  ];
+  function gruposMercado(rankings, grupos) {
+    var ult = grupos.length - 1;
+    return grupos.map(function (g, i) {
+      var rs = [];
+      g.s.forEach(function (s) { rankings.forEach(function (r) { if (r.seccion === s) { rs.push(r); } }); });
+      if (i === ult) {
+        rankings.forEach(function (r) { if (!grupos.some(function (x) { return x.s.indexOf(r.seccion) >= 0; })) { rs.push(r); } });
+      }
+      return { g: g, rs: rs };
+    }).filter(function (x) { return x.rs.length; });
+  }
+  /* los rankings en desplegables por grupo (con grupos) o uno por ranking (NHL) */
+  function rankingsHTML(rankings, grupos, aud, res, o) {
+    if (!grupos) {
+      return rankings.map(function (r) {
+        return resumenCaja('', 'r-' + r.seccion, EMOJI_SECCION[r.seccion] || '📊', esc(r.titulo), '', aud ? cuentaAud(r.picks, res) : r.total,
+          listaRanking(r, aud, res, o));
+      }).join('');
+    }
+    return gruposMercado(rankings, grupos).map(function (x) {
+      var todos = [].concat.apply([], x.rs.map(function (r) { return r.picks; }));
+      var cuenta = aud ? cuentaAud(todos, res) : x.rs.reduce(function (s, r) { return s + (r.total || r.picks.length); }, 0);
+      var cuerpo = x.rs.length === 1 && !x.g.d ? listaRanking(x.rs[0], aud, res, o) : x.rs.map(function (r) {
+        return '<div class="sub-rk"><h3><span class="emoji">' + (EMOJI_SECCION[r.seccion] || '📊') + '</span>' + esc(r.titulo) +
+          '<span class="cuenta">' + (aud ? cuentaAud(r.picks, res) : r.total) + '</span></h3>' + listaRanking(r, aud, res, o) + '</div>';
+      }).join('');
+      return resumenCaja('', 'g-' + x.g.id, x.g.e, esc(x.g.t), x.g.d ? esc(x.g.d) : '', cuenta, cuerpo);
+    }).join('');
+  }
+  /* cuantos acerto (de los comprobables) una lista de picks auditada */
+  function cuentaAud(picks, res) {
+    return picks.filter(function (p) { return res(p)[0] === 'acierto'; }).length + ' de ' +
+      picks.filter(function (p) { var e = res(p)[0]; return e === 'acierto' || e === 'fallo'; }).length + ' ✅';
+  }
+  function resumenCaja(id, k, emoji, titulo, detalle, cuenta, cuerpo) {
+    return '<details class="caja"' + (id ? ' id="' + id + '"' : '') + ' data-k="' + esc(k) + '"><summary><span class="emoji">' + emoji + '</span>' +
+      '<span class="sum-txt">' + titulo + (detalle ? '<small>' + detalle + '</small>' : '') + '</span><span class="cuenta">' + cuenta + '</span></summary>' +
+      '<div class="cuerpo">' + cuerpo + '</div></details>';
+  }
+  function listaRanking(r, aud, res, o) {
+    return (r.no_validable ? '<p class="nota">⚠️ No validable con la tabla: el orden en que caen los córners no se puede reconstruir, ' +
+        'así que estas probabilidades no están auditadas.</p>' : '') +
+      '<ul class="lista">' + r.picks.map(function (p) { return fila(p, o({ origen: r.titulo, resultado: res(p) })); }).join('') + '</ul>' +
+      (r.total > r.picks.length ? '<p class="criterio">Se muestran los ' + r.picks.length + ' de mayor respaldo de ' + r.total + '.</p>' : '');
+  }
+  /* analisis (o auditoria, con mapaRes) de una jornada: TOP 5 y sugeridos plegados, y los rankings */
   function cuerpoJornada(d, mapaRes) {
     var aud = !!mapaRes, h = '';
     var res = function (p) { return aud ? (mapaRes[p.partido + '|' + p.mercado] || ['no_comprobable', '']) : null; };
     var base = { doc: d, auditada: !!d.auditoria, escoger: !aud };
     var o = function (extra) { var r = {}; for (var k in base) { r[k] = base[k]; } for (k in extra) { r[k] = extra[k]; } return r; };
-    h += '<section id="s-top5"><h2><span class="emoji">🏆</span>TOP 5 de la jornada</h2>' + ((d.top5 || []).length
-      ? '<div class="grid-picks">' + d.top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
-      : vacio('🏆', 'Ningún pick de esta jornada alcanzó el nivel del TOP 5.')) + '</section>';
-    h += '<section id="s-sugeridos"><h2><span class="emoji">💡</span>Picks sugeridos</h2><div class="grid-picks">' +
-      (d.sugeridos || []).map(function (s) {
+    var top5 = d.top5 || [], sugs = d.sugeridos || [], conPick = sugs.filter(function (s) { return s.pick; });
+    h += '<h2><span class="emoji">🎯</span>Picks de la jornada</h2>';
+    h += resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 de la jornada', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
+      ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
+      : vacio('🏆', 'Ningún pick de esta jornada alcanzó el nivel del TOP 5.'));
+    h += resumenCaja('s-sugeridos', 'sugeridos', '💡', 'Picks sugeridos', 'uno por cada criterio',
+      aud && conPick.length ? cuentaAud(conPick.map(function (s) { return s.pick; }), res) : conPick.length + (sugs.length > conPick.length ? ' de ' + sugs.length : ''),
+      '<div class="grid-picks">' + sugs.map(function (s) {
         var cab = '<div class="persona"><span class="emoji">' + (EMOJI_PERSONA[s.clave] || '💡') + '</span>' + esc(s.nombre) + '</div>' +
           (s.criterio ? '<p class="criterio">' + esc(s.criterio) + '</p>' : '');
         return s.pick ? tarjeta(s.pick, o({ origen: s.nombre, cabecera: cab, resultado: res(s.pick) }))
           : '<article class="pick">' + cab + '<p class="criterio">🚫 Desierto esta jornada' + (s.motivo ? ': ' + esc(s.motivo) : '') + '</p></article>';
-      }).join('') + '</div></section>';
+      }).join('') + '</div>');
     h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + ((d.rankings || []).length
-      ? d.rankings.map(function (r) {
-        var cuenta = aud ? r.picks.filter(function (p) { return res(p)[0] === 'acierto'; }).length + ' de ' +
-          r.picks.filter(function (p) { var e = res(p)[0]; return e === 'acierto' || e === 'fallo'; }).length + ' ✅' : r.total;
-        return '<details class="caja" data-k="r-' + esc(r.seccion) + '"><summary><span class="emoji">' + (EMOJI_SECCION[r.seccion] || '📊') +
-          '</span>' + esc(r.titulo) + '<span class="cuenta">' + cuenta + '</span></summary><div class="cuerpo">' +
-          (r.no_validable ? '<p class="nota">⚠️ No validable con la tabla: el orden en que caen los córners no se puede reconstruir, ' +
-            'así que estas probabilidades no están auditadas.</p>' : '') +
-          '<ul class="lista">' + r.picks.map(function (p) { return fila(p, o({ origen: r.titulo, resultado: res(p) })); }).join('') + '</ul>' +
-          (r.total > r.picks.length ? '<p class="criterio">Se muestran los ' + r.picks.length + ' de mayor respaldo de ' + r.total + '.</p>' : '') +
-          '</div></details>';
-      }).join('') : vacio('📊', 'Esta jornada no tiene rankings publicados.')) + '</section>';
+      ? rankingsHTML(d.rankings, GRUPOS_MERCADO, aud, res, o) : vacio('📊', 'Esta jornada no tiene rankings publicados.')) + '</section>';
     return h;
   }
   function vLiga(sem, archivo) {
@@ -1026,17 +1139,20 @@
         if (d.auditoria) { acc.push('<a class="boton secundario" href="#/auditoria/' + esc(d.semana) + '/' + esc(d.archivo) + '">🔍 Ver su auditoría</a>'); }
         if (acc.length) { h += '<div class="acciones">' + acc.join('') + '</div>'; }
         if (d.liga_joven) {
-          h += '<p class="nota">🌱 Liga joven: mientras acumula jornadas, algunas familias de mercados se publican con el ' +
-            'comportamiento medido en las otras ligas. Van marcadas con «Liga joven».</p>';
+          /* un solo aviso por liga, no en cada pick (pedido de Javier, 10/10) */
+          h += '<p class="nota">🌱 Inicio de temporada: mientras la liga acumula jornadas, algunos mercados se calculan con lo ' +
+            'que se ha medido en las otras ligas.</p>';
         }
         if (d.fechas_deducidas) { h += '<p class="nota">📅 Algunas fechas se dedujeron del día de la semana: la hora de esos partidos está por confirmar.</p>'; }
-        h += '<nav class="indice" aria-label="En esta jornada">' + [['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'],
-          ['s-sugeridos', '💡 Sugeridos'], ['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']].map(function (x) {
+        /* primero los partidos y despues los picks (pedido de Javier, 10/10) */
+        h += '<nav class="indice" aria-label="En esta jornada">' + [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'],
+          ['s-sugeridos', '💡 Sugeridos'], ['s-mercados', '📊 Mercados']].map(function (x) {
           return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
         }).join('') + '</nav>';
+        h += '<section id="s-partidos"><h2><span class="emoji">📋</span>Partidos <span class="cuenta">' +
+          plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' + fichasPorDia(d) + '</section>';
         h += '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>';
         h += cuerpoJornada(d, null);
-        h += '<section id="s-partidos"><h2><span class="emoji">📋</span>Fichas de los partidos</h2>' + fichasPorDia(d) + '</section>';
         pintar(h, d.nombre + ' J' + d.jornada);
       });
     });
@@ -1210,16 +1326,20 @@
       }
       if (d.nota && !(d.top5 || []).length) { h += '<p class="nota">💤 ' + esc(d.nota) + '</p>'; }
       if (d.liquidacion) { h += '<p class="criterio">📏 ' + esc(d.liquidacion) + '.</p>'; }
-      h += '<nav class="indice" aria-label="En este día">' + (aud ? [] : [['s-escogidos', '✅ Escogidos']]).concat([['s-top5', '🏆 TOP 5'],
-        ['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']]).map(function (x) {
+      /* en el analisis, primero los partidos y despues los picks (pedido de Javier, 10/10); en la
+         auditoria, primero lo que acerto */
+      var partidos = '<section id="s-partidos"><h2><span class="emoji">📋</span>Partidos <span class="cuenta">' +
+        plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' +
+        ((d.partidos || []).length ? (d.partidos || []).slice().sort(function (a, b) { return (a.hora || '99').localeCompare(b.hora || '99'); })
+          .map(function (f) { return fichaOtro(f, d); }).join('') : vacio('📭', 'Sin partidos este día.')) +
+        '</section>';
+      h += '<nav class="indice" aria-label="En este día">' + (aud ? [['s-top5', '🏆 TOP 5'], ['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']]
+        : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'], ['s-mercados', '📊 Mercados']]).map(function (x) {
         return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
       }).join('') + '</nav>';
-      if (!aud) { h += '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>'; }
+      if (!aud) { h += partidos + '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>'; }
       h += cuerpoDiaOtro(d, mapa);
-      h += '<section id="s-partidos"><h2><span class="emoji">📋</span>Fichas de los partidos <span class="cuenta">' +
-        plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' +
-        ((d.partidos || []).length ? (d.partidos || []).map(function (f) { return fichaOtro(f, d); }).join('') : vacio('📭', 'Sin partidos este día.')) +
-        '</section>';
+      if (aud) { h += partidos; }
       pintar(h, d.nombre + ' ' + fCorta(d.fecha));
     });
   }
@@ -1231,17 +1351,13 @@
       for (var k in extra) { r[k] = extra[k]; }
       return r;
     };
-    var h = '<section id="s-top5"><h2><span class="emoji">🏆</span>TOP 5 del día</h2>' + ((d.top5 || []).length
-      ? '<div class="grid-picks">' + d.top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
-      : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.')) + '</section>';
+    var top5 = d.top5 || [];
+    var h = '<h2><span class="emoji">🎯</span>Picks del día</h2>' +
+      resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 del día', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
+        ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
+        : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.'));
     h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + ((d.rankings || []).length
-      ? d.rankings.map(function (r) {
-        var cuenta = aud ? r.picks.filter(function (p) { return res(p)[0] === 'acierto'; }).length + ' de ' +
-          r.picks.filter(function (p) { var e = res(p)[0]; return e === 'acierto' || e === 'fallo'; }).length + ' ✅' : r.total;
-        return '<details class="caja" data-k="r-' + esc(r.seccion) + '"><summary><span class="emoji">' + (EMOJI_SECCION[r.seccion] || '📊') +
-          '</span>' + esc(r.titulo) + '<span class="cuenta">' + cuenta + '</span></summary><div class="cuerpo"><ul class="lista">' +
-          r.picks.map(function (p) { return fila(p, o({ origen: r.titulo, resultado: res(p) })); }).join('') + '</ul></div></details>';
-      }).join('') : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
+      ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : null, aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
     return h;
   }
   /* ficha de un partido de hockey: goles esperados, lo que hace cada equipo contra lo que permite el
@@ -1390,8 +1506,13 @@
       if (Editor.activo) {
         h += '<p class="criterio linea-editor">✏️ Quita los tuyos tocando ✓ · <a href="#/green"><b>🟢 Armar la selección del día ›</b></a></p>';
       }
-      if (!picks.length) {
+      /* los de hoy que ya empezaron, al final y plegados (sugerencia aprobada por Javier, 10/10) */
+      var emp = picks.filter(empezado), todosE = picks;
+      picks = picks.filter(function (p) { return !empezado(p); });
+      if (!todosE.length) {
         h += vacio('📭', filtro || quien ? 'No hay picks escogidos de hoy en adelante con ese filtro.' : 'Todavía no hay picks escogidos de hoy en adelante.');
+      } else if (!picks.length) {
+        h += '<p class="criterio">Los escogidos de hoy ya empezaron; los de los próximos días saldrán aquí.</p>';
       } else if (vista === 'dia') {
         h += porDiaLista(picks, function (p) { return renglonEscogido(p, null, {}); });
       } else {
@@ -1411,6 +1532,8 @@
             lista.map(function (p) { return renglonEscogido(p, null, { conDia: true }); }).join('') + '</ul>';
         }).join('');
       }
+      h += plegadoEmpezados('esc-empezados', emp, '<ul class="lista">' + emp.map(function (p) { return renglonEscogido(p, null, { conDia: true }); }).join('') +
+        '</ul>', function (p) { return p.archivo + '|' + p.partido; });
       h += '<p class="criterio mas-abajo">📜 Los de días pasados, con su resultado, están en <a href="#/resultados">🏅 Resultados</a>.</p>';
       pintar(h, 'Picks escogidos');
     });
@@ -1446,8 +1569,18 @@
     Object.keys(t).forEach(function (n) { cerrarConteo(t[n]); });
     return t;
   }
+  /* siempre picksin, maki y diego, en ese orden, vaya como vaya cada uno (pedido de Javier, 10/10);
+     alguien nuevo va despues, por nombre */
+  var ORDEN_SEL = ['picksin', 'maki', 'diego'];
   function ordenTabla(t) {
-    return Object.keys(t).sort(function (a, b) { return (t[b].balance - t[a].balance) || (t[b].ok - t[a].ok) || a.localeCompare(b); });
+    var i = function (n) { var k = ORDEN_SEL.indexOf(n); return k < 0 ? 99 : k; };
+    return Object.keys(t).sort(function (a, b) { return (i(a) - i(b)) || a.localeCompare(b); });
+  }
+  /* lugar por balance (buenas menos malas; empate: mas buenas): 0 = primero; empatados, mismo lugar */
+  function lugarSel(t, n) {
+    return Object.keys(t).filter(function (m) {
+      return t[m].comp && (t[m].balance > t[n].balance || (t[m].balance === t[n].balance && t[m].ok > t[n].ok));
+    }).length;
   }
   function tablaSeleccionadores(t, orden) {
     return '<div class="tabla-caja tabla-scroll"><table><thead><tr><th>Seleccionador</th><th class="num">Escogidos</th>' +
@@ -1497,7 +1630,7 @@
     var c = top && top.semanas && top.semanas[sem];
     if (!c) {
       return h + '<p class="criterio">' + (top && top.desde && masDias(sem, 6) < top.desde
-        ? 'El top de tops se audita desde el ' + fLarga(top.desde) + '.' : 'No hubo top de tops esta semana.') + '</p>';
+        ? 'Los resultados del top de tops cuentan desde el ' + fLarga(top.desde) + '.' : 'No hubo top de tops esta semana.') + '</p>';
     }
     h += marcadorCajas([['✅ Acertados', c.aciertos + ' de ' + c.comprobables, 'verde'], ['🎯 Acierto real', pct(c.acierto), 'verde'],
       ['📈 Prometido (media)', pct(c.prometido), 'azul'], ['⏳ Sin resultado', c.sin_resultado, c.sin_resultado ? 'azul' : '']]) +
@@ -1505,7 +1638,7 @@
         ['💰 Ganancia (a 1 unidad)', (c.ganancia > 0 ? '+' : '') + num(c.ganancia, 2) + ' u', c.ganancia >= 0 ? 'verde' : ''],
         ['📊 Por pick', (c.ganancia_por_pick > 0 ? '+' : '') + num(c.ganancia_por_pick, 3) + ' u', c.ganancia_por_pick >= 0 ? 'verde' : '']]) : '') +
       tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado });
-    var dias = Object.keys(top.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6); }).sort();
+    var dias = Object.keys(top.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6) && (!top.desde || f >= top.desde); }).sort();
     h += '<details class="caja" data-k="top-dias" open><summary><span class="emoji">🗓️</span>Por día <span class="cuenta">' +
       plural(c.picks, 'pick', 'picks') + '</span></summary><div class="cuerpo">' + dias.map(function (f) {
         var rs = (top.resumen || {})[f] || {};
@@ -1534,7 +1667,7 @@
     return Promise.all([cargarTodo(), topDeTops().catch(function () { return null; })]).then(function (x) {
       var T = x[0], top = x[1];
       var ult = T.picks.map(function (p) { return p.fecha || ''; }).sort().pop() || hoy();
-      var min = lunesDe(PRIMERA_ESC), max = lunesDe(ult > hoy() ? ult : hoy());
+      var min = lunesDe(CUENTAS_DESDE), max = lunesDe(ult > hoy() ? ult : hoy());
       var mapas = T.mapas, picks = T.picks.filter(function (p) { return p.fecha && p.fecha >= sem && p.fecha <= masDias(sem, 6); });
       var n = contar(picks, mapas);
       var h = cabeceraRes('semana') + selectorLunes(sem, 'resultados', min, max);
@@ -1591,10 +1724,10 @@
   function vSeleccionadores() { location.replace('#/ranking'); return Promise.resolve(); }
   function rankingHTML(T) {
     var t = porSeleccionador([T]), orden = ordenTabla(t), medallas = ['🥇', '🥈', '🥉'];
-    var h = '<div class="podio">' + orden.map(function (n, i) {
+    var h = '<div class="podio">' + orden.map(function (n) {
       var c = t[n];
       return '<article class="tarjeta-sel" style="--c:' + colorDe(n) + '">' +
-        '<div class="sel-cab"><span class="medalla" aria-hidden="true">' + (c.comp ? (medallas[i] || '🎖️') : '🆕') + '</span>' + persona(n) +
+        '<div class="sel-cab"><span class="medalla" aria-hidden="true">' + (c.comp ? (medallas[lugarSel(t, n)] || '🎖️') : '🆕') + '</span>' + persona(n) +
         (n === 'picksin' ? '<span class="chip neutro">principal</span>' : '') + '</div>' +
         '<div class="sel-record"><span class="buenas">✅ ' + c.ok + '<small>buenas</small></span><span class="malas">❌ ' + c.ko + '<small>malas</small></span>' +
         '<span class="balance">' + (c.balance > 0 ? '+' : '') + c.balance + '<small>balance</small></span></div>' +
@@ -1604,7 +1737,8 @@
         (c.nulo ? ' · ➖ ' + c.nulo + ' anulados' : '') + '</p>' +
         '<a class="migas" href="#/escogidos?por=' + encodeURIComponent(n) + '">Ver sus picks de hoy en adelante ›</a></article>';
     }).join('') + '</div>';
-    h += '<p class="criterio">Ordenados por balance (buenas menos malas). Los anulados, los no comprobables y los que no tienen resultado no cuentan; ' +
+    h += '<p class="criterio">Siempre en el mismo orden; la medalla dice quién va arriba por balance (buenas menos malas). ' +
+      'Los anulados, los no comprobables y los que no tienen resultado no cuentan; ' +
       'si dos escogen el mismo pick, cuenta para los dos.</p>';
     var semanas = porLunes(T.picks);
     h += '<details class="caja" data-k="rk-semanas"><summary><span class="emoji">📅</span>Semana a semana <span class="cuenta">lunes a domingo</span></summary><div class="cuerpo">' + (semanas.length
@@ -3349,6 +3483,7 @@
     else if (a === 'ir') {
       e.preventDefault();
       var el = document.getElementById(t.getAttribute('data-id'));
+      if (el && el.tagName === 'DETAILS') { el.open = true; }          // TOP 5 y sugeridos van plegados
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     }
     else if (a === 'editor') { if (Editor.activo) { salir(); } else { abrirDialogo(); } }
