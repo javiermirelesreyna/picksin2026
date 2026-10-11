@@ -498,8 +498,14 @@
     var cls = k.indexOf('alta') === 0 ? 'alta' : (k.indexOf('media') === 0 ? 'media' : 'baja');
     return '<span class="chip ' + cls + '">Confianza ' + esc(c) + '</span>';
   }
+  /* el momio de Playdoit de un pick (Javier, 11/10/2026): solo en modo editor, como en el top de tops */
+  function chipMomio(p) {
+    if (!Editor.activo || !p || !p.americano) { return ''; }
+    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' +
+      (p.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad: revisa información</span>' : '');
+  }
   function chipsPick(p, o) {
-    var c = [chipConfianza(p.confianza)];
+    var c = [chipConfianza(p.confianza), chipMomio(p)];
     if (p.cuota) { c.push('<span class="chip neutro">Cuota implícita ' + esc(num(p.cuota, 2)) + '</span>'); }
     if (p.respaldo) { c.push('<span class="chip neutro" title="Lo que hace cada equipo y lo que permite su rival">⚖️ Respaldo ' + esc(p.respaldo) + '</span>'); }
     if (o.conOrigen && o.origen) { c.push('<span class="chip">' + emojiOrigen(o.origen) + ' ' + esc(o.origen) + '</span>'); }
@@ -552,7 +558,7 @@
       '<span class="m">' + esc(p.mercado) + '</span>' +
       '<span class="fila-fin">' + sello(sel) + '<span class="pp">' + pct(p.p) + '</span>' + botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + esc(p.partido) + ' · <span class="dia">📅 ' + esc(cuando(p)) + '</span>' +
-      (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + '</span>' +
+      (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + (chipMomio(p) ? ' ' + chipMomio(p) : '') + '</span>' +
       (res ? '<span class="det">' + (ESTADO[res[0]] || ESTADO.no_comprobable).t + (res[1] ? ': ' + esc(res[1]) : '') + '</span>' : '') +
       '</li>';
   }
@@ -697,7 +703,7 @@
     var p = x.p, d = x.d;
     var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
-      ' · ' + esc(p.partido) + ' ' : '') + marcasTop(x.top) + deDondeSale(x) + chipConfianza(p.confianza) +
+      ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top) : chipMomio(p)) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
         '</span>' : '');
@@ -950,7 +956,6 @@
                 var n = Esc.deArchivo(L.archivo).length;
                 return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
                   '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
-                  (L.narrativa ? ' <span class="chip">📖 Con narrativa</span>' : '') +
                   (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
                   '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
                   '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
@@ -1013,6 +1018,77 @@
         (grupos[k].length === 1 ? ' partido' : ' partidos') + '</span></div>' + grupos[k].map(function (f) { return ficha(f, d); }).join('');
     }).join('');
   }
+  /* nombres cortos para que el partido y su tendencia quepan en un renglon (Javier, 11/10/2026): sin
+     "Club", "FC", "CD"...; en hockey y americano, el apodo ("Rangers", "Golden Knights") */
+  var SIGLAS_FUERA = { club: 1, cf: 1, fc: 1, cd: 1, ca: 1, sc: 1, ac: 1, afc: 1, ud: 1, rcd: 1, sd: 1, cs: 1, fk: 1, sk: 1, kv: 1, nk: 1, 'if': 1, bk: 1 };
+  function cortoEq(n, d) {
+    var p = String(n || '').split(/\s+/).filter(Boolean);
+    var dep = d ? depDe(d) : 'futbol';
+    if ((dep === 'hockey' || dep === 'americano') && p.length > 1) {
+      var k = /^(Golden|Maple|Blue|Red)$/.test(p[p.length - 2]) ? 2 : 1;
+      return p.slice(-k).join(' ');
+    }
+    var q = p.filter(function (x) { return !SIGLAS_FUERA[x.toLowerCase().replace(/\./g, '')]; });
+    return (q.length ? q : p).join(' ');
+  }
+  function mercadoCorto(m, f, d) {
+    var t = String(m || '').replace(/^Handicap Asiatico /, 'Hándicap ').replace(/ \(si alguien llega\)$/, '');
+    [f.local, f.visitante || f.visita].forEach(function (n) { if (n) { t = t.split(n).join(cortoEq(n, d)); } });
+    return t;
+  }
+  function sumPartido(f, d, visita, hora) {
+    var tm = f.tendencia;
+    return '<span class="sum-txt"><span class="sum-fila"><span class="sum-uno">' + esc(cortoEq(f.local, d)) + ' vs ' + esc(cortoEq(visita, d)) + '</span>' +
+      (hora ? '<span class="sum-hora">' + hora + '</span>' : '') + '</span>' +
+      (tm ? '<small class="sum-uno">🧭 ' + pct(tm.p) + ' · ' + esc(mercadoCorto(tm.mercado, f, d)) + '</small>' : '') + '</span>';
+  }
+  /* la explicacion del partido y de cada equipo (Javier, 11/10/2026: "de los 2 involucrados") */
+  function explicaHTML(x, f) {
+    if (!x) { return ''; }
+    if (typeof x === 'string') { return '<p class="explica">📝 ' + esc(x) + '</p>'; }
+    return '<div class="explica"><p>📝 ' + esc(x.partido || '') + '</p>' +
+      (x.local ? '<p>🏠 <b>' + esc(cortoEq(f.local)) + ':</b> ' + esc(x.local) + '</p>' : '') +
+      (x.visitante ? '<p>✈️ <b>' + esc(cortoEq(f.visitante)) + ':</b> ' + esc(x.visitante) + '</p>' : '') + '</div>';
+  }
+  /* la tendencia maestra del partido (Javier, 11/10/2026): si es uno de los picks publicados se puede
+     escoger como cualquier otro; si no, solo se muestra */
+  function tendenciaHTML(tm, d) {
+    if (!tm) { return ''; }
+    var pub = todosLosPicks(d).filter(function (x) { return x && x.partido === tm.partido && x.mercado === tm.mercado; })[0];
+    var row = pub ? fila(pub, { doc: d, origen: origenDe(d, pub), auditada: !!d.auditoria })
+      : fila(tm, { doc: d, origen: 'Tendencia maestra', escoger: false });
+    return '<div class="tendencia"><div class="tendencia-cab">🧭 Tendencia maestra ' + chipConfianza(tm.confianza) + '</div>' +
+      '<ul class="lista">' + row + '</ul>' + (tm.just ? '<p class="criterio">' + esc(tm.just) + '</p>' : '') + '</div>';
+  }
+  /* la tabla de pronosticos consolidada de la jornada (Javier, 11/10/2026): en cada metrica lo esperado
+     del local y del visitante y, abajo, su linea principal con la probabilidad de que salga mas */
+  var CONSOLIDADA = [['tarjetas', '🟨 Tarjetas'], ['remates', '🎯 Remates'], ['sot', '🥅 Al arco'], ['corners', '⛳ Córners'],
+    ['offsides', '🚩 Offsides'], ['faltas', '🦵 Faltas']];
+  function tablaConsolidada(d) {
+    var ps = (d.partidos || []).filter(function (f) { return f.goles && f.goles.ll != null; }).slice().sort(function (a, b) {
+      return ((a.fecha || '9') + (a.hora || '99')).localeCompare((b.fecha || '9') + (b.hora || '99'));
+    });
+    if (!ps.length) { return ''; }
+    var par = function (a, b) { return '<b>' + num(a, 2) + ' – ' + num(b, 2) + '</b>'; };
+    var filas = ps.map(function (f) {
+      var g = f.goles, met = {};
+      (f.metricas || []).forEach(function (m) { met[m.clave] = m; });
+      return '<tr><td class="cons-partido"><b>' + esc(f.local) + '</b><b>' + esc(f.visitante) + '</b><small>' + esc(f.fecha ? fCorta(f.fecha) : f.dia || '') +
+        (f.hora ? ' · ' + esc(f.hora) : '') + '</small></td>' +
+        '<td><small>L ' + pct(g.p_local) + '</small><small>E ' + pct(g.p_empate) + '</small><small>V ' + pct(g.p_visitante) + '</small></td>' +
+        '<td>' + par(g.ll, g.lv) + (g.linea ? '<small>' + esc(g.linea) + ': más ' + pct(g.over) + '</small>' : '') +
+        '<small>ambos ' + pct(g.btts) + '</small></td>' +
+        CONSOLIDADA.map(function (c) {
+          var m = met[c[0]];
+          return '<td>' + (m && m.ll != null ? par(m.ll, m.lv) + '<small>' + esc(m.linea) + ': más ' + pct(m.over) + '</small>' : '—') + '</td>';
+        }).join('') + '</tr>';
+    }).join('');
+    return resumenCaja('', 'consolidada', '📊', 'Tabla consolidada', 'los pronósticos de todos los partidos', plural(ps.length, 'partido', 'partidos'),
+      '<p class="criterio">En cada columna, lo esperado del local – visitante (en tarjetas, las que recibe cada uno); abajo, la línea principal ' +
+      'y la probabilidad de que salga más. Desliza a la derecha para ver todo.</p><div class="tabla-scroll consolidada"><table><thead><tr><th>Partido</th>' +
+      '<th>1X2</th><th>⚽ Goles</th>' + CONSOLIDADA.map(function (c) { return '<th>' + c[1] + '</th>'; }).join('') +
+      '</tr></thead><tbody>' + filas + '</tbody></table></div>');
+  }
   function ficha(f, d) {
     var g = f.goles || {};
     var marc = (g.marcadores || []).map(function (m) { return esc(m[0]) + ' (' + pct(m[1]) + ')'; }).join(' · ');
@@ -1022,8 +1098,10 @@
         '<td class="num">' + esc(m.linea || '—') + '</td><td class="num">' + pct(m.over) + '</td>' +
         '<td class="num">' + pct(m.local_mas) + '</td></tr>';
     }).join('');
-    return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' + esc(f.local) + ' vs ' + esc(f.visitante) +
-      '<span class="cuenta">' + (f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</span></summary><div class="cuerpo">' +
+    var tm = f.tendencia;
+    return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' +
+      sumPartido(f, d, f.visitante, f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</summary><div class="cuerpo">' +
+      explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) +
       '<div class="x12"><div>🏠 Local<b>' + pct(g.p_local) + '</b></div><div>🤝 Empate<b>' + pct(g.p_empate) + '</b></div>' +
       '<div>✈️ Visitante<b>' + pct(g.p_visitante) + '</b></div></div>' +
       '<div class="datos"><div><span>⚽ Goles esperados</span> <b>' + num(g.total, 2) + '</b></div>' +
@@ -1109,7 +1187,7 @@
     var base = { doc: d, auditada: !!d.auditoria, escoger: !aud };
     var o = function (extra) { var r = {}; for (var k in base) { r[k] = base[k]; } for (k in extra) { r[k] = extra[k]; } return r; };
     var top5 = d.top5 || [], sugs = d.sugeridos || [], conPick = sugs.filter(function (s) { return s.pick; });
-    h += '<h2><span class="emoji">🎯</span>Picks de la jornada</h2>';
+    h += '<h2><span class="emoji">💎</span>Picks de la jornada</h2>';
     h += resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 de la jornada', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
       ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
       : vacio('🏆', 'Ningún pick de esta jornada alcanzó el nivel del TOP 5.'));
@@ -1150,7 +1228,7 @@
           return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
         }).join('') + '</nav>';
         h += '<section id="s-partidos"><h2><span class="emoji">📋</span>Partidos <span class="cuenta">' +
-          plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' + fichasPorDia(d) + '</section>';
+          plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' + tablaConsolidada(d) + fichasPorDia(d) + '</section>';
         h += '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>';
         h += cuerpoJornada(d, null);
         pintar(h, d.nombre + ' J' + d.jornada);
@@ -1352,7 +1430,7 @@
       return r;
     };
     var top5 = d.top5 || [];
-    var h = '<h2><span class="emoji">🎯</span>Picks del día</h2>' +
+    var h = '<h2><span class="emoji">💎</span>Picks del día</h2>' +
       resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 del día', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
         ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
         : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.'));
@@ -1364,8 +1442,8 @@
      rival en cada metrica (la maxima del motor) y la porteria y definicion de cada equipo */
   function fichaOtro(f, d) {
     var k = 'f-' + d.archivo + f.local;
-    var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' + esc(f.local) + ' vs ' + esc(f.visita) +
-      '<span class="cuenta">' + (f.hora ? '🕐 ' + esc(f.hora) : '') + '</span></summary><div class="cuerpo">';
+    var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
+      sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">';
     if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
       return cab + '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p></div></details>';

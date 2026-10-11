@@ -956,3 +956,25 @@ details.caja .grid-picks { margin-top: 2px; }
 /* hoy: "Por partido · Probabilidad · Top de tops" en un solo renglon */
 @media (max-width: 520px) { .hoy-filtros .conmutador a { white-space: nowrap; flex: 1 1 auto; padding: 7px 3px; } }
 @media (max-width: 370px) { .hoy-filtros .conmutador a { font-size: .74rem; } }
+/* ------------------------------------------------------------ narrativa corta en cada partido (11/10/2026) */
+.explica { margin: 2px 0 12px; line-height: 1.5; font-size: .92rem; }
+.tendencia { background: var(--azul-suave); border-radius: 12px; padding: 8px 12px 6px; margin: 0 0 12px; }
+.tendencia-cab { display: flex; align-items: center; gap: 8px; font-weight: 750; color: var(--azul-oscuro); font-size: .9rem; }
+.tendencia .lista .fila:first-child { border-top: 0; }
+.tendencia .criterio { margin: 2px 0 4px; font-size: .82rem; }
+.consolidada table { font-size: .8rem; }
+.consolidada th, .consolidada td { white-space: nowrap; vertical-align: top; text-align: center; }
+.consolidada td b, .consolidada td small { display: block; }
+.consolidada td small { color: var(--suave); font-size: .72rem; }
+.consolidada .cons-partido { text-align: left; position: sticky; left: 0; background: var(--superficie); z-index: 1; box-shadow: 1px 0 0 var(--borde); }
+.consolidada th:first-child { text-align: left; position: sticky; left: 0; background: var(--superficie); z-index: 2; }
+.explica p { margin: 0 0 7px; }
+.explica p:last-child { margin-bottom: 0; }
+div.explica { margin: 2px 0 12px; }
+/* el partido y su tendencia, cada uno en un renglon (11/10/2026) */
+details.caja > summary .sum-txt { flex: 1 1 auto; }
+.sum-uno { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fila .pt .chip.momio, .fila .pt .chip.oportunidad { margin-left: 2px; }
+.sum-fila { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.sum-fila .sum-uno { flex: 1 1 auto; min-width: 0; }
+.sum-hora { flex: none; color: var(--tenue); font-weight: 600; font-size: .84rem; white-space: nowrap; }
