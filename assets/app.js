@@ -498,6 +498,35 @@
     var cls = k.indexOf('alta') === 0 ? 'alta' : (k.indexOf('media') === 0 ? 'media' : 'baja');
     return '<span class="chip ' + cls + '">Confianza ' + esc(c) + '</span>';
   }
+  /* arbitro y avisos del partido (Javier, 12/10/2026): clasico y "algo en juego" en los picks de tarjetas y
+     faltas (no cambian la probabilidad: el arbitro ya va dentro del motor) y la linea del partido */
+  var RE_AVISO = /tarjeta|falta/i;
+  function fichaDe(d, partido) {
+    if (!d || !d.partidos) { return null; }
+    if (!d._fichas) {
+      d._fichas = {};
+      d.partidos.forEach(function (f) { d._fichas[f.local + ' vs ' + f.visitante] = f; });
+    }
+    return d._fichas[partido] || null;
+  }
+  function chipsAviso(avisos, mercado) {
+    if (!avisos || !avisos.length || !RE_AVISO.test(mercado || '')) { return ''; }
+    var cl = avisos.filter(function (a) { return a.tipo === 'clasico'; });
+    var ej = avisos.filter(function (a) { return a.tipo === 'en_juego'; });
+    return (cl.length ? '<span class="chip alerta" title="' + esc(cl[0].texto) + ': en los clásicos suele haber más tarjetas y faltas">⚔️ ' +
+      esc(cl[0].texto) + '</span>' : '') +
+      (ej.length ? '<span class="chip alerta" title="' + esc(ej.map(function (a) { return a.texto; }).join(' · ')) + '">🔥 Algo en juego</span>' : '');
+  }
+  function lineaPartido(f) {
+    if (!f || (!f.arbitro && !(f.avisos || []).length)) { return ''; }
+    var partes = [];
+    if (f.arbitro) {
+      partes.push('<span>🧑‍⚖️ ' + esc(f.arbitro.nombre) + (f.arbitro.tarjetas != null ? ' · ' + num(f.arbitro.tarjetas, 1) +
+        ' tarjetas por partido' : '') + (f.arbitro.perfil ? ' · <b>' + esc(f.arbitro.perfil) + '</b>' : '') + '</span>');
+    }
+    (f.avisos || []).forEach(function (a) { partes.push('<span>' + (a.tipo === 'clasico' ? '⚔️ ' : '🔥 ') + esc(a.texto) + '</span>'); });
+    return '<p class="aviso-partido">' + partes.join('') + '</p>';
+  }
   /* el momio de Playdoit de un pick (Javier, 11/10/2026): solo en modo editor, como en el top de tops */
   function chipMomio(p) {
     if (!Editor.activo || !p || !p.americano) { return ''; }
@@ -703,7 +732,8 @@
     var p = x.p, d = x.d;
     var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
-      ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top) : chipMomio(p)) + deDondeSale(x) + chipConfianza(p.confianza) +
+      ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top) : chipMomio(p)) +
+      chipsAviso((x.top && x.top.avisos) || (fichaDe(d, p.partido) || {}).avisos, p.mercado) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
         '</span>' : '');
@@ -735,7 +765,7 @@
       '<a class="ph-liga" href="#/analisis/' + esc(m.d.semana) + '/' + esc(m.d.archivo) + '">' + bandera(m.d.bandera) + ' ' + esc(m.d.nombre) +
       ' · ' + esc(etqJornada(m.d)) + '</a>' + (nEsc ? '<span class="sello">✅ ' + nEsc + '</span>' : '') +
       (empezo ? '<span class="chip neutro">🔒 empezó</span>' : '') + '</div>' +
-      '<h3 class="ph-partido">' + (m.d.emoji || '⚽') + ' ' + esc(m.partido) + '</h3>' +
+      '<h3 class="ph-partido">' + (m.d.emoji || '⚽') + ' ' + esc(m.partido) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
       '<ul class="lista">' + ver.map(function (x) { return renglonHoy(x, false); }).join('') + '</ul>' +
       (resto.length ? '<details class="ph-mas" data-k="ph-' + esc(m.d.archivo + '|' + m.partido) + '"><summary>＋ ' +
         plural(resto.length, 'pick más', 'picks más') + ' de este partido</summary><ul class="lista">' +
@@ -1101,7 +1131,7 @@
     var tm = f.tendencia;
     return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' +
       sumPartido(f, d, f.visitante, f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</summary><div class="cuerpo">' +
-      explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) +
+      lineaPartido(f) + explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) +
       '<div class="x12"><div>🏠 Local<b>' + pct(g.p_local) + '</b></div><div>🤝 Empate<b>' + pct(g.p_empate) + '</b></div>' +
       '<div>✈️ Visitante<b>' + pct(g.p_visitante) + '</b></div></div>' +
       '<div class="datos"><div><span>⚽ Goles esperados</span> <b>' + num(g.total, 2) + '</b></div>' +

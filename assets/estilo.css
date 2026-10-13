@@ -784,6 +784,9 @@ td.neto.menos { color: var(--rojo-texto); }
 /* top de tops con momios de Playdoit (regla R5, 09/10/2026): solo en modo editor */
 .chip.momio { background: var(--azul-suave); color: var(--azul-oscuro); font-weight: 700; }
 .chip.oportunidad { background: var(--ambar-suave); color: var(--ambar-texto); font-weight: 700; }
+/* arbitro y avisos del partido (12/10/2026) */
+.chip.alerta { background: var(--rojo-suave); color: var(--rojo-texto); font-weight: 700; }
+.aviso-partido { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 6px; font-size: .8rem; color: var(--suave); }
 .top-explica { margin: 0 0 10px; }
 @media (max-width: 520px) {
   .hoy-filtros .conmutador { display: flex; width: 100%; }
