@@ -893,7 +893,8 @@
             h += '<details class="caja ph-mas top-info" data-k="top-info"><summary>ℹ️ Cómo se eligen</summary><div class="cuerpo">' + (r5
               ? '<p class="criterio top-explica">⭐ <b>Los mejores picks del día de todos los deportes.</b> Entran los de ' + pct(top.piso) +
                 ' o más que el motor respalda (sin los de confianza baja; en fútbol, desde la jornada 5 también los de equipos que aún no juegan 7 partidos, porque ahí el motor acierta igual), de cualquier liga y mercado; primero el más seguro. Máximo ' +
-                esc(top.maximo) + ' por día y ' + esc(top.por_partido || 3) + ' del mismo partido. Cuando empieza su partido, un pick ya no entra ' +
+                esc(top.maximo) + ' por día y ' + esc(top.por_partido || 3) + ' del mismo partido' + (top.por_mercado ? ', con una sola línea de cada ' +
+                'mercado (de Under 6.5 y Under 5.5 de tarjetas del mismo partido entra solo una)' : '') + '. Cuando empieza su partido, un pick ya no entra ' +
                 'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
                 (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
                   ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ' +
