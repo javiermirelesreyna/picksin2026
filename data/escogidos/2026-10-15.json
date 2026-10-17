@@ -1,6 +1,6 @@
 {
  "semana": "2026-10-15",
- "actualizado": "2026-10-17T03:52:23.325Z",
+ "actualizado": "2026-10-17T03:52:49.300Z",
  "picks": [
   {
    "id": "scotland__premiership-j9|Kilmarnock vs Motherwell|Over 8.5 Corners",
@@ -30,6 +30,36 @@
    ],
    "escogido": {
     "picksin": "2026-10-17T03:52:23.325Z"
+   }
+  },
+  {
+   "id": "spain__laliga2-j10|Eibar vs Mallorca|Over 3.5 Tarjetas",
+   "archivo": "spain__laliga2-j10",
+   "liga": "spain__laliga2",
+   "nombre": "LaLiga 2",
+   "pais": "España",
+   "bandera": "🇪🇸",
+   "jornada": 10,
+   "sa": "2026-10-15",
+   "origen": "Más/menos: tarjetas, córners y faltas",
+   "partido": "Eibar vs Mallorca",
+   "mercado": "Over 3.5 Tarjetas",
+   "fecha": "2026-10-17",
+   "dia": "sábado",
+   "hora": "08:15",
+   "ts": 1792246500,
+   "sem": "2026-10-15",
+   "p": 0.86,
+   "cuota": 1.21,
+   "confianza": "Alta",
+   "respaldo": "2/4 a favor, 2 en contra",
+   "familia": "Tarjetas",
+   "liga_joven": true,
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-17T03:52:49.300Z"
    }
   }
  ]
