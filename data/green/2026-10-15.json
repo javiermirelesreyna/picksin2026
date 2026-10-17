@@ -1,0 +1,51 @@
+{
+ "semana": "2026-10-15",
+ "actualizado": "2026-10-17T03:53:40.663Z",
+ "selecciones": [
+  {
+   "id": "mvbv3g9g-pijfq1",
+   "fecha": "2026-10-17",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "+104",
+   "dec": 2.0364,
+   "apuesta": 1000,
+   "pago": 2036.3636,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+     "nombre": "Premiership Escocesa",
+     "partido": "Kilmarnock vs Motherwell",
+     "mercado": "Over 8.5 Corners",
+     "fecha": "2026-10-17",
+     "hora": "08:00",
+     "momio": "-220",
+     "dec": 1.4545,
+     "p": 0.855,
+     "archivo": "scotland__premiership-j9",
+     "sa": "2026-10-15"
+    },
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇪🇸",
+     "nombre": "LaLiga 2",
+     "partido": "Eibar vs Mallorca",
+     "mercado": "Over 3.5 Tarjetas",
+     "fecha": "2026-10-17",
+     "hora": "08:15",
+     "momio": "-250",
+     "dec": 1.4,
+     "p": 0.86,
+     "archivo": "spain__laliga2-j10",
+     "sa": "2026-10-15"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-10-17T03:53:40.663Z",
+   "resultado": null
+  }
+ ]
+}
