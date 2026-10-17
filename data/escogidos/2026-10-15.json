@@ -1,32 +1,5 @@
 {
  "semana": "2026-10-15",
- "actualizado": "2026-10-17T03:33:49.261Z",
- "picks": [
-  {
-   "id": "italy__serie-b-j7|Mantova vs Palermo|Under 6.5 Tarjetas",
-   "archivo": "italy__serie-b-j7",
-   "liga": "italy__serie-b",
-   "nombre": "Serie B",
-   "pais": "Italia",
-   "bandera": "🇮🇹",
-   "jornada": 7,
-   "sa": "2026-10-15",
-   "origen": "Top de tops",
-   "partido": "Mantova vs Palermo",
-   "mercado": "Under 6.5 Tarjetas",
-   "fecha": "2026-10-17",
-   "dia": "sábado",
-   "hora": "09:15",
-   "ts": 1792250100,
-   "sem": "2026-10-15",
-   "p": 0.901,
-   "confianza": "Baja",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-10-17T03:33:49.261Z"
-   }
-  }
- ]
+ "actualizado": "2026-10-17T03:35:11.488Z",
+ "picks": []
 }
