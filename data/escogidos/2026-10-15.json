@@ -1,5 +1,36 @@
 {
  "semana": "2026-10-15",
- "actualizado": "2026-10-17T03:35:11.488Z",
- "picks": []
+ "actualizado": "2026-10-17T03:52:23.325Z",
+ "picks": [
+  {
+   "id": "scotland__premiership-j9|Kilmarnock vs Motherwell|Over 8.5 Corners",
+   "archivo": "scotland__premiership-j9",
+   "liga": "scotland__premiership",
+   "nombre": "Premiership Escocesa",
+   "pais": "Escocia",
+   "bandera": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+   "jornada": 9,
+   "sa": "2026-10-15",
+   "origen": "Más/menos: tarjetas, córners y faltas",
+   "partido": "Kilmarnock vs Motherwell",
+   "mercado": "Over 8.5 Corners",
+   "fecha": "2026-10-17",
+   "dia": "sábado",
+   "hora": "08:00",
+   "ts": 1792245600,
+   "sem": "2026-10-15",
+   "p": 0.855,
+   "cuota": 1.22,
+   "confianza": "Alta",
+   "respaldo": "2/4 a favor, 2 en contra",
+   "familia": "Corners",
+   "liga_joven": true,
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-17T03:52:23.325Z"
+   }
+  }
+ ]
 }
