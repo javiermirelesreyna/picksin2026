@@ -277,7 +277,7 @@
   var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
   /* los picks de las listas Seguros y Valor que no estan en los rankings ni en el top (Javier, 20/10/2026:
      "haz tambien que se pueda escoger"): true cuando el Worker publicado ya acepte data/listas_valor.json */
-  var LISTAS_ESCOGIBLE = false;
+  var LISTAS_ESCOGIBLE = true;                    // worker b2178e81 (20/10/2026) ya los acepta
   Esc.rango = function (desde, hasta) {
     return Promise.all(semanasEntre(desde, hasta).map(Esc.cargar)).then(function (ws) {
       var vistos = {};
