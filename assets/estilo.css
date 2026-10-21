@@ -784,6 +784,14 @@ td.neto.menos { color: var(--rojo-texto); }
 /* top de tops con momios de Playdoit (regla R5, 09/10/2026): solo en modo editor */
 .chip.momio { background: var(--azul-suave); color: var(--azul-oscuro); font-weight: 700; }
 .chip.oportunidad { background: var(--ambar-suave); color: var(--ambar-texto); font-weight: 700; }
+/* listas Seguros y Valor y la probabilidad combinada (20/10/2026): solo en modo editor */
+.chip.comb { background: var(--verde-suave); color: var(--verde-texto); font-weight: 700; }
+.chip.valor { background: var(--azul); color: #fff; font-weight: 700; }
+.chip.top-lugar.seguros { background: var(--azul-oscuro); }
+.chip.top-lugar.valor { background: var(--azul); }
+.conmutador.listas-sel { display: flex; width: 100%; margin: -4px 0 12px; }
+.conmutador.listas-sel a { flex: 1 1 0; text-align: center; padding: 6px 4px; }
+@media (max-width: 370px) { .conmutador.listas-sel a { font-size: .8rem; } }
 /* arbitro y avisos del partido (12/10/2026) */
 .chip.alerta { background: var(--rojo-suave); color: var(--rojo-texto); font-weight: 700; }
 .aviso-partido { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 6px; font-size: .8rem; color: var(--suave); }

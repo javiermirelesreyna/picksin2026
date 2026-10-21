@@ -146,6 +146,10 @@
   var resultados = function (s) { return cargar('data/semanas/' + s + '/resultados.json', true); };
   /* el top de tops de cada dia: solo QUE picks y en que orden (lo calcula publicar_sitio.py) */
   var topDeTops = function () { return cargar('data/top_de_tops.json', true); };
+  /* las listas Seguros y Valor (Javier, 19-20/10/2026, solo modo editor): QUE picks y en que orden, con su
+     combinada; las calcula publicar_sitio.py (listas_valor.py) */
+  var listasValor = function () { return cargar('data/listas_valor.json', true); };
+  var LISTAS = { seguros: { e: '🛡️', t: 'Seguros' }, valor: { e: '💎', t: 'Valor' } };
 
   function semanaDefecto(idx, tipo) {
     var campo = (tipo === 'auditoria' || tipo === 'resultados') ? 'auditadas' : 'analisis';
@@ -271,6 +275,9 @@
   /* los picks del top de tops que no estan en los rankings de su jornada se pueden escoger cuando el
      intermediario del editor (Cloudflare) ya los acepta: worker.js del 09/10/2026 */
   var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
+  /* los picks de las listas Seguros y Valor que no estan en los rankings ni en el top (Javier, 20/10/2026:
+     "haz tambien que se pueda escoger"): true cuando el Worker publicado ya acepte data/listas_valor.json */
+  var LISTAS_ESCOGIBLE = false;
   Esc.rango = function (desde, hasta) {
     return Promise.all(semanasEntre(desde, hasta).map(Esc.cargar)).then(function (ws) {
       var vistos = {};
@@ -530,8 +537,17 @@
   /* el momio de Playdoit de un pick (Javier, 11/10/2026): solo en modo editor, como en el top de tops */
   function chipMomio(p) {
     if (!Editor.activo || !p || !p.americano) { return ''; }
-    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' +
+    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' + chipComb(p) +
       (p.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad: revisa información</span>' : '');
+  }
+  /* la probabilidad combinada motor + Playdoit (20/10/2026): solo en modo editor y solo con momio */
+  function chipComb(t) {
+    return Editor.activo && t && t.pc != null ? '<span class="chip comb" title="Probabilidad combinada: la del motor mezclada con la de Playdoit sin su margen, con el peso que el motor se ha ganado en ese mercado">🤝 ' +
+      pct(t.pc) + '</span>' : '';
+  }
+  function chipValor(t) {
+    return Editor.activo && t && t.ve != null ? '<span class="chip valor" title="Lo que deja en promedio a 1 unidad si la combinada está en lo correcto">📈 Valor ' +
+      (t.ve > 0 ? '+' : '') + pct(t.ve) + '</span>' : '';
   }
   function chipsPick(p, o) {
     var c = [chipConfianza(p.confianza), chipMomio(p)];
@@ -718,10 +734,11 @@
   }
   /* marcas de un pick del top (regla R5, 09/10/2026): el momio de Playdoit y sus avisos solo en modo
      editor (la pagina publica no habla de apuestas); "no comprobable" (carreras) para todos */
-  function marcasTop(t) {
+  function marcasTop(t, conValor) {
     if (!t) { return ''; }
     return (t.no_comprobable ? '<span class="chip neutro" title="La tabla no trae el minuto de cada corner: el motor no ha podido comprobar que cumple lo que promete">⚠️ No comprobable</span>' : '') +
       (Editor.activo && t.momio ? '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(t.americano || americano(t.momio)) + '</span>' : '') +
+      chipComb(t) + (conValor ? chipValor(t) : '') +
       (Editor.activo && t.sin_momio ? '<span class="chip neutro" title="Playdoit todavía no lo ofrece">⏳ Sin momio</span>' : '') +
       (Editor.activo && t.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad encontrada: revisa información</span>' : '') +
       (Editor.activo && t.diferencia_casa ? '<span class="chip oportunidad" title="' + esc(t.diferencia_casa) + '">🚧 Diferencia motor–casa en esta liga: revisa información</span>' : '') +
@@ -730,9 +747,9 @@
   }
   function renglonHoy(x, conPartido, lugar, res) {
     var p = x.p, d = x.d;
-    var sub = (lugar ? '<span class="chip top-lugar">⭐ ' + lugar + '</span> ' : '') +
+    var sub = (lugar ? '<span class="chip top-lugar' + (x.lista ? ' ' + x.lista : '') + '">' + (x.lista ? LISTAS[x.lista].e : '⭐') + ' ' + lugar + '</span> ' : '') +
       (conPartido ? '<span class="cuando">🕐 ' + esc(p.hora || '—') + '</span> · ' + bandera(d.bandera) + ' ' + esc(d.nombre) +
-      ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top) : chipMomio(p)) +
+      ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top, x.lista === 'valor') : chipMomio(p)) +
       chipsAviso((x.top && x.top.avisos) || (fichaDe(d, p.partido) || {}).avisos, p.mercado) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
@@ -771,11 +788,12 @@
         plural(resto.length, 'pick más', 'picks más') + ' de este partido</summary><ul class="lista">' +
         resto.map(function (x) { return renglonHoy(x, false); }).join('') + '</ul></details>' : '') + '</article>';
   }
-  function urlHoy(dia, f, orden) {
+  function urlHoy(dia, f, orden, cual) {
     var a = [];
     if (dia && dia !== hoy()) { a.push('dia=' + dia); }
     if (f && f !== 'todos') { a.push('f=' + f); }
     if (orden === 'p' || orden === 'top') { a.push('orden=' + orden); }
+    if (orden === 'top' && LISTAS[cual]) { a.push('lista=' + cual); }
     return '#/hoy' + (a.length ? '?' + a.join('&') : '');
   }
   /* pedido de Javier (10/10): en las tres vistas de Hoy lo que ya empezo baja al final, plegado;
@@ -790,14 +808,42 @@
       (n > 1 ? ' de ' + n + ' partidos' : '') + (ok + ko ? ' · ✅ ' + ok + ' · ❌ ' + ko : '') + '</summary><div class="cuerpo">' + html + '</div></details>';
   }
   /* el top de tops del dia: cada pick conserva su lugar (⭐ 1...) aunque se filtre o ya haya empezado */
-  function topHoy(tops, ver) {
-    if (!tops.length) { return vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.'); }
-    if (!ver.length) { return vacio('📭', 'Ningún pick del top de tops de este día con ese filtro.'); }
+  function topHoy(tops, ver, cual) {
+    if (!tops.length) {
+      return cual === 'seguros' ? vacio('🛡️', 'Ningún pick de este día cumple: el motor y la combinada en 80% o más, pagando mejor que −500.')
+        : cual === 'valor' ? vacio('💎', 'Ningún pick de este día paga más de lo que vale según la combinada.')
+        : vacio('⭐', 'Ningún pick de este día llega a lo que el motor da como prácticamente seguro.');
+    }
+    if (!ver.length) { return vacio('📭', 'Ningún pick ' + (cual ? 'de la lista ' + LISTAS[cual].t : 'del top de tops') + ' de este día con ese filtro.'); }
     var ren = function (x) { return renglonHoy(x, true, tops.indexOf(x) + 1, x.top && x.top.estado ? [x.top.estado, x.top.detalle || ''] : null); };
     var prox = ver.filter(function (x) { return !empezado(x.p); }), emp = ver.filter(function (x) { return empezado(x.p); });
     return (prox.length ? '<ul class="lista tabla-caja top-tops">' + prox.map(ren).join('') + '</ul>'
-      : vacio('🔒', 'Todos los picks del top de este día ya empezaron.')) +
-      plegadoEmpezados('hoy-top-empezados', emp, '<ul class="lista top-tops">' + emp.map(ren).join('') + '</ul>');
+      : vacio('🔒', 'Todos los picks ' + (cual ? 'de la lista ' + LISTAS[cual].t : 'del top') + ' de este día ya empezaron.')) +
+      plegadoEmpezados('hoy-' + (cual || 'top') + '-empezados', emp, '<ul class="lista top-tops">' + emp.map(ren).join('') + '</ul>');
+  }
+  /* como se eligen los de cada lista: con las reglas que publica listas_valor.json */
+  function explicaLista(listas, k) {
+    var R = (listas && listas.reglas) || {}, r = R[k] || {};
+    return '<details class="caja ph-mas top-info" data-k="lista-info-' + k + '"><summary>ℹ️ Cómo se eligen</summary><div class="cuerpo">' +
+      (k === 'seguros'
+        ? '<p class="criterio top-explica">🛡️ <b>Los más seguros con momio.</b> Entran los que el motor da en ' + pct(r.piso) +
+          ' o más, con su respaldo como en el top, si la combinada también da ' + pct(r.piso) + ' o más y Playdoit paga mejor que ' +
+          esc(americano(r.momio_minimo)) + '. Primero el que más da la combinada.</p>'
+        : '<p class="criterio top-explica">💎 <b>Momio positivo que paga más de lo que vale.</b> Entran los que Playdoit paga ' +
+          esc(americano(r.momio_minimo)) + ' o mejor, si la combinada da ' + pct(r.piso) + ' o más y con ese momio dejan ' + pct(r.valor_minimo) +
+          ' o más de valor (📈), con el respaldo del motor como en el top. Aciertan menos que los seguros, pero cada acierto paga más: ' +
+          'esta lista se mide por la ganancia, no por el acierto. Primero el más seguro.</p>') +
+      '<p class="criterio top-explica">🤝 <b>Combinada:</b> la probabilidad del motor mezclada con la de Playdoit sin su margen, con el peso que ' +
+      'el motor se ha ganado en cada mercado con el archivo de momios (se recalcula cada jueves). Máximo ' + esc(R.maximo) + ' por día, ' +
+      esc(R.por_partido) + ' del mismo partido y una sola línea de cada mercado. Cuando empieza su partido, un pick ya no entra ni sale. ' +
+      '<b>Solo modo editor:</b> se mide aquí antes de pasar al grupo.' + (listas && listas.momios_de ? ' Momios de Playdoit de las ' +
+      esc(horaMx(listas.momios_de)) + '.' : '') + '</p></div></details>';
+  }
+  /* copia de un pick del dia para una lista (el mismo pick puede estar en el top y en una lista) */
+  function copiaPick(x) {
+    var y = {};
+    for (var k in x) { if (Object.prototype.hasOwnProperty.call(x, k)) { y[k] = x[k]; } }
+    return y;
   }
   /* Hoy se reacomoda solo cuando empieza un partido (si la pagina se queda abierta) y al volver a ella */
   var relojHoy = null, corteHoy = 0;
@@ -818,12 +864,15 @@
     var dia = dias.indexOf(q.get('dia')) >= 0 ? q.get('dia') : h0;
     var filtro = ['top5', 'sug', 'esc'].indexOf(q.get('f')) >= 0 ? q.get('f') : 'todos';
     var orden = ['p', 'top'].indexOf(q.get('orden')) >= 0 ? q.get('orden') : 'partido';
+    /* las listas Seguros y Valor van dentro del top de tops, solo en modo editor (20/10/2026) */
+    var cual = orden === 'top' && Editor.activo && LISTAS[q.get('lista')] ? q.get('lista') : '';
     var sems = ventanaHist();
     return Promise.all([indice(), docsDeDias(dias[0], dias[2]), Esc.rango(dias[0], dias[2]),
       Editor.activo ? Hist.cargar(sems, true).then(function () { return Hist.lista(sems); }, function () { return null; }) : null,
-      topDeTops().catch(function () { return null; })
+      topDeTops().catch(function () { return null; }),
+      Editor.activo ? listasValor().catch(function () { return null; }) : null
     ]).then(function (x) {
-      var idx = x[0], docs = x[1], escs = x[2], sels = x[3], top = x[4];
+      var idx = x[0], docs = x[1], escs = x[2], sels = x[3], top = x[4], listas = x[5];
       return (sels && sels.length ? mapasHist(sels) : Promise.resolve({})).then(function (mapas) {
         var ordenLiga = {};
         idx.ligas.forEach(function (L, i) { ordenLiga[L.id] = i; });
@@ -834,7 +883,7 @@
           ' · todas las ligas · hora del centro de México</p></div>';
         h += '<nav class="dias-tabs" aria-label="Día">' + dias.map(function (d, i) {
           var e = escs.filter(function (p) { return p.fecha === d; }).length;
-          return '<a href="' + urlHoy(d, filtro, orden) + '" aria-current="' + (d === dia) + '"><b>' + nombre(d, i) + '</b><span>' + fCorta(d) + '</span>' +
+          return '<a href="' + urlHoy(d, filtro, orden, cual) + '" aria-current="' + (d === dia) + '"><b>' + nombre(d, i) + '</b><span>' + fCorta(d) + '</span>' +
             '<small>' + plural(porDia[i].length, 'pick', 'picks') + (e ? ' · ✅ ' + e : '') + '</small></a>';
         }).join('') + '</nav>';
         if (Editor.activo && sels) { h += bloquePendientes(sels, mapas, dia); }
@@ -879,16 +928,50 @@
           }).filter(Boolean);
           var r5 = !!(top && top.regla === 'R5');
           var rsTop = ((top && top.resumen) || {})[dia];
+          /* Seguros y Valor (modo editor, 20/10/2026): como el top, cada pick con su lugar; si no esta en los
+             rankings de su jornada sale con su ficha de la lista, y se puede escoger si tambien esta en el top */
+          var enTop = {};
+          tops.forEach(function (x) { enTop[x.pid] = true; });
+          var deLista = function (k) {
+            return (((listas && listas[k] && listas[k].dias) || {})[dia] || []).map(function (r) {
+              var pid = r.archivo + '|' + r.partido + '|' + r.mercado, x = porPid[pid];
+              if (x) {
+                x = copiaPick(x);
+              } else if (porArchivo[r.archivo]) {
+                x = { p: { partido: r.partido, mercado: r.mercado, p: r.p, fecha: r.fecha, dia: r.dia, hora: r.hora, ts: r.ts,
+                  sem: r.sem, confianza: r.confianza }, d: porArchivo[r.archivo], top5: false, sug: [], rk: [], pid: pid,
+                  escoger: LISTAS_ESCOGIBLE || (TOP_ESCOGIBLE && enTop[pid]) ? undefined : false };
+              }
+              if (x) { x.top = r; x.lista = k; }
+              return x;
+            }).filter(Boolean);
+          };
+          var enLista = cual ? deLista(cual) : [];
           /* los filtros tambien en el top de tops (pedido de Javier, 10/10): cuentan entre sus picks */
-          var base = orden === 'top' ? tops : lista;
+          var base = orden === 'top' ? (cual ? enLista : tops) : lista;
           h += '<div class="hoy-filtros"><nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
-              return '<a href="' + urlHoy(dia, f[0], orden) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + filtrar(base, f[0]).length + '</b></a>';
+              return '<a href="' + urlHoy(dia, f[0], orden, cual) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + filtrar(base, f[0]).length + '</b></a>';
             }).join('') + '</nav><div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
             '" aria-current="' + (orden === 'partido') + '">🕐 Por partido</a><a href="' + urlHoy(dia, filtro, 'p') + '" aria-current="' + (orden === 'p') +
             '">📈 Probabilidad</a><a href="' + urlHoy(dia, filtro, 'top') + '" aria-current="' + (orden === 'top') +
             '">⭐ Top de tops</a></div></div>';
-          if (orden === 'top') {
+          if (orden === 'top' && Editor.activo && listas) {
+            var nL = { '': tops.length, seguros: cual === 'seguros' ? enLista.length : deLista('seguros').length,
+              valor: cual === 'valor' ? enLista.length : deLista('valor').length };
+            h += '<div class="conmutador listas-sel" role="group" aria-label="Lista">' + [['', '⭐ Top'], ['seguros', '🛡️ Seguros'], ['valor', '💎 Valor']].map(function (l) {
+              return '<a href="' + urlHoy(dia, filtro, 'top', l[0]) + '" aria-current="' + (cual === l[0]) + '">' + l[1] + ' <b>' + nL[l[0]] + '</b></a>';
+            }).join('') + '</div>';
+          }
+          if (orden === 'top' && cual) {
+            var rsL = ((listas[cual] || {}).resumen || {})[dia];
+            h += explicaLista(listas, cual) + (rsL && rsL.comprobables ? '<p class="leyenda"><span>✅ ' + plural(rsL.aciertos, 'acertado', 'acertados') +
+                '</span><span>❌ ' + plural(rsL.fallos, 'fallado', 'fallados') + '</span>' + (rsL.anulados ? '<span>➖ ' + rsL.anulados +
+                ' anulados o no comprobables</span>' : '') + (rsL.sin_resultado ? '<span>⏳ ' + rsL.sin_resultado + ' sin resultado</span>' : '') +
+                '<span>🎯 ' + pct(rsL.acierto) + ' de acierto</span>' + (rsL.ganancia != null ? '<span>💰 ' + (rsL.ganancia > 0 ? '+' : '') +
+                num(rsL.ganancia, 2) + ' u</span>' : '') + '</p>' : '') +
+              topHoy(enLista, filtrar(enLista, filtro), cual);
+          } else if (orden === 'top') {
             /* la explicacion, plegada (sugerencia aprobada por Javier, 10/10): los picks a la vista */
             h += '<details class="caja ph-mas top-info" data-k="top-info"><summary>ℹ️ Cómo se eligen</summary><div class="cuerpo">' + (r5
               ? '<p class="criterio top-explica">⭐ <b>Los mejores picks del día de todos los deportes.</b> Entran los de ' + pct(top.piso) +
@@ -934,7 +1017,7 @@
           }
         }
         pintar(h, dia === h0 ? 'Hoy' : fLarga(dia));
-        vigilarHoy(lista.concat(tops || []).map(function (x) { return x.p.ts; }).concat(escDia.map(function (p) { return p.ts; })));
+        vigilarHoy(lista.concat(tops || []).concat(enLista || []).map(function (x) { return x.p.ts; }).concat(escDia.map(function (p) { return p.ts; })));
       });
     });
   }
@@ -1726,12 +1809,42 @@
   }
   /* la auditoria del top de tops (pedido de Javier, 07/10): cuentas y resultados salen de
      top_de_tops.json (publicar_sitio.py); aqui solo se muestran */
-  function renglonTop(r, lugar) {
+  function renglonTop(r, lugar, cual) {
     var res = r.estado ? [r.estado, r.detalle || ''] : [jugado(r) ? 'por_auditar' : 'pendiente', ''];
-    var sub = '<span class="chip top-lugar">⭐ ' + lugar + '</span> <span class="cuando">🕐 ' + esc(r.hora || '—') + '</span> · ' +
-      bandera(r.bandera) + ' <a href="#/analisis/' + esc(r.semana) + '/' + esc(r.archivo) + '">' + esc(r.nombre) + '</a> · ' + esc(r.partido) +
-      ' ' + marcasTop(r);
+    var sub = '<span class="chip top-lugar' + (cual ? ' ' + cual : '') + '">' + (cual ? LISTAS[cual].e : '⭐') + ' ' + lugar + '</span> <span class="cuando">🕐 ' +
+      esc(r.hora || '—') + '</span> · ' + bandera(r.bandera) + ' <a href="#/analisis/' + esc(r.semana) + '/' + esc(r.archivo) + '">' + esc(r.nombre) +
+      '</a> · ' + esc(r.partido) + ' ' + marcasTop(r, cual === 'valor');
     return renglon(r, { doc: { archivo: r.archivo }, sub: sub, resultado: res, auditada: !!r.estado, escoger: false, sinSello: true });
+  }
+  /* las listas Seguros y Valor en Resultados (solo modo editor, 20/10/2026): cuentas de listas_valor.json */
+  function bloqueLista(listas, k, sem) {
+    var L = listas[k] || {}, c = L.semanas && L.semanas[sem];
+    var h = '<h2 id="s-' + k + '"><span class="emoji">' + LISTAS[k].e + '</span>' + LISTAS[k].t + ' <span class="cuenta">solo modo editor · ' +
+      (k === 'valor' ? 'se mide por la ganancia' : 'seguros con momio') + '</span></h2>';
+    if (!c) {
+      return h + '<p class="criterio">' + (listas.desde && masDias(sem, 6) < listas.desde ? 'La lista cuenta desde el ' + fLarga(listas.desde) + '.'
+        : 'No hubo picks en esta lista esta semana.') + '</p>';
+    }
+    h += marcadorCajas([['✅ Acertados', c.aciertos + ' de ' + c.comprobables, 'verde'], ['🎯 Acierto real', pct(c.acierto), 'verde'],
+      ['🤝 Prometido (combinada)', pct(c.prometido), 'azul'], ['⏳ Sin resultado', c.sin_resultado, c.sin_resultado ? 'azul' : '']]) +
+      (c.con_momio ? marcadorCajas([['💰 Ganancia (a 1 unidad)', (c.ganancia > 0 ? '+' : '') + num(c.ganancia, 2) + ' u', c.ganancia >= 0 ? 'verde' : ''],
+        ['📊 Por pick', (c.ganancia_por_pick > 0 ? '+' : '') + num(c.ganancia_por_pick, 3) + ' u', c.ganancia_por_pick >= 0 ? 'verde' : '']]) : '') +
+      tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado });
+    var dias = Object.keys(L.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6); }).sort();
+    h += '<details class="caja" data-k="' + k + '-dias"><summary><span class="emoji">🗓️</span>Por día <span class="cuenta">' +
+      plural(c.picks, 'pick', 'picks') + '</span></summary><div class="cuerpo">' + dias.map(function (f) {
+        var rs = (L.resumen || {})[f] || {};
+        return '<div class="dia-cab">🗓️ ' + fLarga(f) + '<span class="cuenta">' + (rs.comprobables ? '✅ ' + rs.aciertos + ' · ❌ ' + rs.fallos
+          : plural(L.dias[f].length, 'pick', 'picks')) + '</span></div><ul class="lista">' +
+          L.dias[f].map(function (r, i) { return renglonTop(r, i + 1, k); }).join('') + '</ul>';
+      }).join('') + '</div></details>';
+    var a = L.acumulado;
+    if (a && a.comprobables) {
+      h += '<p class="criterio">Desde el ' + fCorta(listas.desde) + ': ' + a.aciertos + ' de ' + a.comprobables + ' (' + pct(a.acierto) +
+        '; la combinada prometía ' + pct(a.prometido) + ')' + (a.ganancia != null ? ', ' + (a.ganancia > 0 ? '+' : '') + num(a.ganancia, 2) +
+        ' u en ' + plural(a.con_momio, 'pick', 'picks') : '') + '.</p>';
+    }
+    return h;
   }
   function bloqueTop(top, sem) {
     var h = '<h2 id="s-top"><span class="emoji">⭐</span>Top de tops <span class="cuenta">los más seguros de cada día</span></h2>';
@@ -1772,8 +1885,9 @@
   function vResultados(partes, q) {
     if (q && q.get('ver') === 'ranking') { location.replace('#/ranking'); return Promise.resolve(); }
     var sem = /^\d{4}-\d{2}-\d{2}$/.test(partes[0] || '') ? lunesDe(partes[0]) : lunesDe(hoy());
-    return Promise.all([cargarTodo(), topDeTops().catch(function () { return null; })]).then(function (x) {
-      var T = x[0], top = x[1];
+    return Promise.all([cargarTodo(), topDeTops().catch(function () { return null; }),
+      Editor.activo ? listasValor().catch(function () { return null; }) : null]).then(function (x) {
+      var T = x[0], top = x[1], listas = x[2];
       var ult = T.picks.map(function (p) { return p.fecha || ''; }).sort().pop() || hoy();
       var min = lunesDe(CUENTAS_DESDE), max = lunesDe(ult > hoy() ? ult : hoy());
       var mapas = T.mapas, picks = T.picks.filter(function (p) { return p.fecha && p.fecha >= sem && p.fecha <= masDias(sem, 6); });
@@ -1800,6 +1914,7 @@
           }).join('') + '</tbody></table></div>';
       }
       h += bloqueTop(top, sem);
+      if (Editor.activo && listas) { h += bloqueLista(listas, 'seguros', sem) + bloqueLista(listas, 'valor', sem); }
       h += '<h2><span class="emoji">📈</span>Historial de la selección <span class="cuenta">lunes a domingo</span></h2>' + historialSemanas(T);
       if (picks.length) {                  // la tabla de seleccionadores, hasta el final (pedido de Javier)
         var t = porSeleccionador([{ picks: picks, mapas: mapas }]);
