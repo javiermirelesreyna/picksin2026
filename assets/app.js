@@ -2131,10 +2131,44 @@
     }
     return imagenes[src];
   }
+  var DIAS_GZ = ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'];
+  var NIVELES_GZ = ['fuerte', 'superfuerte', 'ultrafuerte'];
   function recursosGZ() {
-    var f = document.fonts && document.fonts.load
-      ? document.fonts.load('40px "Banderas Picksin"', '🇲🇽').catch(function () { return null; }) : null;
-    return Promise.all([imagen('assets/logo.webp'), imagen('assets/avatar.webp'), f]).then(function (r) { return { logo: r[0], avatar: r[1] }; });
+    var cargaLetra = function (f, t) { return document.fonts && document.fonts.load ? document.fonts.load('40px "' + f + '"', t).catch(function () { return null; }) : null; };
+    return Promise.all([imagen('assets/logo.webp'), imagen('assets/avatar.webp'), imagen('assets/gz-greenzone.webp'), imagen('assets/gz-fondo.webp'),
+      cargaLetra('Banderas Picksin', '🇲🇽'), cargaLetra('Bebas Picksin', 'ABC')]
+      .concat(DIAS_GZ.map(function (x) { return imagen('assets/gz-dia-' + x + '.webp'); }))
+      .concat(NIVELES_GZ.map(function (x) { return imagen('assets/gz-nivel-' + x + '.webp'); }))).then(function (r) {
+      var A = { logo: r[0], avatar: r[1], greenzone: r[2], fondo: r[3], dias: {}, niveles: {} };
+      DIAS_GZ.forEach(function (x, i) { A.dias[x] = r[6 + i]; });
+      NIVELES_GZ.forEach(function (x, i) { A.niveles[x] = r[13 + i]; });
+      return A;
+    });
+  }
+  /* la primera bandera (los de la NHL traen dos: Estados Unidos y Canada) */
+  function primeraBandera(b) {
+    var cp = Array.from(String(b || ''));
+    if (!cp.length) { return ''; }
+    if (cp[0] === '\u{1F3F4}') { var k = cp.indexOf('\u{E007F}'); return cp.slice(0, k > 0 ? k + 1 : 1).join(''); }
+    return /[\u{1F1E6}-\u{1F1FF}]/u.test(cp[0]) ? cp.slice(0, 2).join('') : cp[0];
+  }
+  /* lo que la imagen necesita, sacado de la jugada que se esta armando */
+  function datosGZ() {
+    var P = GZ.patas, calc = calcularGZ(), dia = diaGZ(P), niv = NIVELES[GZ.nivel] || NIVELES.fuerte;
+    var sinAcento = function (t) { return t.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+    var clave = !dia.varios && P.length && P[0].pick.fecha ? sinAcento(DIAS[fecha(P[0].pick.fecha).getUTCDay()]) : null;
+    return {
+      dia: { clave: clave, titulo: dia.titulo, fecha: dia.sub },
+      picks: P.map(function (x, i) {
+        var p = x.pick, eq = String(p.partido || '').split(' vs ');
+        var hora = dia.varios && p.fecha ? DIAS_C[fecha(p.fecha).getUTCDay()].toUpperCase() + ' ' + (p.hora || '') : (p.hora || '');
+        return { bandera: primeraBandera(p.bandera), deporte: deporteDe(p)[0], mercado: p.mercado,
+          local: p.local || eq[0] || '', visita: p.visitante || eq[1] || '', hora: hora.trim(), momio: calc.decs[i] ? americano(calc.decs[i]) : '' };
+      }),
+      momio: calc.tipo !== 'directas' && calc.dec ? americano(calc.dec) : null,
+      apuesta: calc.apuesta ? dinero(calc.apuesta) : null, total: calc.pago ? dinero(calc.pago) : null,
+      nivel: { clave: GZ.nivel, e: niv.e, n: niv.n }
+    };
   }
   function letra(c, peso, tam, estilo) {                    // estilo: 'italic' (opcional)
     c.font = (estilo ? estilo + ' ' : '') + peso + ' ' + tam + 'px ' + (document.documentElement.classList.contains('banderas-fuente') ? '"Banderas Picksin", ' : '') + LETRA;
@@ -2174,204 +2208,244 @@
     while (t > min && c.measureText(texto).width > ancho) { t -= 2; letra(c, peso, t); }
     return t;
   }
-  /* "NO ES SUERTE, ES CIENCIA" de fondo, con trazo para engrosar la letra y "ES CIENCIA" mas oscuro.
-     Cada parte se dibuja opaca en su propia capa y luego se funde con su transparencia (asi el
-     trazo y el relleno no se suman en los bordes). */
-  function marcaAgua(c, W, H) {
-    var D = Math.sqrt(W * W + H * H), capas = [0, 1].map(function () {
-      var k = document.createElement('canvas');
-      k.width = W; k.height = H;
-      var x = k.getContext('2d');
-      x.translate(W / 2, H / 2); x.rotate(-Math.PI / 9);
-      letra(x, 900, 62);
-      x.textAlign = 'left'; x.lineJoin = 'round'; x.lineWidth = 6; x.fillStyle = x.strokeStyle = '#0f5989';
-      return x;
-    });
-    var t1 = 'NO ES SUERTE, ', t2 = 'ES CIENCIA', w1 = capas[0].measureText(t1).width;
-    var fw = w1 + capas[0].measureText(t2 + '   ·   ').width;
-    for (var i = 0, y = -D / 2; y < D / 2; y += 104, i++) {
-      for (var x = -D / 2 - (i % 2) * fw / 2; x < D / 2; x += fw) {
-        capas[0].strokeText(t1, x, y); capas[0].fillText(t1, x, y);
-        capas[1].strokeText(t2, x + w1, y); capas[1].fillText(t2, x + w1, y);
-      }
-    }
-    c.save();
-    c.globalAlpha = 0.06; c.drawImage(capas[0].canvas, 0, 0);
-    c.globalAlpha = 0.13; c.drawImage(capas[1].canvas, 0, 0);
-    c.restore();
-  }
-  /* se llama dos veces: sin `plan` solo mide (para saber el alto) y con `plan` dibuja */
-  function componerGZ(c, A, plan) {
-    var pintar = !!plan, W = 1080, M = 48, P = GZ.patas, calc = calcularGZ(), niv = NIVELES[GZ.nivel], dia = diaGZ(P);
-    var VERDE = '#2e8f35', AZUL = '#1279bb', MARINO = '#0f5989', TEXTO = '#0e1a2b', SUAVE = '#56677c', TENUE = '#8796a8';
-    var y = 44, X = M, TW = W - 2 * M, PAD = 44;
-    c.textBaseline = 'alphabetic';
-    if (pintar) {
-      var g = c.createLinearGradient(0, 0, 0, plan.H);
-      g.addColorStop(0, '#ffffff'); g.addColorStop(1, '#e4eef8');
-      c.fillStyle = g; c.fillRect(0, 0, W, plan.H);
-      marcaAgua(c, W, plan.H);
-    }
-    /* logo, el dia en grande y la fecha */
-    var lh = 210, lw = A.logo ? lh * A.logo.width / A.logo.height : 0;
-    if (pintar && A.logo) {
-      c.save(); c.shadowColor = 'rgba(15, 89, 137, .28)'; c.shadowBlur = 36; c.shadowOffsetY = 12;
-      c.drawImage(A.logo, (W - lw) / 2, y, lw, lh); c.restore();
-    }
-    y += lh;
-    c.textAlign = 'center';
-    var t = ajustar(c, 900, 132, 56, dia.titulo, TW - 40);
-    y += 54 + Math.round(t * 0.74);
-    if (pintar) { c.fillStyle = VERDE; c.fillText(dia.titulo, W / 2, y); }
-    letra(c, 700, 30); espaciado(c, 4);
-    y += 52;
-    if (pintar) { c.fillStyle = SUAVE; c.fillText(dia.sub, W / 2, y); }
-    espaciado(c, 0);
-    y += 48;
+  /* La imagen de la Seleccion del dia con el diseno de Javier (24/10/2026, su imagen final): su fondo, el dia
+     con su letra y "NO ES SUERTE ES CIENCIA" por dentro, el logo, las selecciones en un cuadro blanco con la
+     caja del momio, la apuesta y el total y la franja del nivel, su avatar y su logo de Green Zone. Letra
+     Bebas Neue (SIL OFL). Va en su propio modulo para no chocar con los nombres de la pagina. */
+  var GZ3 = (function () {
+  var EMOJIS = '"Banderas Picksin", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, ' +
+    '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji"';
+  /* la letra de Javier: Bebas Neue (licencia SIL OFL), servida con la pagina como "Bebas Picksin" */
+  var LETRA = '"Bebas Picksin", "Bebas Neue", ' + EMOJIS;
+  var W = 1080, K = 1;
+  var C = { fondo: '#f4f4f4', gris: '#979797', frase: '#8a8a8a', fraseOscura: '#6b6b6b', barra: '#047808', parentesis: '#079a0f', verde: '#06970f', azul: '#0d7cb9',
+    texto: '#111111', suave: '#777777', linea: '#8a8a8a', borde: '#c4c4c4', caja: '#dddddd' };
+  /* colores del nivel (Javier): fuerte = azul del logo, superfuerte = verde, ultrafuerte = los dos */
+  var NIVEL = { fuerte: ['#1279bb', '#0f5989'], superfuerte: ['#00b300', '#259d25'], ultrafuerte: [null, '#1a6f73'] };
 
-    /* la tarjeta con las selecciones */
-    var arriba = y;
-    if (pintar) {
-      c.save(); c.shadowColor = 'rgba(14, 40, 72, .14)'; c.shadowBlur = 48; c.shadowOffsetY = 16;
-      c.fillStyle = '#ffffff'; redondo(c, X, arriba, TW, plan.tarjeta, 40); c.fill(); c.restore();
-      c.strokeStyle = '#e0e8f0'; c.lineWidth = 2; redondo(c, X, arriba, TW, plan.tarjeta, 40); c.stroke();
+  function fuente(c, peso, tam) { c.font = 'normal ' + tam + 'px ' + LETRA; }      // Bebas solo tiene un grueso
+  function ancho(c, t, peso, tam, k) { fuente(c, peso, tam); return c.measureText(t).width * (k || K); }
+  function T(c, t, x, y, peso, tam, color, k, alin) {
+    k = k || K;
+    var w = ancho(c, t, peso, tam, k), x0 = alin === 'center' ? x - w / 2 : alin === 'right' ? x - w : x;
+    c.save(); c.translate(x0, y); c.scale(k, 1); c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+    c.fillStyle = color; c.fillText(t, 0, 0); c.restore();
+    return w;
+  }
+  function emoji(c, e, x, y, tam) {
+    c.font = tam + 'px ' + EMOJIS; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(e, x, y); c.textBaseline = 'alphabetic';
+  }
+  function linea(c, x1, y1, x2, y2, color, g) { c.strokeStyle = color; c.lineWidth = g || 2; c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke(); }
+  function azar(s) { return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; }
+
+  /* fondo de papel claro con motas, como el del ejemplo */
+  function papel(c, H) {
+    c.fillStyle = C.fondo; c.fillRect(0, 0, W, H);
+    var r = azar(17);
+    for (var i = 0; i < W * H / 260; i++) {
+      var x = r() * W, y = r() * H, l = 2 + r() * 7, a = r() * Math.PI;
+      c.strokeStyle = 'rgba(120,120,120,' + (0.05 + r() * 0.12).toFixed(3) + ')'; c.lineWidth = 1 + r() * 1.4;
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); c.stroke();
     }
-    y += PAD;
-    var etq = P.length === 1 ? '1 SELECCIÓN' : P.length + ' SELECCIONES';
-    letra(c, 800, 24); espaciado(c, 3);
-    var ew = c.measureText(etq).width + 48;
-    if (pintar) {
-      c.fillStyle = '#eaf7e6'; redondo(c, X + PAD, y, ew, 52, 26); c.fill();
-      c.fillStyle = '#237a29'; c.textAlign = 'left'; c.fillText(etq, X + PAD + 24, y + 35);
+    var g = c.createRadialGradient(W / 2, H * 0.4, 100, W / 2, H * 0.45, H * 0.8);
+    g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g; c.fillRect(0, 0, W, H);
+  }
+
+  /* el dia en gris con "NO ES SUERTE ES CIENCIA" por dentro, en Bebas y con "ES CIENCIA" mas oscuro
+     (Javier, 23/10); la imagen de su letra sirve de molde */
+  function diaConFrase(img, w, h, alto) {
+    var k = document.createElement('canvas'); k.width = Math.ceil(w); k.height = Math.ceil(h);
+    var x = k.getContext('2d');
+    x.drawImage(img, 0, 0, w, h);
+    x.globalCompositeOperation = 'source-in'; x.fillStyle = C.gris; x.fillRect(0, 0, w, h);
+    x.globalCompositeOperation = 'source-atop';
+    x.save(); x.translate(w / 2, h / 2); x.rotate(-0.5);
+    var tam = 52, a = 'NO ES SUERTE ', b = 'ES CIENCIA   ';            // mismo tamano en todos los dias
+    fuente(x, 400, tam); x.textBaseline = 'alphabetic';
+    var wa = x.measureText(a).width, wb = x.measureText(b).width, fw = wa + wb, D = Math.sqrt(w * w + h * h) + tam * 2;
+    for (var i = 0, y = -D / 2; y < D / 2; y += tam * 0.98, i++) {
+      for (var xx = -D / 2 - (i % 3) * fw / 3; xx < D / 2; xx += fw) {
+        x.fillStyle = C.frase; x.fillText(a, xx, y);
+        x.fillStyle = C.fraseOscura; x.fillText(b, xx + wa, y);
+      }
     }
-    espaciado(c, 0);
-    y += 52 + 34;
-    P.forEach(function (x, i) {
-      var p = x.pick, dec = calc.decs[i], numerada = P.length > 1;
-      var x0 = X + PAD + (numerada ? 68 : 0), der = X + TW - PAD, y0 = y;
-      var momio = dec ? americano(dec) : '';
-      letra(c, 800, 36);
-      var mw = momio ? Math.max(146, c.measureText(momio).width + 48) : 0;
-      var ancho = der - (mw ? mw + 26 : 0) - x0;
-      c.textAlign = 'left';
-      letra(c, 700, 25);
-      var l1 = partir(c, (p.bandera ? p.bandera + '  ' : '') + nombreDe(p) + '  ·  ' + (dia.varios ? cuando(p) : (p.hora || cuando(p))) +
-        '  ' + deporteDe(p)[0], ancho, 1)[0];
-      y += 26;
-      if (pintar) { c.fillStyle = SUAVE; c.fillText(l1, x0, y); }
-      letra(c, 800, 40);
-      var lm = partir(c, p.mercado, ancho, 3), ym = y + 10;
-      y += 8;
-      lm.forEach(function (l) { y += 48; if (pintar) { c.fillStyle = TEXTO; c.fillText(l, x0, y); } });
-      letra(c, 500, 29);
-      y += 4;
-      partir(c, p.partido, ancho, 2).forEach(function (l) { y += 38; if (pintar) { c.fillStyle = SUAVE; c.fillText(l, x0, y); } });
-      if (calc.tipo === 'directas' && calc.patas[i].apuesta) {
-        y += 44;
-        if (pintar) {
-          letra(c, 700, 27);
-          var a1 = 'Apuesta ' + dinero(calc.patas[i].apuesta);
-          c.fillStyle = SUAVE; c.fillText(a1, x0, y);
-          if (calc.patas[i].pago) {
-            var a2 = '   →   Ganancia ', w1 = c.measureText(a1).width;
-            c.fillText(a2, x0 + w1, y);
-            letra(c, 800, 27); c.fillStyle = VERDE; c.fillText(dinero(calc.patas[i].pago), x0 + w1 + c.measureText(a2).width, y);
-          }
-        }
+    x.restore();
+    return k;
+  }
+
+  /* el mercado: primero lo negro (la linea, el equipo) y despues lo verde (el mercado), con el nombre del
+     mercado lo mas corto posible (Javier, 23/10: "goles visita", "puntos partido") */
+  function cortaMercado(t) {
+    return t.replace(/ DEL VISITANTE/g, ' VISITA').replace(/ DEL LOCAL/g, ' LOCAL').replace(/ DEL PARTIDO/g, ' PARTIDO')
+      .replace(/ (EN|DE) LA (\d)ª MITAD/g, ' $2ª MITAD').replace(/ POR TIERRA/g, ' TIERRA').replace(/REMATES AL ARCO/g, 'REMATES ARCO')
+      .replace(/ \(SIN EMPATE\)/g, '').replace(/ \(SI ALGUIEN LLEGA\)/g, '').trim();
+  }
+  function partesMercado(m, local, visita) {
+    var t = String(m || '').toUpperCase(), r;
+    if ((r = /^(OVER|UNDER) (\d+(?:\.\d+)?) (.+)$/.exec(t))) { return [r[1] + ' ' + r[2], cortaMercado(r[3])]; }
+    if ((r = /^(.+?) ((?:MÁS|MENOS) DE \d+(?:\.\d+)?)$/.exec(t))) { return [r[2], cortaMercado(r[1])]; }
+    if ((r = /^HANDICAP ASIATICO (.+) ([+-]\d+(?:\.\d+)?)$/.exec(t))) { return [corto(r[1]) + ' ' + r[2], 'HÁNDICAP']; }
+    if ((r = /^DOBLE (1X|X2|12)$/.exec(t))) { return [r[1], 'DOBLE OPORTUNIDAD']; }
+    if ((r = /^CARRERA A (\d+) CORNERS( 1H)?: (.+?)(?: \(SI ALGUIEN LLEGA\))?$/.exec(t))) { return [corto(r[3]), 'CARRERA A ' + r[1] + ' CORNERS' + (r[2] || '')]; }
+    if ((r = /^(.+?) GANA (.+)$/.exec(t))) { return [corto(r[1]) + ' GANA', cortaMercado(r[2])]; }
+    if ((r = /^(.+?): MAS (.+)$/.exec(t))) { return [corto(r[1]), 'MÁS ' + cortaMercado(r[2])]; }
+    if (/^LOCAL \(1\)$/.test(t)) { return [corto(local), 'GANA']; }
+    if (/^VISITANTE \(2\)$/.test(t)) { return [corto(visita), 'GANA']; }
+    return ['', cortaMercado(t)];
+  }
+  /* sin "Club", "FC", "CD"... al principio del nombre (al final se quedan: "Paris FC" no es el PSG) */
+  function corto(n) {
+    var q = String(n || '').split(/\s+/).filter(Boolean);
+    while (q.length > 1 && /^(club|cf|fc|cd|ca|sc|ac|afc|ud|rcd|sd|fk|sk|kv|nk|rc|vfl|ss)$/i.test(q[0].replace(/\./g, ''))) { q.shift(); }
+    return q.join(' ').toUpperCase();
+  }
+
+  function redondo(c, x, y, w, h, r) {           // r: un numero o [arriba-izq, arriba-der, abajo-der, abajo-izq]
+    if (typeof r === 'number') { r = [r, r, r, r]; }
+    c.beginPath(); c.moveTo(x + r[0], y); c.lineTo(x + w - r[1], y); c.arcTo(x + w, y, x + w, y + r[1], r[1]);
+    c.lineTo(x + w, y + h - r[2]); c.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]); c.lineTo(x + r[3], y + h);
+    c.arcTo(x, y + h, x, y + h - r[3], r[3]); c.lineTo(x, y + r[0]); c.arcTo(x, y, x + r[0], y, r[0]); c.closePath();
+  }
+  /* el fondo de Javier (23/10): cubre toda la imagen, sea del alto que sea */
+  function fondo(c, H, img) {
+    if (!img) { papel(c, H); return; }
+    var e = Math.max(W / img.width, H / img.height), w = img.width * e, h = img.height * e;
+    c.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  }
+
+  function redondo(c, x, y, w, h, r) {           // r: un numero o [arriba-izq, arriba-der, abajo-der, abajo-izq]
+    if (typeof r === 'number') { r = [r, r, r, r]; }
+    c.beginPath(); c.moveTo(x + r[0], y); c.lineTo(x + w - r[1], y); c.arcTo(x + w, y, x + w, y + r[1], r[1]);
+    c.lineTo(x + w, y + h - r[2]); c.arcTo(x + w, y + h, x + w - r[2], y + h, r[2]); c.lineTo(x + r[3], y + h);
+    c.arcTo(x, y + h, x, y + h - r[3], r[3]); c.lineTo(x, y + r[0]); c.arcTo(x, y, x + r[0], y, r[0]); c.closePath();
+  }
+  /* el fondo de Javier: cubre toda la imagen, sea del alto que sea */
+  function fondo(c, H, img) {
+    if (!img) { papel(c, H); return; }
+    var e = Math.max(W / img.width, H / img.height), w = img.width * e, h = img.height * e;
+    c.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+  }
+  /* cuando la jugada abarca varios dias ("SABADO Y DOMINGO") no hay letra de Javier: el molde se hace con Bebas */
+  function moldeTexto(t) {
+    var k = document.createElement('canvas'), x = k.getContext('2d'), tam = 400;
+    fuente(x, 400, tam);
+    k.width = Math.ceil(x.measureText(t).width) + 4; k.height = Math.round(tam * 0.92);
+    x = k.getContext('2d'); fuente(x, 400, tam); x.textBaseline = 'alphabetic'; x.fillStyle = '#000'; x.fillText(t, 2, k.height);
+    return { img: k, cuerpo: Math.round(tam * 0.7) };
+  }
+
+  function dibujar(c, A, D) {
+    /* el dia ocupa siempre el ancho de las selecciones; el logo va con su mitad en el borde de arriba de
+       las letras: un dia "mas alto" (LUNES) baja todo lo demas */
+    var molde = A.dias[D.dia.clave] ? { img: A.dias[D.dia.clave], cuerpo: 186 } : moldeTexto(D.dia.titulo || 'POR CONFIRMAR');
+    var img = molde.img, LT = 26, LH = 262, X = 55, AN = 971;
+    var esc = AN / img.width, cuerpo = molde.cuerpo * esc, acento = (img.height - molde.cuerpo) * esc;
+    var arriba = LT + LH / 2 + 6, diaAbajo = arriba + cuerpo;
+    /* el cuadro blanco redondeado: las selecciones, la caja del momio final y las cantidades, y abajo la franja
+       del nivel con las esquinas de abajo redondeadas (imagen final de Javier, 24/10) */
+    var cols = [['MOMIO', D.momio, C.texto, 222], ['APUESTA', D.apuesta, C.texto, 520], ['TOTAL', D.total, C.verde, 842]].filter(function (k) { return k[1]; });
+    var n = D.picks.length, FILA = 107, PASO = 133, PX = 58, PW = 964;
+    var py = diaAbajo + 82, f0 = py + 33, finFilas = f0 + (n - 1) * PASO + FILA;
+    var ty = finFilas + 32, TH = cols.length ? 117 : 0, by = ty + TH + (cols.length ? 30 : 0), BH = 93, pb = by + BH;
+    var ay = pb + 60, AH = 235, H = ay + AH + 40;
+    c.canvas.width = W; c.canvas.height = H;
+    fondo(c, H, A.fondo);
+    c.drawImage(diaConFrase(img, AN, img.height * esc, cuerpo), X, arriba - acento);
+    if (A.logo) { var lw = LH * A.logo.width / A.logo.height; c.drawImage(A.logo, (W - lw) / 2, LT, lw, LH); }
+
+    /* fecha · linea · N SELECCIONES */
+    var fy = diaAbajo + 56;
+    var wf = T(c, D.dia.fecha, 64, fy, 400, 40, C.suave);
+    var et = n === 1 ? '1 SELECCIÓN' : n + ' SELECCIONES', we = ancho(c, et, 400, 40);
+    T(c, et, 1016, fy, 400, 40, C.suave, K, 'right');
+    linea(c, 64 + wf + 30, fy - 14, 1016 - we - 30, fy - 14, C.linea, 2);
+
+    c.fillStyle = '#ffffff'; redondo(c, PX, py, PW, pb - py, 46); c.fill();
+
+    /* una fila por seleccion */
+    D.picks.forEach(function (p, i) {
+      var y = f0 + i * PASO, mid = y + FILA / 2;
+      c.fillStyle = C.parentesis; c.beginPath();                     // el parentesis verde
+      c.moveTo(108, y); c.ellipse(108, mid, 16, FILA / 2, 0, -Math.PI / 2, Math.PI / 2, true); c.closePath(); c.fill();
+      emoji(c, p.bandera || '🏳️', 136, y + 29, 40);
+      linea(c, 108, y + 53, 176, y + 53, '#cfcfcf', 2);
+      emoji(c, p.deporte || '⚽', 136, y + 80, 40);
+      var izq = 258, der = 810, pm = partesMercado(p.mercado, p.local, p.visita), tam = 56;
+      var negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
+      while (tam > 32 && ancho(c, negro + verde, 400, tam) > der - izq) { tam -= 2; }
+      var xx = izq + T(c, negro, izq, y + 60, 400, tam, C.texto);
+      T(c, verde, xx, y + 60, 400, tam, C.verde);
+      var L = corto(p.local), V = corto(p.visita), t2 = 31;
+      var linea2 = function (t) {
+        return ancho(c, L, 400, t) + (V ? ancho(c, ' vs ', 400, t * 0.72) + ancho(c, V, 400, t) : 0) + (p.hora ? ancho(c, '  ' + p.hora, 400, t * 0.82) : 0);
+      };
+      while (t2 > 20 && linea2(t2) > der - izq) { t2 -= 1; }
+      xx = izq;
+      xx += T(c, L, xx, y + 94, 400, t2, C.texto);
+      if (V) {
+        xx += T(c, ' vs ', xx, y + 94, 400, Math.round(t2 * 0.72), C.suave);
+        xx += T(c, V, xx, y + 94, 400, t2, C.texto);
       }
-      if (pintar && numerada) {
-        c.fillStyle = '#eaf7e6'; c.beginPath(); c.arc(X + PAD + 24, y0 + 17, 24, 0, 2 * Math.PI); c.fill();
-        letra(c, 800, 26); c.fillStyle = '#237a29'; c.textAlign = 'center'; c.fillText(String(i + 1), X + PAD + 24, y0 + 26);
-      }
-      if (pintar && mw) {
-        c.fillStyle = MARINO; redondo(c, der - mw, ym, mw, 66, 20); c.fill();
-        letra(c, 800, 36); c.fillStyle = '#ffffff'; c.textAlign = 'center'; c.fillText(momio, der - mw / 2, ym + 46);
-      }
-      if (i < P.length - 1) {
-        y += 32;
-        if (pintar) {
-          c.save(); c.strokeStyle = '#d6e2ee'; c.lineWidth = 2; c.setLineDash([10, 10]);
-          c.beginPath(); c.moveTo(X + PAD, y); c.lineTo(der, y); c.stroke(); c.restore();
-        }
-        y += 30;
+      if (p.hora) { T(c, '  ' + p.hora, xx, y + 94, 400, Math.round(t2 * 0.82), C.suave); }
+      if (p.momio) {                                                  // momio en su caja azul, redonda a la derecha
+        c.fillStyle = C.azul; redondo(c, 828, y, 166, FILA, [0, 30, 30, 0]); c.fill();
+        var tm = 50; while (tm > 30 && ancho(c, p.momio, 400, tm) > 146) { tm -= 2; }        // casi la mitad (Javier, 24/10)
+        T(c, p.momio, 911, y + 71, 400, tm, '#ffffff', K, 'center');
       }
     });
-    /* momio, apuesta y ganancia */
-    var cols = calc.tipo === 'directas'
-      ? (calc.apuesta ? [['APUESTA TOTAL', dinero(calc.apuesta)], ['GANANCIA TOTAL', dinero(calc.pago), 1]] : [])
-      : (calc.dec || calc.apuesta ? [['MOMIO', calc.dec ? americano(calc.dec) : '—'], ['APUESTA', dinero(calc.apuesta)],
-        ['GANANCIA TOTAL', dinero(calc.pago), 1]] : []);
+
+    /* el momio final, la apuesta y el total, en su caja redondeada */
     if (cols.length) {
-      y += 40;
-      var cw = (TW - 2 * PAD) / cols.length;
-      if (pintar) {
-        c.fillStyle = '#f3f7fb'; redondo(c, X + PAD, y, TW - 2 * PAD, 164, 28); c.fill();
-        cols.forEach(function (k, i) {
-          var cx = X + PAD + cw * i + cw / 2;
-          if (i) { c.fillStyle = '#dbe6f1'; c.fillRect(X + PAD + cw * i - 1, y + 32, 2, 100); }
-          c.textAlign = 'center';
-          letra(c, 800, 21); espaciado(c, 2); c.fillStyle = TENUE; c.fillText(k[0], cx, y + 60); espaciado(c, 0);
-          ajustar(c, 900, k[2] ? 52 : 46, 26, k[1], cw - 28);
-          c.fillStyle = k[2] ? VERDE : TEXTO; c.fillText(k[1], cx, y + 124);
-        });
-      }
-      y += 164;
+      c.fillStyle = C.caja; redondo(c, 92, ty, 904, TH, 32); c.fill();
+      c.strokeStyle = C.borde; c.lineWidth = 2; redondo(c, 93, ty + 1, 902, TH - 2, 31); c.stroke();
+      var tres = cols.length === 3, cw = 904 / cols.length;
+      if (tres) { linea(c, 333, ty + 22, 333, ty + 92, '#a9a9a9', 2); linea(c, 685, ty + 22, 685, ty + 92, '#a9a9a9', 2); }
+      cols.forEach(function (k, j) {
+        var cx = tres ? k[3] : 92 + cw * j + cw / 2, ancho_ = tres ? [230, 340, 300][j] : cw - 40;
+        if (!tres && j) { linea(c, 92 + cw * j, ty + 22, 92 + cw * j, ty + 92, '#a9a9a9', 2); }
+        T(c, k[0], cx, ty + 32, 400, 22, C.suave, K, 'center');
+        var t = 64; while (t > 30 && ancho(c, k[1], 400, t) > ancho_) { t -= 2; }
+        T(c, k[1], cx, ty + 92, 400, t, k[2], K, 'center');
+      });
     }
-    y += PAD;
-    var tarjeta = y - arriba;
 
-    /* el nivel, el avatar y la firma: la firma se mide primero, porque la franja del nivel empieza
-       a la altura de su punto verde, ya a la derecha del avatar */
-    y += 44;
-    var parte = [['GREEN ZONE', 900, VERDE], [' by Picksin', 800, TEXTO]], ancho = 30 + 16 + 16 + 46;
-    parte.forEach(function (k) { letra(c, k[1], 44); ancho += c.measureText(k[0]).width; });
-    var fx = (X + 282 + X + TW) / 2 - ancho / 2;
-    var bh = 156, bt = y, bx = fx - 8, tx = bx + 40;
-    if (pintar) {
-      var fb = niv.fondo;
-      if (!fb) { fb = c.createLinearGradient(bx, 0, X + TW, 0); fb.addColorStop(0, MARINO); fb.addColorStop(1, '#49ad33'); }
-      c.save(); c.shadowColor = 'rgba(14, 40, 72, .18)'; c.shadowBlur = 30; c.shadowOffsetY = 10;
-      c.fillStyle = fb; redondo(c, bx, bt, X + TW - bx, bh, 40); c.fill(); c.restore();
-      c.textAlign = 'left';
-      letra(c, 800, 22); espaciado(c, 5); c.fillStyle = '#ffffff'; c.globalAlpha = 0.8;
-      c.fillText('NIVEL', tx, bt + 54);
-      var sx = tx + c.measureText('NIVEL').width + 14;
-      espaciado(c, 0); c.globalAlpha = 1;
-      for (var s = 0; s < 3; s++) {
-        c.fillStyle = s < niv.n ? '#ffffff' : 'rgba(255, 255, 255, .3)';
-        redondo(c, sx + s * 54, bt + 38, 46, 16, 8); c.fill();
-      }
-      var rotulo = niv.e + ' ' + niv.t.toUpperCase();
-      ajustar(c, 900, 72, 36, rotulo, X + TW - 40 - tx);
-      c.fillStyle = '#ffffff'; c.fillText(rotulo, tx, bt + 126);
+    /* la franja del nivel, al fondo del cuadro: su color, su letra de brocha y sus barras */
+    var col = NIVEL[D.nivel.clave] || NIVEL.fuerte, fb = col[0];
+    if (!fb) { fb = c.createLinearGradient(PX, 0, PX + PW, 0); fb.addColorStop(0, '#1279bb'); fb.addColorStop(1, '#00b300'); }
+    c.fillStyle = fb; redondo(c, PX, by, PW, BH, [0, 0, 46, 46]); c.fill();
+    var wn = T(c, 'NIVEL', 112, by + 64, 400, 46, '#ffffff');
+    /* el emoji y la palabra del nivel, centrados en su espacio (entre "NIVEL" y las barras) */
+    var bi = A.niveles[D.nivel.clave], bh = 74, bw = 0;
+    if (bi) { bw = bi.width * bh / bi.height; if (bw > 380) { bw = 380; bh = bi.height * bw / bi.width; } }
+    var ew = 60, gap = 14, grupo = ew + gap + bw, li = 112 + wn + 20, ld = 697, gx = li + (ld - li - grupo) / 2;
+    emoji(c, D.nivel.e, gx + ew / 2, by + 48, 56);
+    if (bi) { c.drawImage(bi, gx + ew + gap, by + 47 - bh / 2, bw, bh); }
+    for (var s = 0; s < 3; s++) {
+      var x0 = 707 + s * 96, sk = 14;
+      c.beginPath(); c.moveTo(x0 + sk, by + 30); c.lineTo(x0 + 86 + sk, by + 30); c.lineTo(x0 + 86, by + 64); c.lineTo(x0, by + 64); c.closePath();
+      if (s < D.nivel.n) { c.fillStyle = '#ffffff'; c.fill(); } else { c.strokeStyle = 'rgba(0,0,0,.45)'; c.lineWidth = 3; c.stroke(); }
     }
-    y = bt + bh + 82;
-    if (pintar) {
-      c.fillStyle = VERDE; c.beginPath(); c.arc(fx + 15, y - 15, 15, 0, 2 * Math.PI); c.fill();
-      fx += 46;
-      c.textAlign = 'left';
-      parte.forEach(function (k) { letra(c, k[1], 44); c.fillStyle = k[2]; c.fillText(k[0], fx, y); fx += c.measureText(k[0]).width; });
-      fx += 16;
-      c.fillStyle = VERDE; redondo(c, fx, y - 40, 46, 46, 10); c.fill();
-      c.strokeStyle = '#ffffff'; c.lineWidth = 6; c.lineCap = 'round'; c.lineJoin = 'round';
-      c.beginPath(); c.moveTo(fx + 11, y - 17); c.lineTo(fx + 20, y - 8); c.lineTo(fx + 36, y - 29); c.stroke();
-      if (A.avatar) {
-        var ah = 292, aw = ah * A.avatar.width / A.avatar.height, ax = X + 22, ab = y + 30;
-        c.fillStyle = 'rgba(14, 40, 72, .14)'; c.beginPath(); c.ellipse(ax + aw / 2, ab - 4, aw * 0.42, 11, 0, 0, 2 * Math.PI); c.fill();
-        c.imageSmoothingEnabled = true; c.imageSmoothingQuality = 'high';
-        c.drawImage(A.avatar, ax, ab - ah, aw, ah);
-      }
+
+    /* el avatar y el logo de Green Zone */
+    if (A.avatar) {
+      var aw = AH * A.avatar.width / A.avatar.height, ax = 130;
+      c.fillStyle = 'rgba(0,0,0,.16)'; c.beginPath(); c.ellipse(ax + aw / 2 + 6, ay + AH - 8, aw * 0.62, 16, 0, 0, 2 * Math.PI); c.fill();
+      c.drawImage(A.avatar, ax, ay, aw, AH);
     }
-    return { H: y + 64, tarjeta: tarjeta };
+    if (A.greenzone) {
+      var gw = 530, gh = gw * A.greenzone.height / A.greenzone.width;
+      c.save(); c.translate(692, ay + 112); c.rotate(-0.06); c.drawImage(A.greenzone, -gw / 2, -gh / 2, gw, gh); c.restore();
+    }
+    return H;
   }
+    return { dibujar: dibujar };
+  })();
   function dibujarGZ() {
     var turno = ++gzTurno;
     return recursosGZ().then(function (A) {
       var l = document.createElement('canvas');
-      l.width = 1080; l.height = 16;
-      var plan = componerGZ(l.getContext('2d'), A, null);
-      l.height = plan.H;
-      componerGZ(l.getContext('2d'), A, plan);
+      GZ3.dibujar(l.getContext('2d'), A, datosGZ());
       return new Promise(function (ok) { l.toBlob(ok, 'image/png'); });
     }).then(function (b) {
       if (turno !== gzTurno || !b) { return; }

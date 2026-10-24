@@ -989,3 +989,7 @@ details.caja > summary .sum-txt { flex: 1 1 auto; }
 .sum-fila { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .sum-fila .sum-uno { flex: 1 1 auto; min-width: 0; }
 .sum-hora { flex: none; color: var(--tenue); font-weight: 600; font-size: .84rem; white-space: nowrap; }
+
+/* ------------------------------------------------------------ letra de la imagen de la Seleccion del dia (24/10/2026) */
+/* Bebas Neue, (c) 2019 The Bebas Neue Project Authors, licencia SIL Open Font License 1.1 */
+@font-face { font-family: "Bebas Picksin"; src: url("bebas-neue.woff2") format("woff2"); font-display: block; }
