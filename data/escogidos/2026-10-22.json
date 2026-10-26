@@ -1,0 +1,39 @@
+{
+ "semana": "2026-10-22",
+ "actualizado": "2026-10-26T19:57:29.394Z",
+ "picks": [
+  {
+   "id": "nhl-2026-10-26|New York Rangers vs Los Angeles Kings|Goles del partido más de 4.5",
+   "archivo": "nhl-2026-10-26",
+   "liga": "nhl",
+   "nombre": "NHL",
+   "pais": "Estados Unidos y Canadá",
+   "bandera": "🇺🇸🇨🇦",
+   "jornada": null,
+   "sa": "2026-10-22",
+   "origen": "TOP 5",
+   "deporte": "hockey",
+   "emoji": "🏒",
+   "partido": "New York Rangers vs Los Angeles Kings",
+   "mercado": "Goles del partido más de 4.5",
+   "fecha": "2026-10-26",
+   "dia": "lunes",
+   "hora": "17:00",
+   "ts": 1793055600,
+   "sem": "2026-10-22",
+   "p": 0.8349,
+   "cuota": 1.25,
+   "confianza": "Baja",
+   "respaldo": "1/4 a favor, 1 en contra",
+   "familia": "Goles del partido",
+   "ciclo": "2026-10-20",
+   "liquidacion": "con tiempo extra y penales (+1 gol al ganador de la tanda)",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-26T19:57:29.394Z"
+   }
+  }
+ ]
+}
