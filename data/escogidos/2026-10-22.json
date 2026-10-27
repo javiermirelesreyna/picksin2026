@@ -1,35 +1,5 @@
 {
  "semana": "2026-10-22",
- "actualizado": "2026-10-27T20:29:57.140Z",
- "picks": [
-  {
-   "id": "argentina__profesional-j14|Argentinos Juniors vs Independiente Rivadavia|Over 5.5 Remates al Arco",
-   "archivo": "argentina__profesional-j14",
-   "liga": "argentina__profesional",
-   "nombre": "Liga Profesional Argentina",
-   "pais": "Argentina",
-   "bandera": "🇦🇷",
-   "jornada": 14,
-   "sa": "2026-10-22",
-   "origen": "TOP 5",
-   "partido": "Argentinos Juniors vs Independiente Rivadavia",
-   "mercado": "Over 5.5 Remates al Arco",
-   "fecha": "2026-10-27",
-   "dia": "martes",
-   "hora": "16:00",
-   "ts": 1793138400,
-   "sem": "2026-10-22",
-   "p": 0.868,
-   "cuota": 1.2,
-   "confianza": "Alta",
-   "respaldo": "3/4 a favor, 1 en contra",
-   "familia": "Remates al Arco",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-10-27T20:29:57.140Z"
-   }
-  }
- ]
+ "actualizado": "2026-10-27T20:32:45.115Z",
+ "picks": []
 }
