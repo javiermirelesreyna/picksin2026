@@ -176,7 +176,10 @@
     nhl_total: '🥅', nhl_local: '🏠', nhl_visita: '✈️',
     nfl_total: '🏈', nfl_total_local: '🏠', nfl_total_visita: '✈️', nfl_td_partido: '🙌', nfl_td_local: '🏠', nfl_td_visita: '✈️',
     nfl_td_carrera: '🏃', nfl_yardas_partido: '📏', nfl_yardas_local: '🏠', nfl_yardas_visita: '✈️', nfl_1m_total: '⏱️',
-    nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️'
+    nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️',
+    nba_ganador: '🏆', nba_handicap: '⚖️', nba_total: '🏀', nba_total_local: '🏠', nba_total_visita: '✈️', nba_1m_ganador: '🏆',
+    nba_1m_total: '⏱️', nba_1m_local: '🏠', nba_1m_visita: '✈️', nba_q1_total: '⏱️', nba_q1_local: '🏠', nba_q1_visita: '✈️',
+    nba_2m_total: '⏱️'
   };
   var EMOJI_PERSONA = { a_el_muro: '🧱', b_la_disparidad: '⚖️', c_la_boveda: '🔐', d_el_espejismo: '🏜️', e_el_radar: '📡' };
   var EMOJI_METRICA = { remates: '🎯', sot: '🥅', corners: '⛳', tarjetas: '🟨', faltas: '🦵', offsides: '🚩' };
@@ -752,7 +755,8 @@
       ' · ' + esc(p.partido) + ' ' : '') + (x.top ? marcasTop(x.top, x.lista === 'valor') : chipMomio(p)) +
       chipsAviso((x.top && x.top.avisos) || (fichaDe(d, p.partido) || {}).avisos, p.mercado) + deDondeSale(x) + chipConfianza(p.confianza) +
       (p.respaldo ? '<span class="chip neutro">⚖️ ' + esc(p.respaldo) + '</span>' : '') +
-      (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' : '⚠️ no validable') +
+      (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' :
+        p.deporte === 'basquetbol' ? '🩹 jugador clave' : '⚠️ no validable') +
         '</span>' : '');
     return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res,
       escoger: x.escoger });
@@ -1026,7 +1030,7 @@
   /* arriba: el deporte (cada uno con su ciclo) y si se ve el analisis o la auditoria. Pedido de Javier
      (01/10): las pestanas de todos los deportes en este orden; los que aun no estan listos dicen
      "Proximamente" mientras se preparan sus motores (listo = true cuando se conecte cada uno). */
-  var DEPORTES_PAGINA = [{ id: 'futbol', e: '⚽', t: 'Fútbol', listo: true }, { id: 'nba', e: '🏀', t: 'NBA', listo: false },
+  var DEPORTES_PAGINA = [{ id: 'futbol', e: '⚽', t: 'Fútbol', listo: true }, { id: 'nba', e: '🏀', t: 'NBA', listo: true },
     { id: 'nfl', e: '🏈', t: 'NFL', listo: true }, { id: 'nhl', e: '🏒', t: 'NHL', listo: true }];
   function cabAnalisis(tipo, sem, dep) {
     dep = dep || 'futbol';
@@ -1133,13 +1137,13 @@
     }).join('');
   }
   /* nombres cortos para que el partido y su tendencia quepan en un renglon (Javier, 11/10/2026): sin
-     "Club", "FC", "CD"...; en hockey y americano, el apodo ("Rangers", "Golden Knights") */
+     "Club", "FC", "CD"...; en hockey, americano y basquetbol, el apodo ("Rangers", "Golden Knights", "Trail Blazers") */
   var SIGLAS_FUERA = { club: 1, cf: 1, fc: 1, cd: 1, ca: 1, sc: 1, ac: 1, afc: 1, ud: 1, rcd: 1, sd: 1, cs: 1, fk: 1, sk: 1, kv: 1, nk: 1, 'if': 1, bk: 1 };
   function cortoEq(n, d) {
     var p = String(n || '').split(/\s+/).filter(Boolean);
     var dep = d ? depDe(d) : 'futbol';
-    if ((dep === 'hockey' || dep === 'americano') && p.length > 1) {
-      var k = /^(Golden|Maple|Blue|Red)$/.test(p[p.length - 2]) ? 2 : 1;
+    if ((dep === 'hockey' || dep === 'americano' || dep === 'basquetbol') && p.length > 1) {
+      var k = /^(Golden|Maple|Blue|Red|Trail)$/.test(p[p.length - 2]) ? 2 : 1;
       return p.slice(-k).join(' ');
     }
     var q = p.filter(function (x) { return !SIGLAS_FUERA[x.toLowerCase().replace(/\./g, '')]; });
@@ -1248,6 +1252,14 @@
     { id: 'yardas', e: '🏃', t: 'Yardas por tierra', d: 'del partido y de cada equipo', s: ['nfl_yardas_partido', 'nfl_yardas_local', 'nfl_yardas_visita'] },
     { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos y touchdowns de la 1ª y la 2ª mitad',
       s: ['nfl_1m_total', 'nfl_1m_local', 'nfl_1m_visita', 'nfl_td_1m', 'nfl_2m_total'] }
+  ];
+  /* la NBA (27/10/2026): sus 13 rankings en 4 desplegables */
+  var GRUPOS_NBA = [
+    { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'del partido y de la 1ª mitad', s: ['nba_ganador', 'nba_handicap', 'nba_1m_ganador'] },
+    { id: 'puntos', e: '🏀', t: 'Puntos', d: 'del partido, del local y del visitante', s: ['nba_total', 'nba_total_local', 'nba_total_visita'] },
+    { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos de la 1ª mitad (partido y cada equipo) y de la 2ª mitad',
+      s: ['nba_1m_total', 'nba_1m_local', 'nba_1m_visita', 'nba_2m_total'] },
+    { id: 'cuarto', e: '⏱️', t: '1er cuarto', d: 'puntos del partido y de cada equipo', s: ['nba_q1_total', 'nba_q1_local', 'nba_q1_visita'] }
   ];
   function gruposMercado(rankings, grupos) {
     var ult = grupos.length - 1;
@@ -1447,6 +1459,7 @@
       var h0 = hoy();
       h += '<p class="sub">' + e + ' <b>' + esc(D.nombre) + '</b> · cada día de partidos tiene su análisis · el motor corre ' +
         'una vez por ciclo, de <b>martes a lunes</b> · ' + (dep === 'nfl' ? 'los puntos cuentan con prórroga (el ganador empatado se devuelve)' :
+        dep === 'nba' ? 'todo cuenta con prórroga; la 1ª mitad y el 1er cuarto, solo su periodo (su ganador es sin empate)' :
         'los goles cuentan con tiempo extra y penales (+1 gol al ganador de la tanda)') + '</p>';
       if (tipo === 'auditoria' && D.acierto) {
         var a = D.acierto;
@@ -1548,7 +1561,7 @@
         ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
         : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.'));
     h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + ((d.rankings || []).length
-      ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : null, aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
+      ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : depDe(d) === 'basquetbol' ? GRUPOS_NBA : null, aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
     return h;
   }
   /* ficha de un partido de hockey: goles esperados, lo que hace cada equipo contra lo que permite el
@@ -1557,6 +1570,7 @@
     var k = 'f-' + d.archivo + f.local;
     var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
       sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">';
+    if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f) + '</div></details>'; }
     if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
       return cab + '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p></div></details>';
@@ -1614,6 +1628,47 @@
       'Lo de ' + esc(f.local) + ' (' + sL + ') sale de lo que hace ' + sL + ' y lo que permite ' + esc(f.visita) + ' (' + sV + '), y al revés. ' +
       'Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) + '. Los índices de las justificaciones de los picks combinan ' +
       'estas métricas con los pesos del motor.</p>' +
+      '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
+      '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
+      filas + '</tbody></table></div>';
+  }
+
+  /* ficha de un partido NBA (27/10/2026): lo esperado (puntos del partido, de la 1a mitad y del 1er cuarto de cada
+     equipo, ritmo, probabilidad de ganar y de prorroga), los 3 jugadores clave de cada equipo con su estado en el
+     reporte oficial de lesiones (aviso J de Javier: no cambia la probabilidad) y todas las metricas */
+  function fichaBasquetbol(f) {
+    var e = f.esperado, pp = f.partidos_previos || {}, S = f.siglas || {}, C = f.claves || {};
+    var sL = esc(S.local || f.local), sV = esc(S.visita || f.visita);
+    var x = function (v) { return v == null ? '—' : num(v, 2); };
+    var jug = function (eq, l) {
+      return '<div><span>⭐ Clave de ' + esc(eq) + '</span> <b>' + ((l || []).length ? l.map(function (j) {
+        var est = j.estado ? (j.estado === 'disponible' ? ' ✅' : j.estado === 'probable' ? ' 🟢 probable' :
+          ' 🩹 ' + esc(j.estado)) : '';
+        return esc(j.nombre) + ' (' + num(j.minutos, 1) + ' min)' + est;
+      }).join(' · ') : '—') + '</b></div>';
+    };
+    var claves = '<div class="datos">' + jug(f.local, C.local) + jug(f.visita, C.visita) + '</div>' +
+      (f.aviso ? '<p class="nota-pick">⚠️ ' + esc(f.aviso) + '</p>' : '') +
+      (C.reporte ? '<p class="criterio">🩺 ' + esc(C.reporte) + ' El motor no ajusta la probabilidad por jugadores: es un aviso.</p>' : '');
+    if (!e || f.sin_proyeccion) {
+      return '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p>' + claves;
+    }
+    var filas = (f.espejo || []).map(function (m) {
+      return '<tr><td style="white-space:normal">' + esc(m.metrica) + '</td><td class="num">' + x(m.hace_local) + '</td><td class="num">' + x(m.permite_visita) +
+        '</td><td class="num">' + x(m.hace_visita) + '</td><td class="num">' + x(m.permite_local) + '</td></tr>';
+    }).join('');
+    return '<div class="datos"><div><span>🏠 Puntos esperados de ' + esc(f.local) + '</span> <b>' + num(e.puntos_local, 1) + '</b></div>' +
+      '<div><span>✈️ Puntos esperados de ' + esc(f.visita) + '</span> <b>' + num(e.puntos_visita, 1) + '</b></div>' +
+      '<div><span>⏱️ 1ª mitad (' + sL + ' · ' + sV + ')</span> <b>' + num(e.puntos_1m_local, 1) + ' · ' + num(e.puntos_1m_visita, 1) + '</b></div>' +
+      '<div><span>⏱️ 1er cuarto (' + sL + ' · ' + sV + ')</span> <b>' + num(e.puntos_q1_local, 1) + ' · ' + num(e.puntos_q1_visita, 1) + '</b></div>' +
+      '<div><span>🔁 Ritmo (posesiones por equipo)</span> <b>' + num(e.ritmo, 1) + '</b></div>' +
+      '<div><span>📈 Probabilidad de que gane ' + esc(f.local) + '</span> <b>' + pct(e.p_local) + '</b></div>' +
+      '<div><span>⏳ Probabilidad de prórroga</span> <b>' + pct(e.p_prorroga) + '</b></div></div>' + claves +
+      (f.campo_neutral ? '<p class="criterio">🌍 Campo neutral: sin ventaja de local.</p>' : '') +
+      '<p class="criterio">Lo que <b>hace</b> cada equipo contra lo que <b>permite</b> su rival, en cada métrica (1.00 = media de la liga; ' +
+      'conteos llevados a 48 minutos). Lo de ' + esc(f.local) + ' (' + sL + ') sale de lo que hace ' + sL + ' y lo que permite ' + esc(f.visita) +
+      ' (' + sV + '), y al revés; los partidos recientes pesan más. Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) +
+      '. Los índices de las justificaciones de los picks combinan estas métricas con los pesos del motor.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
       '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
       filas + '</tbody></table></div>';
