@@ -1,5 +1,40 @@
 {
  "semana": "2026-10-22",
- "actualizado": "2026-10-27T20:32:45.115Z",
- "picks": []
+ "actualizado": "2026-10-29T02:03:43.953Z",
+ "picks": [
+  {
+   "id": "nba-2026-10-28|LA Clippers vs Los Angeles Lakers|Puntos del visitante en el 1er cuarto más de 23.5",
+   "archivo": "nba-2026-10-28",
+   "liga": "nba",
+   "nombre": "NBA",
+   "pais": "Estados Unidos",
+   "bandera": "🇺🇸",
+   "jornada": null,
+   "sa": "2026-10-22",
+   "origen": "TOP 5",
+   "deporte": "basquetbol",
+   "emoji": "🏀",
+   "partido": "LA Clippers vs Los Angeles Lakers",
+   "mercado": "Puntos del visitante en el 1er cuarto más de 23.5",
+   "fecha": "2026-10-28",
+   "dia": "miércoles",
+   "hora": "20:30",
+   "ts": 1793241000,
+   "sem": "2026-10-22",
+   "p": 0.8659,
+   "cuota": 1.2,
+   "confianza": "Baja",
+   "respaldo": "1/2 a favor, 1 en contra",
+   "familia": "Puntos del visitante en el 1er cuarto",
+   "aviso": "Aviso: jugador clave Rui Hachimura (Clippers): fuera en el reporte oficial de lesiones. El motor no ajusta la probabilidad por jugadores.",
+   "ciclo": "2026-10-27",
+   "liquidacion": "Solo el 1er cuarto",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-29T02:03:43.953Z"
+   }
+  }
+ ]
 }
