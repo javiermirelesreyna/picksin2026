@@ -993,3 +993,6 @@ details.caja > summary .sum-txt { flex: 1 1 auto; }
 /* ------------------------------------------------------------ letra de la imagen de la Seleccion del dia (24/10/2026) */
 /* Bebas Neue, (c) 2019 The Bebas Neue Project Authors, licencia SIL Open Font License 1.1 */
 @font-face { font-family: "Bebas Picksin"; src: url("bebas-neue.woff2") format("woff2"); font-display: block; }
+/* Courier Prime Bold, (c) 2015 The Courier Prime Project Authors, licencia SIL Open Font License 1.1 (28/10/2026:
+   la frase "NO ES SUERTE ES CIENCIA" de la imagen) */
+@font-face { font-family: "Courier Picksin"; font-weight: bold; src: url("courier-prime-bold.woff2") format("woff2"); font-display: block; }
