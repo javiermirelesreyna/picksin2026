@@ -1,6 +1,6 @@
 {
  "semana": "2026-10-29",
- "actualizado": "2026-10-30T19:38:37.055Z",
+ "actualizado": "2026-10-30T19:41:37.256Z",
  "picks": [
   {
    "id": "spain__laliga-j11|Villarreal vs Espanyol|Over 3.5 Tarjetas",
@@ -26,6 +26,32 @@
    ],
    "escogido": {
     "picksin": "2026-10-30T19:38:37.055Z"
+   }
+  },
+  {
+   "id": "brazil__brasileirao-j33|Corinthians vs Mirassol|Over 0.5 Goles",
+   "archivo": "brazil__brasileirao-j33",
+   "liga": "brazil__brasileirao",
+   "nombre": "Brasileirao Serie A",
+   "pais": "Brasil",
+   "bandera": "🇧🇷",
+   "jornada": 33,
+   "sa": "2026-10-29",
+   "origen": "Top de tops",
+   "partido": "Corinthians vs Mirassol",
+   "mercado": "Over 0.5 Goles",
+   "fecha": "2026-10-30",
+   "dia": "viernes",
+   "hora": "17:00",
+   "ts": 1793401200,
+   "sem": "2026-10-29",
+   "p": 0.943,
+   "confianza": "Alta",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-30T19:41:37.256Z"
    }
   }
  ]
