@@ -1,0 +1,49 @@
+{
+ "semana": "2026-10-29",
+ "actualizado": "2026-10-30T19:43:29.958Z",
+ "selecciones": [
+  {
+   "id": "mvvdr09s-3jtqyu",
+   "fecha": "2026-10-30",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "+100",
+   "dec": 2,
+   "apuesta": 1000,
+   "pago": 2000,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇪🇸",
+     "nombre": "LaLiga",
+     "partido": "Villarreal vs Espanyol",
+     "mercado": "Over 3.5 Tarjetas",
+     "fecha": "2026-10-30",
+     "hora": "14:00",
+     "momio": "-300",
+     "dec": 1.3333,
+     "p": 0.835,
+     "archivo": "spain__laliga-j11",
+     "sa": "2026-10-29"
+    },
+    {
+     "manual": true,
+     "deporte": "futbol",
+     "bandera": "🇧🇷",
+     "nombre": "BRASILEIRAO",
+     "partido": "CORINTHIANS vs MIRASOL",
+     "mercado": "Over 2 goles",
+     "fecha": "2026-10-30",
+     "hora": "17:00",
+     "momio": "-200",
+     "dec": 1.5,
+     "p": null
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-10-30T19:43:29.958Z",
+   "resultado": null
+  }
+ ]
+}
