@@ -1,0 +1,32 @@
+{
+ "semana": "2026-10-29",
+ "actualizado": "2026-10-30T19:38:37.055Z",
+ "picks": [
+  {
+   "id": "spain__laliga-j11|Villarreal vs Espanyol|Over 3.5 Tarjetas",
+   "archivo": "spain__laliga-j11",
+   "liga": "spain__laliga",
+   "nombre": "LaLiga",
+   "pais": "España",
+   "bandera": "🇪🇸",
+   "jornada": 11,
+   "sa": "2026-10-29",
+   "origen": "Top de tops",
+   "partido": "Villarreal vs Espanyol",
+   "mercado": "Over 3.5 Tarjetas",
+   "fecha": "2026-10-30",
+   "dia": "viernes",
+   "hora": "14:00",
+   "ts": 1793390400,
+   "sem": "2026-10-29",
+   "p": 0.835,
+   "confianza": "Alta",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-30T19:38:37.055Z"
+   }
+  }
+ ]
+}
