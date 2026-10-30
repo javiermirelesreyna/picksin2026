@@ -2683,6 +2683,8 @@
       '<ol class="gz-pasos"><li><button type="button" class="boton gz-guardar" data-accion="gz-guardar">💾 Guardar en el historial</button></li>' +
       '<li><button type="button" class="boton gz-compartir" data-accion="gz-compartir">📤 Compartir en Green Zone</button></li></ol>' +
       '<p class="gz-candado" data-gz-out="candado"></p>' +
+      '<div class="gz-pickster"><button type="button" class="boton" data-accion="gz-pickster">😉 Compartir en PICKSTERLAND</button>' +
+      '<small>Solo para el grupo con maki y diego: no se guarda en el historial y, al compartirla, la jugada se borra.</small></div>' +
       '<div class="gz-mas"><button type="button" class="boton secundario gz-tras" data-accion="gz-descargar">⬇️ Descargar imagen</button>' +
       '<button type="button" class="boton secundario gz-tras" data-accion="gz-copiar">📋 Copiar texto</button>' +
       '<button type="button" class="boton secundario" data-accion="gz-limpiar">🧹 Empezar otra</button></div>';
@@ -2841,6 +2843,31 @@
     copiado.then(function (ok) {
       avisar(ok ? '📥 Imagen descargada y texto copiado: pégalos en el grupo.' : '📥 Imagen descargada: súbela al grupo.');
     });
+  }
+
+  /* Picksterland (Javier, 29/10/2026): su grupo con maki y diego. La imagen se comparte SIN guardarla y, en cuanto
+     se comparte, la jugada se borra: de ahi no queda nada en el historial ni en los reportes */
+  function compartirPickster() {
+    if (!GZ.patas.length) { return; }
+    if (!gzBlob) { avisar('⏳ La imagen se está preparando: vuelve a tocar en un segundo.'); return; }
+    var archivo = null;
+    try { archivo = new File([gzBlob], nombreGZ().replace('green-zone', 'picksterland'), { type: 'image/png' }); } catch (e) { archivo = null; }
+    var borrar = function (msg) { limpiarGZ(); avisar(msg); };
+    if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      navigator.share({ files: [archivo] }).then(function () {
+        borrar('✅ Compartida en PICKSTERLAND. La jugada se borró: no quedó guardada.');
+      }, function (e) {
+        if (e && e.name !== 'AbortError') { descargarGZ(); borrar('📥 Se descargó la imagen: súbela a PICKSTERLAND desde tu galería. La jugada se borró.'); }
+      });
+      return;
+    }
+    descargarGZ();
+    borrar('📥 Imagen descargada: súbela a PICKSTERLAND. La jugada se borró: no quedó guardada.');
+  }
+  function limpiarGZ() {
+    GZ.patas = []; GZ.total = null; GZ.hechos = null; GZ.ids = null; GZ.guardado = null; guardarGZ();
+    $$('.gz-item').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
+    pintarPanelGZ();
   }
 
   /* ================================================================== 7. historial y reporte de Green Zone */
@@ -3946,6 +3973,7 @@
       guardarGZ(); renderGZ();
     }
     else if (a === 'gz-compartir') { compartirGZ(); }
+    else if (a === 'gz-pickster') { compartirPickster(); }
     else if ((a === 'gz-descargar' || a === 'gz-copiar') && !guardadaGZ()) { avisar('🔒 Primero guárdala en el historial.'); }
     else if (a === 'gz-descargar') { if (!gzBlob || !descargarGZ()) { avisar('⏳ La imagen se está preparando: vuelve a tocar en un segundo.'); } }
     else if (a === 'gz-copiar') {
@@ -3955,9 +3983,7 @@
     }
     else if (a === 'gz-limpiar') {
       if (GZ.patas.length && !guardadaGZ() && !confirm('Esta jugada no está guardada en el historial. ¿Borrarla de todos modos?')) { return; }
-      GZ.patas = []; GZ.total = null; GZ.hechos = null; GZ.ids = null; GZ.guardado = null; guardarGZ();
-      $$('.gz-item').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
-      pintarPanelGZ();
+      limpiarGZ();
     }
   }
   document.addEventListener('submit', function (e) {
