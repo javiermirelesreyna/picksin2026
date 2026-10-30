@@ -271,10 +271,12 @@
   Esc.reiniciar = function () { Esc.datos = {}; Esc.cargas = {}; };
   /* los escogidos que se juegan entre dos dias, de los archivos semanales que cubren esos dias; los
      que no tienen fecha salen en los rangos que llegan a hoy, para que no se pierdan */
-  /* Javier (10/10/2026): "deja en cero los contadores de resultados, empezaremos de nuevo". Resultados,
-     ranking y el Inicio cuentan los escogidos desde este dia; los de antes (desde el 2026-09-24) siguen
-     guardados (en su analisis y su auditoria) y vuelven a contar si se cambia esta fecha. */
-  var CUENTAS_DESDE = '2026-10-10';
+  /* Javier (10/10/2026): "deja en cero los contadores de resultados, empezaremos de nuevo"; y otra vez el
+     29/10/2026 ("vuelve a poner el contador en cero... este fin empezare con los motores"), desde el viernes
+     30/10. Resultados, ranking, el Inicio y el historial y los reportes de la Seleccion del dia cuentan desde
+     este dia; lo de antes (escogidos desde el 2026-09-24, selecciones del dia) sigue guardado (en su analisis,
+     su auditoria y data/green/) y vuelve a contar si se cambia esta fecha. */
+  var CUENTAS_DESDE = '2026-10-30';
   /* los picks del top de tops que no estan en los rankings de su jornada se pueden escoger cuando el
      intermediario del editor (Cloudflare) ya los acepta: worker.js del 09/10/2026 */
   var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
@@ -2895,6 +2897,7 @@
   };
   Hist.lista = function (semanas) {
     return [].concat.apply([], semanas.map(function (s) { return Hist.datos[s] ? Hist.datos[s].selecciones : []; }))
+      .filter(function (s) { return s.fecha >= CUENTAS_DESDE; })              // el contador en cero (29/10/2026)
       .sort(function (a, b) { return a.fecha.localeCompare(b.fecha) || String(a.creado).localeCompare(String(b.creado)); });
   };
   function mapasHist(sels) {
