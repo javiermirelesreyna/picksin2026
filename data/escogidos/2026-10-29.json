@@ -1,6 +1,6 @@
 {
  "semana": "2026-10-29",
- "actualizado": "2026-10-30T19:41:37.256Z",
+ "actualizado": "2026-10-31T17:03:35.225Z",
  "picks": [
   {
    "id": "spain__laliga-j11|Villarreal vs Espanyol|Over 3.5 Tarjetas",
@@ -52,6 +52,32 @@
    ],
    "escogido": {
     "picksin": "2026-10-30T19:41:37.256Z"
+   }
+  },
+  {
+   "id": "netherlands__eredivisie-j11|PSV Eindhoven vs Willem II Tilburg|Under 11.5 Corners",
+   "archivo": "netherlands__eredivisie-j11",
+   "liga": "netherlands__eredivisie",
+   "nombre": "Eredivisie",
+   "pais": "Países Bajos",
+   "bandera": "🇳🇱",
+   "jornada": 11,
+   "sa": "2026-10-29",
+   "origen": "Valor",
+   "partido": "PSV Eindhoven vs Willem II Tilburg",
+   "mercado": "Under 11.5 Corners",
+   "fecha": "2026-10-31",
+   "dia": "sábado",
+   "hora": "11:45",
+   "ts": 1793468700,
+   "sem": "2026-10-29",
+   "p": 0.64,
+   "confianza": "Media",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-10-31T17:03:35.225Z"
    }
   }
  ]
