@@ -1,6 +1,6 @@
 {
  "semana": "2026-10-29",
- "actualizado": "2026-10-31T13:01:08.679Z",
+ "actualizado": "2026-10-31T17:05:37.761Z",
  "selecciones": [
   {
    "id": "mvvdr09s-3jtqyu",
@@ -46,6 +46,36 @@
    "resultado": "ganada",
    "resuelto_por": "picksin",
    "resuelto": "2026-10-31T13:01:08.679Z"
+  },
+  {
+   "id": "mvwnjrji-bxe1qf",
+   "fecha": "2026-10-31",
+   "tipo": "directa",
+   "nivel": "superfuerte",
+   "momio": "+110",
+   "dec": 2.1,
+   "apuesta": 1000,
+   "pago": 2100,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇳🇱",
+     "nombre": "Eredivisie",
+     "partido": "PSV Eindhoven vs Willem II Tilburg",
+     "mercado": "Under 11.5 Corners",
+     "fecha": "2026-10-31",
+     "hora": "11:45",
+     "momio": "+110",
+     "dec": 2.1,
+     "p": 0.64,
+     "archivo": "netherlands__eredivisie-j11",
+     "sa": "2026-10-29"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-10-31T17:05:37.761Z",
+   "resultado": null
   }
  ]
 }
