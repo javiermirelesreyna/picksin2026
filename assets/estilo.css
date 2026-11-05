@@ -1001,3 +1001,22 @@ details.caja > summary .sum-txt { flex: 1 1 auto; }
 /* Courier Prime Bold, (c) 2015 The Courier Prime Project Authors, licencia SIL Open Font License 1.1 (28/10/2026:
    la frase "NO ES SUERTE ES CIENCIA" de la imagen) */
 @font-face { font-family: "Courier Picksin"; font-weight: bold; src: url("courier-prime-bold.woff2") format("woff2"); font-display: block; }
+
+/* ------------------------------------------------------------ version 2.5: todos los mercados del partido */
+.mejor-partido { margin: 8px 0 10px; font-size: .92rem; }
+details.caja.mk-todos { margin-top: 12px; box-shadow: none; }
+details.caja.mk-sec { box-shadow: none; }
+.mk { margin: 0 0 14px; }
+.mk h5 { margin: 0 0 4px; font-size: .9rem; font-weight: 750; color: var(--azul-oscuro); }
+.mk-tabla { width: 100%; border-collapse: collapse; font-size: .86rem; }
+.mk-tabla th { text-align: left; font-weight: 600; color: var(--suave); font-size: .78rem; padding: 2px 6px; }
+.mk-tabla th.num { text-align: right; }
+.mk-tabla td { padding: 3px 6px; border-top: 1px solid var(--borde); vertical-align: top; }
+.mk-tabla td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.mk-tabla td b { font-weight: 700; }
+.mk-tabla .mk-momio { display: block; color: var(--suave); font-size: .74rem; font-weight: 500; }
+.mk-tabla td.mk-con { background: var(--verde-suave); }
+.mk-tabla td.mk-edge { background: #bfe6b4; }
+.rk-modo { display: flex; gap: 6px; margin: 2px 0 8px; }
+.rk-modo button { flex: 1; padding: 7px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--superficie); font: inherit; font-size: .84rem; font-weight: 650; color: var(--suave); cursor: pointer; }
+.rk-modo button.on { background: var(--azul-suave); color: var(--azul-oscuro); border-color: var(--azul-suave); }

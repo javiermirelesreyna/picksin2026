@@ -542,7 +542,8 @@
   /* el momio de Playdoit de un pick (Javier, 11/10/2026): solo en modo editor, como en el top de tops */
   function chipMomio(p) {
     if (!Editor.activo || !p || !p.americano) { return ''; }
-    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' + chipComb(p) +
+    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' +
+      (p.pcasa != null ? chipCasa(p) : chipComb(p)) + chipEdge(p) +
       (p.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad: revisa información</span>' : '');
   }
   /* la probabilidad combinada motor + Playdoit (20/10/2026): solo en modo editor y solo con momio */
@@ -550,12 +551,19 @@
     return Editor.activo && t && t.pc != null ? '<span class="chip comb" title="Probabilidad combinada: la del motor mezclada con la de Playdoit sin su margen, con el peso que el motor se ha ganado en ese mercado">🤝 ' +
       pct(t.pc) + '</span>' : '';
   }
+  /* version 2.5: lo que da Playdoit sin su margen y el edge (probabilidad del motor por el momio, menos 1) */
+  function chipCasa(t) {
+    return Editor.activo && t && t.pcasa != null ? '<span class="chip neutro" title="La probabilidad que da Playdoit, sin su margen">🏠 ' + pct(t.pcasa) + '</span>' : '';
+  }
+  function chipEdge(t) {
+    return Editor.activo && t && t.vm != null ? '<span class="chip ' + (t.vm >= 0.05 ? 'valor' : 'neutro') + '" title="Probabilidad del motor por el momio, menos 1: lo que dejaría en promedio a 1 unidad si el motor está en lo correcto">📈 Edge ' + (t.vm > 0 ? '+' : '') + pct(t.vm) + '</span>' : '';
+  }
   function chipValor(t) {
     return Editor.activo && t && t.ve != null ? '<span class="chip valor" title="Lo que deja en promedio a 1 unidad si la combinada está en lo correcto">📈 Valor ' +
       (t.ve > 0 ? '+' : '') + pct(t.ve) + '</span>' : '';
   }
   function chipsPick(p, o) {
-    var c = [chipConfianza(p.confianza), chipMomio(p)];
+    var c = [chipConfianza(p.confianza), chipMomio(p), Editor.activo && p.sin_momio ? '<span class="chip neutro" title="Playdoit todavía no lo publica">⏳ Sin momio</span>' : ''];
     if (p.cuota) { c.push('<span class="chip neutro">Cuota implícita ' + esc(num(p.cuota, 2)) + '</span>'); }
     if (p.respaldo) { c.push('<span class="chip neutro" title="Lo que hace cada equipo y lo que permite su rival">⚖️ Respaldo ' + esc(p.respaldo) + '</span>'); }
     if (o.conOrigen && o.origen) { c.push('<span class="chip">' + emojiOrigen(o.origen) + ' ' + esc(o.origen) + '</span>'); }
@@ -608,7 +616,8 @@
       '<span class="m">' + esc(p.mercado) + '</span>' +
       '<span class="fila-fin">' + sello(sel) + '<span class="pp">' + pct(p.p) + '</span>' + botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + esc(p.partido) + ' · <span class="dia">📅 ' + esc(cuando(p)) + '</span>' +
-      (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + (chipMomio(p) ? ' ' + chipMomio(p) : '') + '</span>' +
+      (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + (chipMomio(p) ? ' ' + chipMomio(p) : '') +
+      (Editor.activo && p.sin_momio ? ' <span class="chip neutro" title="Playdoit todavía no lo publica">⏳ Sin momio</span>' : '') + '</span>' +
       (res ? '<span class="det">' + (ESTADO[res[0]] || ESTADO.no_comprobable).t + (res[1] ? ': ' + esc(res[1]) : '') + '</span>' : '') +
       '</li>';
   }
@@ -724,15 +733,17 @@
         if (tipo === 'top5') { x.top5 = true; } else if (tipo === 'sug') { x.sug.push(nombre); } else if (x.rk.indexOf(nombre) < 0) { x.rk.push(nombre); }
       };
       (d.top5 || []).forEach(function (p) { meter(p, 'top5'); });
-      (d.sugeridos || []).forEach(function (s) { meter(s.pick, 'sug', s.nombre); });
-      (d.rankings || []).forEach(function (r) { (r.picks || []).forEach(function (p) { meter(p, 'rk', r.titulo); }); });
+      (d.sugeridos || []).forEach(function (s) { if (s.clave !== 'valor' || Editor.activo) { meter(s.pick, 'sug', s.nombre); } });
+      (d.rankings || []).forEach(function (r) {
+        if ((r.modo !== 'e' || Editor.activo) && !r.oculto) { (r.picks || []).forEach(function (p) { meter(p, 'rk', r.titulo); }); }
+      });
     });
     return out;
   }
   function principal(x) { return x.top5 || x.sug.length > 0; }
   function deDondeSale(x) {
     var t = [];
-    if (x.top5) { t.push('<span class="chip">🏆 TOP 5</span>'); }
+    if (x.top5) { t.push('<span class="chip">🏆 ' + (x.d && x.d.v25 ? 'Top' : 'TOP 5') + '</span>'); }
     x.sug.forEach(function (n) { t.push('<span class="chip">' + emojiOrigen(n) + ' ' + esc(n) + '</span>'); });
     if (!t.length && x.rk.length) { t.push('<span class="chip neutro">📊 ' + esc(x.rk[0]) + '</span>'); }
     return t.join('');
@@ -932,7 +943,8 @@
             if (x) { x.top = r; }
             return x;
           }).filter(Boolean);
-          var r5 = !!(top && top.regla === 'R5');
+          var r7 = !!(top && top.regla === 'R7');
+          var r5 = !!(top && (top.regla === 'R5' || r7));
           var rsTop = ((top && top.resumen) || {})[dia];
           /* Seguros y Valor (modo editor, 20/10/2026): como el top, cada pick con su lugar; si no esta en los
              rankings de su jornada sale con su ficha de la lista, y se puede escoger si tambien esta en el top */
@@ -956,7 +968,8 @@
           /* los filtros tambien en el top de tops (pedido de Javier, 10/10): cuentan entre sus picks */
           var base = orden === 'top' ? (cual ? enLista : tops) : lista;
           h += '<div class="hoy-filtros"><nav class="filtros" aria-label="Qué picks">' +
-            [['todos', '📋 Todos'], ['top5', '🏆 TOP 5'], ['sug', '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
+            [['todos', '📋 Todos'], ['top5', docs.some(function (d) { return d.v25; }) ? '🏆 Top' : '🏆 TOP 5'],
+              ['sug', docs.some(function (d) { return d.v25; }) ? (Editor.activo ? '🛡️ Seguros y valor' : '🛡️ Seguros') : '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
               return '<a href="' + urlHoy(dia, f[0], orden, cual) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + filtrar(base, f[0]).length + '</b></a>';
             }).join('') + '</nav><div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
             '" aria-current="' + (orden === 'partido') + '">🕐 Por partido</a><a href="' + urlHoy(dia, filtro, 'p') + '" aria-current="' + (orden === 'p') +
@@ -980,13 +993,13 @@
           } else if (orden === 'top') {
             /* la explicacion, plegada (sugerencia aprobada por Javier, 10/10): los picks a la vista */
             h += '<details class="caja ph-mas top-info" data-k="top-info"><summary>ℹ️ Cómo se eligen</summary><div class="cuerpo">' + (r5
-              ? '<p class="criterio top-explica">⭐ <b>Los mejores picks del día de todos los deportes.</b> Entran los de ' + pct(top.piso) +
-                ' o más que el motor respalda (sin los de confianza baja; en fútbol, desde la jornada 5 también los de equipos que aún no juegan 7 partidos, porque ahí el motor acierta igual), de cualquier liga y mercado; primero el más seguro. Máximo ' +
+              ? '<p class="criterio top-explica">⭐ <b>' + (r7 ? 'Lo mejor de lo mejor de cada día' : 'Los mejores picks del día') + ' de todos los deportes.</b> Entran los de ' + pct(top.piso) +
+                ' o más' + (r7 ? ' (' + pct(top.piso_otros) + ' en los otros deportes)' : '') + ' que el motor respalda (sin los de confianza baja; en fútbol, desde la jornada 5 también los de equipos que aún no juegan 7 partidos, porque ahí el motor acierta igual), de cualquier liga y mercado' + (r7 ? ', de los de siempre o de los nuevos' : '') + '; primero el más seguro. Máximo ' +
                 esc(top.maximo) + ' por día y ' + esc(top.por_partido || 3) + ' del mismo partido' + (top.por_mercado ? ', con una sola línea de cada ' +
                 'mercado (de Under 6.5 y Under 5.5 de tarjetas del mismo partido entra solo una)' : '') + '. Cuando empieza su partido, un pick ya no entra ' +
                 'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
                 (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
-                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ' +
+                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ' + (r7 ? '⏳ Sin momio: Playdoit todavía no publica ese mercado; entra si la línea queda cerca de lo que proyecta el motor y da hasta ' + pct(top.techo_sin_momio) + ', y compite junto con los demás (actualiza momios). En resultado y hándicap no entra si el motor da más de 5 puntos sobre Playdoit. En los otros deportes, lo que no tiene momio va después. ' : '⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ') +
                   '🔎 Oportunidad encontrada: Playdoit lo paga como si fuera mucho menos probable; revisa información antes de jugarlo. ' +
                   '🚧 Diferencia motor–casa: en esa liga Playdoit pone la línea de ese mercado muy lejos de lo que espera el motor; ' +
                   'manda el motor, pero revisa información.</p>' : '')
@@ -1221,7 +1234,7 @@
     var tm = f.tendencia;
     return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' +
       sumPartido(f, d, f.visitante, f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</summary><div class="cuerpo">' +
-      lineaPartido(f) + explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) +
+      lineaPartido(f) + explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) + mejorHTML(f, d) +
       '<div class="x12"><div>🏠 Local<b>' + pct(g.p_local) + '</b></div><div>🤝 Empate<b>' + pct(g.p_empate) + '</b></div>' +
       '<div>✈️ Visitante<b>' + pct(g.p_visitante) + '</b></div></div>' +
       '<div class="datos"><div><span>⚽ Goles esperados</span> <b>' + num(g.total, 2) + '</b></div>' +
@@ -1232,8 +1245,52 @@
       (filas ? '<div class="tabla-scroll"><table><thead><tr><th>Partido completo</th><th class="num">Proyección</th>' +
         '<th class="num">Rango 80%</th><th class="num">Línea</th><th class="num">Más de la línea</th>' +
         '<th class="num">Local hace más</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '') +
+      (d.v25 ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.local + ' vs ' + f.visitante) + '"><summary><span class="emoji">📚</span><span class="sum-txt">Todos los mercados<small>la probabilidad de cada mercado, en las 5 secciones</small></span></summary><div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '') +
       '</div></details>';
   }
+  /* version 2.5: la mejor probabilidad de todas las estudiadas en el partido */
+  function mejorHTML(f, d) {
+    var m = f.mejor;
+    if (!m) { return ''; }
+    return '<p class="mejor-partido">🏅 <b>Mejor probabilidad de todas:</b> ' + esc(m.mercado) + ' · <b>' + pct(m.p) + '</b>' + (chipMomio(m) ? ' ' + chipMomio(m) : '') + '</p>';
+  }
+  /* version 2.5: los mercados de un partido se bajan al abrirlos (archivo aparte, asi Hoy y la jornada no pesan) */
+  var MK_CACHE = {};
+  function celdaMk(c, i) {
+    if (c[i] == null) { return '<td class="num">—</td>'; }
+    var extra = Editor.activo && c[i + 1] ? '<small class="mk-momio">' + esc(c[i + 1]) + (c[i + 2] != null ? ' · ' + (c[i + 2] > 0 ? '+' : '') + (c[i + 2] * 100).toFixed(0) + '%' : '') + '</small>' : '';
+    var marca = Editor.activo && c[i + 1] ? ' mk-con' + (c[i + 2] >= 0.05 ? ' mk-edge' : '') : '';
+    return '<td class="num' + marca + '"><b>' + (c[i] * 100).toFixed(0) + '%</b>' + extra + '</td>';
+  }
+  function mercadoMk(m) {
+    var h = '<div class="mk"><h5>' + esc(m.t) + '</h5>';
+    if (m.ou) {
+      h += '<table class="mk-tabla"><thead><tr><th>Línea</th><th class="num">Más</th><th class="num">Menos</th></tr></thead><tbody>' + m.ou.map(function (r) {
+        return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1) + celdaMk(r, 4) + '</tr>';
+      }).join('') + '</tbody></table>';
+    }
+    if (m.op) {
+      h += '<table class="mk-tabla"><tbody>' + m.op.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1) + '</tr>'; }).join('') + '</tbody></table>';
+    }
+    return h + '</div>';
+  }
+  function pintarMercados(det) {
+    var q = det.getAttribute('data-mercados').split('|'), caja = det.querySelector('.mk-cuerpo');
+    if (det.getAttribute('data-listo')) { return; }
+    det.setAttribute('data-listo', '1');
+    var url = 'data/semanas/' + q[0] + '/' + q[1] + '-mercados.json';
+    (MK_CACHE[url] || (MK_CACHE[url] = cargar(url))).then(function (d) {
+      var secs = (d.partidos || {})[q[2]] || [];
+      caja.innerHTML = secs.length ? (Editor.activo ? '<p class="criterio">💲 Debajo de cada probabilidad, el momio de Playdoit y el edge. En verde, lo que tiene momio; en verde fuerte, con edge de 5% o más.</p>' : '') + secs.map(function (s) {
+        return '<details class="caja mk-sec"><summary><span class="emoji">' + s.e + '</span><span class="sum-txt">' + s.s + '. ' + esc(s.t) + '</span><span class="cuenta">' + s.m.length + '</span></summary><div class="cuerpo">' +
+          s.m.map(mercadoMk).join('') + '</div></details>';
+      }).join('') : '<p class="criterio">Sin mercados para este partido.</p>';
+    }).catch(function () { det.removeAttribute('data-listo'); caja.innerHTML = '<p class="criterio">No se pudieron cargar los mercados. Vuelve a abrir.</p>'; });
+  }
+  document.addEventListener('toggle', function (e) {
+    var det = e.target;
+    if (det && det.tagName === 'DETAILS' && det.open && det.getAttribute('data-mercados')) { pintarMercados(det); }
+  }, true);
   /* los rankings del futbol en 5 desplegables (pedido de Javier, 10/10); adentro, cada ranking del
      motor con su orden. Uno que no este en la lista va al ultimo grupo. */
   var GRUPOS_MERCADO = [
@@ -1309,11 +1366,57 @@
       (r.total > r.picks.length ? '<p class="criterio">Se muestran los ' + r.picks.length + ' de mayor respaldo de ' + r.total + '.</p>' : '');
   }
   /* analisis (o auditoria, con mapaRes) de una jornada: TOP 5 y sugeridos plegados, y los rankings */
+  /* version 2.5 (Javier, 03/11/2026): los rankings en las 5 secciones en que se dividieron sus mercados */
+  var GRUPOS_25 = [
+    { s: 1, e: '⚽', t: 'Resultado y goles del partido', d: 'resultado, pago anticipado, hándicap, margen, primer gol, goles, marcará, ambos marcan, portería a cero' },
+    { s: 2, e: '⏱️', t: 'Goles por mitad', d: '1ª y 2ª mitad, gana cualquier mitad, marca en ambos tiempos, ambas mitades, intervalo con más goles' },
+    { s: 3, e: '⛳', t: 'Córners', d: 'totales, por equipo, 1x2, hándicap, escala, ambos con N+, carreras, 1ª mitad' },
+    { s: 4, e: '🟨', t: 'Tarjetas y faltas', d: 'totales, por equipo, 1x2, hándicap, ambos con N+, 1ª mitad' },
+    { s: 5, e: '🎯', t: 'Remates y fueras de juego', d: 'remates, remates al arco y fueras de juego: totales, por equipo y 1x2' }
+  ];
+  function rankings25(d, aud, res, o) {
+    return GRUPOS_25.map(function (g) {
+      var rp = (d.rankings || []).filter(function (r) { return r.grupo === g.s && r.modo === 'p'; })[0] || { picks: [], total: 0 };
+      var re = (d.rankings || []).filter(function (r) { return r.grupo === g.s && r.modo === 'e'; })[0] || { picks: [], total: 0 };
+      var lista = function (r, txt) {
+        return r.picks.length ? '<ul class="lista">' + r.picks.map(function (p) { return fila(p, o({ origen: r.titulo, resultado: res(p) })); }).join('') + '</ul>' +
+          (r.total > r.picks.length ? '<p class="criterio">Se muestran los ' + r.picks.length + ' mejores de ' + r.total + '.</p>' : '') : vacio('📊', txt);
+      };
+      var cuerpo = Editor.activo
+        ? '<div class="rk-modo"><button type="button" class="on" data-accion="rk-modo" data-modo="p">🔒 Por probabilidad</button><button type="button" data-accion="rk-modo" data-modo="e">📈 Por edge</button></div>' +
+          '<div class="rk-p">' + lista(rp, 'Ningún mercado de esta sección llega a 60% todavía.') + '</div>' +
+          '<div class="rk-e" hidden>' + lista(re, 'Ninguno con edge todavía: entran cuando Playdoit publique sus momios.') + '</div>'
+        : lista(rp, 'Ningún mercado de esta sección llega a 60% todavía.');
+      return resumenCaja('', 'g25-' + g.s, g.e, esc(g.t), esc(g.d), aud ? cuentaAud(rp.picks.concat(Editor.activo ? re.picks : []), res) : rp.total, cuerpo);
+    }).join('');
+  }
+  function picks25(d, aud, res, o) {
+    var top = d.top5 || [], sugs = d.sugeridos || [];
+    var seg = sugs.filter(function (s) { return s.clave === 'seguros'; }).map(function (s) { return s.pick; });
+    var val = sugs.filter(function (s) { return s.clave === 'valor'; }).map(function (s) { return s.pick; });
+    var R = d.reglas25 || {};
+    var cuenta = function (L) { return aud && L.length ? cuentaAud(L, res) : L.length; };
+    var grid = function (L, origen) { return '<div class="grid-picks">' + L.map(function (p) { return tarjeta(p, o({ origen: origen, resultado: res(p) })); }).join('') + '</div>'; };
+    var h = '<h2><span class="emoji">💎</span>Picks de la jornada</h2>';
+    h += resumenCaja('s-top5', 'top5', '🏆', 'Top de la jornada', 'lo mejor de toda la jornada: primero la seguridad', cuenta(top),
+      (Editor.activo && R.top ? '<p class="criterio">De ' + pct(R.top.piso) + ' o más, pagando ' + esc(americano(R.top.momio)) + ' o mejor. La regla de oro no lo contradice: lo que cada equipo hace contra lo que el otro permite.</p>' : '') +
+      (top.length ? grid(top, 'TOP 5') : vacio('🏆', 'Ningún pick llega todavía. Cuando se actualizan los momios, entran los que cumplen.')));
+    h += resumenCaja('s-seguros', 'seguros', '🛡️', 'Mejores seguros', 'los más probables que siguen', cuenta(seg),
+      seg.length ? grid(seg, '🛡️ Seguro') : vacio('🛡️', 'Ninguno llega todavía.'));
+    if (Editor.activo) {
+      h += resumenCaja('s-valor', 'valor', '💎', 'Mejores de valor', 'bien pagados, con la mayor ventaja sobre la casa', cuenta(val),
+        (R.valor ? '<p class="criterio">' + esc(americano(R.valor.momio)) + ' o mejor, de ' + pct(R.valor.piso) + ' o más, si con la probabilidad combinada motor–casa dejan ' + pct(R.valor.ve_combinada != null ? R.valor.ve_combinada : R.valor.edge) + ' o más por unidad. Primero el que más da la combinada.</p>' : '') +
+        (val.length ? grid(val, '💎 Valor') : vacio('💎', 'Ninguno todavía: entran cuando Playdoit publique sus momios.')));
+    }
+    h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + rankings25(d, aud, res, o) + '</section>';
+    return h;
+  }
   function cuerpoJornada(d, mapaRes) {
     var aud = !!mapaRes, h = '';
     var res = function (p) { return aud ? (mapaRes[p.partido + '|' + p.mercado] || ['no_comprobable', '']) : null; };
     var base = { doc: d, auditada: !!d.auditoria, escoger: !aud };
     var o = function (extra) { var r = {}; for (var k in base) { r[k] = base[k]; } for (k in extra) { r[k] = extra[k]; } return r; };
+    if (d.v25) { return picks25(d, aud, res, o); }
     var top5 = d.top5 || [], sugs = d.sugeridos || [], conPick = sugs.filter(function (s) { return s.pick; });
     h += '<h2><span class="emoji">💎</span>Picks de la jornada</h2>';
     h += resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 de la jornada', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
@@ -1350,8 +1453,9 @@
         }
         if (d.fechas_deducidas) { h += '<p class="nota">📅 Algunas fechas se dedujeron del día de la semana: la hora de esos partidos está por confirmar.</p>'; }
         /* primero los partidos y despues los picks (pedido de Javier, 10/10) */
-        h += '<nav class="indice" aria-label="En esta jornada">' + [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'],
-          ['s-sugeridos', '💡 Sugeridos'], ['s-mercados', '📊 Mercados']].map(function (x) {
+        h += '<nav class="indice" aria-label="En esta jornada">' + (d.v25 ? [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 Top'], ['s-seguros', '🛡️ Seguros']].concat(
+          Editor.activo ? [['s-valor', '💎 Valor']] : [], [['s-mercados', '📊 Mercados']]) : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'],
+          ['s-sugeridos', '💡 Sugeridos'], ['s-mercados', '📊 Mercados']]).map(function (x) {
           return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
         }).join('') + '</nav>';
         h += '<section id="s-partidos"><h2><span class="emoji">📋</span>Partidos <span class="cuenta">' +
@@ -3777,7 +3881,7 @@
         ['🏅', 'Resultados', 'la semana de lunes a domingo, el ranking de seleccionadores y, para los seleccionadores, el historial y los reportes de la selección del día.']
       ].map(fila).join('') + '</ul></div>' +
       '<h2 id="s-leer"><span class="emoji">🧭</span>Cómo leer un pick</h2><div class="tabla-caja"><ul class="lista">' +
-      [['📈', 'Probabilidad', 'lo que el Motor Picksin 2.0 calcula para ese mercado, ya calibrado.'],
+      [['📈', 'Probabilidad', 'lo que el Motor Picksin 2.5 calcula para ese mercado, ya calibrado.'],
         ['🎟️', 'Cuota implícita', 'la cuota que corresponde a esa probabilidad.'],
         ['⚖️', 'Respaldo bilateral', 'cuántos de los cuatro componentes (lo que hace cada equipo y lo que permite su rival) apoyan el pick.'],
         ['🟢', 'Confianza', 'Alta, Media o Baja según la solidez de la muestra y la consistencia del partido.'],
@@ -3804,7 +3908,7 @@
         ['🎯', D.acierto == null ? '—' : numero(+(D.acierto * 100).toFixed(1), 1, '%'), D.acierto == null ? 'de acierto real: sale con la primera auditoría' : 'de acierto real del motor'],
         ['✅', e ? numero(e.total) : '—', 'picks escogidos' + (e && e.acierto != null ? ' · ' + pct(e.acierto) + ' de acierto' : '')],
         ['🟢', g ? '<b>' + g.ganada + '–' + g.perdida + '</b>' : '—', 'selecciones del día ganadas–perdidas'],
-        ['📅', numero(D.dias), 'días con el Motor Picksin 2.0']
+        ['📅', numero(D.dias), 'días con el Motor Picksin']
       ].filter(function (x) { return !(x[0] === '🟢' && !Editor.activo); }).map(function (x) {
         return '<div class="trabajo-dato"><span class="emoji" aria-hidden="true">' + x[0] + '</span>' + x[1] + '<small>' + x[2] + '</small></div>';
       }).join('') + '</div>';
@@ -3863,7 +3967,7 @@
       caja.innerHTML = [[numero(D.partidos), 'partidos estudiados'], [numero(D.datos), 'datos procesados'],
         D.acierto == null ? [numero(D.jornadas), 'jornadas analizadas'] : [numero(+(D.acierto * 100).toFixed(1), 1, '%'), 'de acierto en ' + MILES(D.auditados) + ' picks']]
         .map(function (x) { return '<div>' + x[0] + '<small>' + x[1] + '</small></div>'; }).join('');
-      $('.intro-dia', v).textContent = 'Día ' + D.dias + ' con el Motor Picksin 2.0 · ' + D.ligas + ' ligas';
+      $('.intro-dia', v).textContent = 'Día ' + D.dias + ' con el Motor Picksin · ' + D.ligas + ' ligas';
       setTimeout(function () { contarHasta(caja, 1300); }, Math.max(0, 3500 - (Date.now() - t0)));   // suben de 3.5 a 4.8 s
     }, function () { /* sin datos: la entrada sale sin numeros */ });
   }
@@ -3920,6 +4024,13 @@
       var el = document.getElementById(t.getAttribute('data-id'));
       if (el && el.tagName === 'DETAILS') { el.open = true; }          // TOP 5 y sugeridos van plegados
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    }
+    else if (a === 'rk-modo') {
+      e.preventDefault();
+      var caja = t.closest('.cuerpo'), modo = t.getAttribute('data-modo');
+      caja.querySelector('.rk-p').hidden = modo !== 'p';
+      caja.querySelector('.rk-e').hidden = modo !== 'e';
+      $$('.rk-modo button', caja).forEach(function (b) { b.classList.toggle('on', b === t); });
     }
     else if (a === 'editor') { if (Editor.activo) { salir(); } else { abrirDialogo(); } }
     else if (a === 'intro' || a === 'logo') { entrada(); }
