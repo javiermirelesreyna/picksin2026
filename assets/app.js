@@ -497,7 +497,7 @@
       var s = el.querySelector('.sello');
       if (s) { s.outerHTML = sello(e); }
       var b = el.querySelector('button[data-pid], .btn-escoger, .btn-mini');
-      if (b && r) { b.outerHTML = botonEscoger(pid, r.pick, r.o, el.tagName === 'LI'); }
+      if (b && r) { b.outerHTML = botonEscoger(pid, r.pick, r.o, el.tagName === 'LI' || el.hasAttribute('data-compacto')); }
     });
     var bloque = $('#s-escogidos');
     if (bloque && bloque.getAttribute('data-archivo') && REG.__doc) { bloque.innerHTML = bloqueEscogidosLiga(REG.__doc); }
@@ -1256,21 +1256,38 @@
   }
   /* version 2.5: los mercados de un partido se bajan al abrirlos (archivo aparte, asi Hoy y la jornada no pesan) */
   var MK_CACHE = {};
-  function celdaMk(c, i) {
+  function celdaMk(c, i, sel) {
     if (c[i] == null) { return '<td class="num">—</td>'; }
     var extra = Editor.activo && c[i + 1] ? '<small class="mk-momio">' + esc(c[i + 1]) + (c[i + 2] != null ? ' · ' + (c[i + 2] > 0 ? '+' : '') + (c[i + 2] * 100).toFixed(0) + '%' : '') + '</small>' : '';
     var marca = Editor.activo && c[i + 1] ? ' mk-con' + (c[i + 2] >= 0.05 ? ' mk-edge' : '') : '';
-    return '<td class="num' + marca + '"><b>' + (c[i] * 100).toFixed(0) + '%</b>' + extra + '</td>';
+    var b = '';
+    /* escoger desde la tabla (Javier, 05/11/2026): cada linea con su boton, en modo editor y si el partido no ha empezado */
+    if (sel && Editor.activo && !cerrado(sel.pick, sel.o.auditada)) {
+      var pid = registrar(sel.pick, sel.o), r = REG[pid];
+      b = '<span class="mk-esc" data-pid="' + esc(pid) + '" data-compacto="1">' + botonEscoger(pid, r.pick, r.o, true) + '</span>';
+    }
+    return '<td class="num' + marca + '"><b>' + (c[i] * 100).toFixed(0) + '%</b>' + extra + b + '</td>';
   }
-  function mercadoMk(m) {
+  /* la linea de una celda, como pick escogible: el texto del mercado viene en el archivo (mo / mp) */
+  function selMk(ctx, m, mercado, p) {
+    if (!ctx || !mercado || p == null) { return null; }
+    var f = ctx.f;
+    return { pick: { partido: ctx.partido, mercado: mercado, p: p, cuota: Math.round((1 / Math.max(p, 1e-6) + 0.05) * 100) / 100,
+      familia: m.t, fecha: f.fecha, dia: f.dia, hora: f.hora, ts: f.ts, sem: f.sem },
+      o: { doc: ctx.d, origen: 'Tabla del partido', auditada: !!ctx.d.auditoria } };
+  }
+  function mercadoMk(m, ctx) {
     var h = '<div class="mk"><h5>' + esc(m.t) + '</h5>';
     if (m.ou) {
-      h += '<table class="mk-tabla"><thead><tr><th>Línea</th><th class="num">Más</th><th class="num">Menos</th></tr></thead><tbody>' + m.ou.map(function (r) {
-        return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1) + celdaMk(r, 4) + '</tr>';
+      h += '<table class="mk-tabla"><thead><tr><th>Línea</th><th class="num">Más</th><th class="num">Menos</th></tr></thead><tbody>' + m.ou.map(function (r, k) {
+        var par = (m.mo || [])[k] || [];
+        return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1, selMk(ctx, m, par[0], r[1])) + celdaMk(r, 4, selMk(ctx, m, par[1], r[4])) + '</tr>';
       }).join('') + '</tbody></table>';
     }
     if (m.op) {
-      h += '<table class="mk-tabla"><tbody>' + m.op.map(function (r) { return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1) + '</tr>'; }).join('') + '</tbody></table>';
+      h += '<table class="mk-tabla"><tbody>' + m.op.map(function (r, k) {
+        return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1, selMk(ctx, m, (m.mp || [])[k], r[1])) + '</tr>';
+      }).join('') + '</tbody></table>';
     }
     return h + '</div>';
   }
@@ -1279,11 +1296,15 @@
     if (det.getAttribute('data-listo')) { return; }
     det.setAttribute('data-listo', '1');
     var url = 'data/semanas/' + q[0] + '/' + q[1] + '-mercados.json';
-    (MK_CACHE[url] || (MK_CACHE[url] = cargar(url))).then(function (d) {
+    Promise.all([MK_CACHE[url] || (MK_CACHE[url] = cargar(url)),
+      Editor.activo ? cargar('data/semanas/' + q[0] + '/' + q[1] + '.json').catch(function () { return null; }) : null]).then(function (xs) {
+      var d = xs[0], doc = xs[1], f = doc && doc.v25 ? fichaDe(doc, q[2]) : null;
+      var ctx = f ? { d: doc, f: f, partido: q[2] } : null;
       var secs = (d.partidos || {})[q[2]] || [];
-      caja.innerHTML = secs.length ? (Editor.activo ? '<p class="criterio">💲 Debajo de cada probabilidad, el momio de Playdoit y el edge. En verde, lo que tiene momio; en verde fuerte, con edge de 5% o más.</p>' : '') + secs.map(function (s) {
+      caja.innerHTML = secs.length ? (Editor.activo ? '<p class="criterio">💲 Debajo de cada probabilidad, el momio de Playdoit y el edge. En verde, lo que tiene momio; en verde fuerte, con edge de 5% o más.' +
+        (ctx ? ' Toca ＋ para escoger cualquier línea.' : '') + '</p>' : '') + secs.map(function (s) {
         return '<details class="caja mk-sec"><summary><span class="emoji">' + s.e + '</span><span class="sum-txt">' + s.s + '. ' + esc(s.t) + '</span><span class="cuenta">' + s.m.length + '</span></summary><div class="cuerpo">' +
-          s.m.map(mercadoMk).join('') + '</div></details>';
+          s.m.map(function (m) { return mercadoMk(m, ctx); }).join('') + '</div></details>';
       }).join('') : '<p class="criterio">Sin mercados para este partido.</p>';
     }).catch(function () { det.removeAttribute('data-listo'); caja.innerHTML = '<p class="criterio">No se pudieron cargar los mercados. Vuelve a abrir.</p>'; });
   }

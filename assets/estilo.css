@@ -1020,3 +1020,7 @@ details.caja.mk-sec { box-shadow: none; }
 .rk-modo { display: flex; gap: 6px; margin: 2px 0 8px; }
 .rk-modo button { flex: 1; padding: 7px 8px; border: 1px solid var(--borde); border-radius: 8px; background: var(--superficie); font: inherit; font-size: .84rem; font-weight: 650; color: var(--suave); cursor: pointer; }
 .rk-modo button.on { background: var(--azul-suave); color: var(--azul-oscuro); border-color: var(--azul-suave); }
+
+/* ------------------------------------------------------------ escoger desde la tabla del partido (05/11/2026) */
+.mk-tabla .mk-esc { display: block; margin-top: 4px; }
+.mk-tabla .mk-esc .btn-mini { width: 30px; height: 30px; border-radius: 8px; font-size: .95rem; }
