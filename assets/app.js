@@ -2241,6 +2241,16 @@
     var s = String(t == null ? '' : t).replace(/[$\s,]/g, '');
     return /^\d+(\.\d+)?$/.test(s) && parseFloat(s) > 0 ? parseFloat(s) : null;
   }
+  /* SGP (Javier, 06/11/2026): dos o mas selecciones, todas del mismo partido. En Playdoit van juntas en una sola apuesta
+     y el momio lo da Playdoit al armarla (no es la multiplicacion), asi que se escribe a mano. Se guarda como parlay. */
+  function llavePartido(p) {
+    var pa = String(p.partido || [p.local, p.visitante].filter(Boolean).join(' vs ')).trim().toLowerCase();
+    return pa ? pa + '|' + (p.fecha || '') : '';
+  }
+  function sgpDe(patas) {                          // las de la jugada ({pick}) o las de una guardada (el pick mismo)
+    var ks = (patas || []).map(function (x) { return llavePartido(x.pick || x); });
+    return ks.length > 1 && !!ks[0] && ks.every(function (k) { return k === ks[0]; });
+  }
   function calcularGZ() {
     var P = GZ.patas, r = { tipo: P.length > 1 ? GZ.tipo : 'directa' };
     r.decs = P.map(function (x) { return decimalDe(x.signo, x.momio); });
@@ -2256,9 +2266,10 @@
       r.apuesta = suma('apuesta');
       r.pago = suma('pago');
     } else {
+      r.sgp = r.tipo === 'parlay' && sgpDe(P);
       r.calculado = r.completos ? r.decs.reduce(function (a, b) { return a * b; }, 1) : null;
       r.manual = r.tipo === 'parlay' && GZ.total ? decimalDe(GZ.total.signo, GZ.total.valor) : null;
-      r.dec = r.manual || r.calculado;
+      r.dec = r.sgp ? r.manual : r.manual || r.calculado;            // SGP: solo el que da Playdoit
       r.apuesta = monto(GZ.apuesta);
       r.pago = r.dec && r.apuesta ? r.apuesta * r.dec : null;
     }
@@ -2349,7 +2360,7 @@
       }),
       momio: calc.tipo !== 'directas' && calc.dec ? americano(calc.dec) : null,
       apuesta: calc.apuesta ? dinero(calc.apuesta) : null, total: calc.pago ? dinero(calc.pago) : null,
-      nivel: { clave: GZ.nivel, e: niv.e, n: niv.n }
+      nivel: { clave: GZ.nivel, e: niv.e, n: niv.n }, sgp: calc.tipo === 'parlay' && !!calc.sgp
     };
   }
   function letra(c, peso, tam, estilo) {                    // estilo: 'italic' (opcional)
@@ -2407,6 +2418,8 @@
     suave: '#c7c7c7', etiqueta: '#666666', divide: '#a0a0a0', total: '#0e9215', caja: '#efefef' };
   /* las barras del nivel (Javier, 28/10): fuerte naranja, superfuerte rojo, ultrafuerte los dos */
   var NARANJA = '#ff8000', ROJO = '#ff0000', APAGADA = '#333333';
+  /* SGP (06/11/2026): el partido una sola vez, arriba de sus selecciones (variante b) o como siempre en cada una (a) */
+  var SGP_ARRIBA = true;
 
   function fuente(c, tam) { c.font = 'normal ' + tam + 'px ' + LETRA; }          // Bebas solo tiene un grueso
   function ancho(c, t, tam, k) { fuente(c, tam); return c.measureText(t).width * (k || 1); }
@@ -2603,6 +2616,36 @@
     });
   }
 
+  /* SGP: la segunda linea (equipos, liga, hora, bandera y deporte) una sola vez, mas grande, arriba de las selecciones */
+  function partidoArriba(c, p, y, cortas) {
+    var liga = ligaDe(p), partes = lineaDos(c, p, cortas[liga] ? LIGA_CORTA[liga] : liga), t2 = 42;
+    while (t2 > 20 && partes.mide(t2) > 975 - 118) { t2 -= 0.5; }
+    var e = t2 / 33, base = y + 44, xx = 118;
+    partes.forEach(function (q) {
+      if (q.esp) { xx += q.esp * e; return; }
+      if (q.raya) { c.fillStyle = C.suave; c.fillRect(xx, base - 25 * e, 3, 30 * e); xx += 3; return; }
+      if (q.e) { var we = anchoEmoji(c, q.e, E2 * e); emoji(c, q.e, xx + we / 2, base - 11 * e, E2 * e); xx += we; return; }
+      xx += T(c, q.t, xx, base, t2 * q.k, q.c);
+    });
+    c.fillStyle = C.separa; c.fillRect(118, y + 70, 857, 3);
+  }
+  /* una seleccion del SGP: la raya verde, el mercado y su momio si lo tiene (el partido ya va arriba) */
+  function filaSGP(c, p, y, raya) {
+    c.fillStyle = C.barra; redondo(c, 96.5, y, 7, 62, 3.5); c.fill();
+    if (p.momio) {
+      var g = c.createLinearGradient(0, y - 1, 0, y + 60); g.addColorStop(0, C.azul[0]); g.addColorStop(1, C.azul[1]);
+      c.fillStyle = g; redondo(c, 866, y - 1, 107, 61, 14); c.fill();
+      var tm = 35; while (tm > 24 && ancho(c, p.momio, tm) > 95) { tm -= 1; }
+      T(c, p.momio, 922.5, y + 42, tm, '#ffffff', 'center');
+    }
+    var pm = partesMercado(p.mercado, p.local, p.visita, depDe(p)), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
+    var tam = 77, cabe = (p.momio ? 846 : 972) - 121;
+    while (tam > 40 && ancho(c, negro + verde, tam, 1.045) > cabe) { tam -= 1; }
+    var xx = 120 + T(c, negro, 120, y + 55, tam, C.texto, 0, 1.045);
+    T(c, verde, xx, y + 55, tam, C.verde, 0, 1.045);
+    if (raya) { c.fillStyle = C.separa; c.fillRect(118, y + 85, 857, 3); }
+  }
+
   function dibujar(c, A, D) {
     /* el dia: siempre el mismo ancho, centrado; el logo con su mitad en el borde de arriba de las letras, asi
        que un dia "mas alto" (LUNES) baja todo lo demas */
@@ -2613,9 +2656,9 @@
     /* el cuadro blanco: las selecciones, la caja del momio final y las cantidades y la franja negra del nivel */
     var cols = [['MOMIO', D.momio, C.texto, 211.5], ['APUESTA', D.apuesta, C.texto, 509.5], ['TOTAL', D.total, C.total, 827.5]]
       .filter(function (k) { return k[1]; });
-    var n = D.picks.length, PASO = 170;
-    var py = diaAbajo + 63, f0 = py + 33, ul = f0 + (n - 1) * PASO;
-    var ty = ul + 147, by = cols.length ? ty + 130 : ul + 147, pb = by + 86, H = pb + 266;
+    var n = D.picks.length, arriba2 = !!D.sgp && SGP_ARRIBA, PASO = arriba2 ? 112 : 170;
+    var py = diaAbajo + 63, f0 = py + 33 + (arriba2 ? 98 : 0), ul = f0 + (n - 1) * PASO, fin = arriba2 ? 95 : 147;
+    var ty = ul + fin, by = cols.length ? ty + 130 : ul + fin, pb = by + 86, H = pb + 266;
     c.canvas.width = W; c.canvas.height = H;
     c.fillStyle = C.fondo; c.fillRect(0, 0, W, H);
     var dy = arriba - acento, dh = img.height * esc;
@@ -2626,7 +2669,7 @@
 
     /* N SELECCIONES · raya · fecha */
     var fy = diaAbajo + 45;
-    var et = n === 1 ? '1 SELECCIÓN' : n + ' SELECCIONES';
+    var et = (D.sgp ? 'SGP · ' : '') + (n === 1 ? '1 SELECCIÓN' : n + ' SELECCIONES');
     var we = T(c, et, 116, fy, 30, C.encabezado), wf = ancho(c, D.dia.fecha, 30);
     T(c, D.dia.fecha, 941, fy, 30, C.encabezado, 'right');
     c.fillStyle = C.raya; c.fillRect(116 + we + 28, diaAbajo + 33, 941 - wf - 20 - (116 + we + 28), 2);
@@ -2635,7 +2678,12 @@
     /* una liga de nombre largo que no cabe en alguna fila va con su nombre corto en todas */
     var cortas = {};
     D.picks.forEach(function (p) { var l = ligaDe(p); if (LIGA_CORTA[l] && lineaDos(c, p, l).mide(T2) > CABE2) { cortas[l] = true; } });
-    D.picks.forEach(function (p, i) { fila(c, p, f0 + i * PASO, cortas); });
+    if (arriba2) {                                            // SGP: el partido arriba y debajo sus selecciones
+      partidoArriba(c, D.picks[0], py + 33, cortas);
+      D.picks.forEach(function (p, i) { filaSGP(c, p, f0 + i * PASO, i < n - 1); });
+    } else {
+      D.picks.forEach(function (p, i) { fila(c, p, f0 + i * PASO, cortas); });
+    }
 
     /* el momio final, la apuesta y el total, en su caja gris */
     if (cols.length) {
@@ -2752,7 +2800,7 @@
       campo('Fecha', texto('fecha', '', 'date')) +
       campo('Hora', texto('hora', '', 'time')) +
       campo('Tu apuesta', texto('mercado', 'ej. Yankees gana, Más de 8.5 carreras'), 'ancho') + '</div>' +
-      '<div class="gz-pata-datos"><label class="gz-campo"><span>Momio</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
+      '<div class="gz-pata-datos"><label class="gz-campo"><span>' + (c.sgp ? 'Momio (opcional)' : 'Momio') + '</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
       (c.tipo === 'directas' ? '<label class="gz-campo"><span>Apuesta</span><span class="gz-caja"><i>$</i><input type="text" inputmode="decimal" autocomplete="off" ' +
         'data-gz="apuesta-pata" value="' + esc(x.apuesta || '') + '" placeholder="' + esc(GZ.apuesta || '500') + '" aria-label="Apuesta de esta selección"></span></label>' +
         '<span class="gz-pata-gana" data-gz-out="pata-gana"></span>' : '') + '</div>' +
@@ -2767,12 +2815,13 @@
     return '<li class="gz-pata" data-id="' + esc(x.id) + '"><div class="gz-pata-cab">' + (GZ.patas.length > 1 ? '<span class="gz-num">' + (i + 1) + '</span>' : '') +
       '<div class="gz-pata-txt"><b>' + esc(p.mercado) + '</b><small>' + bandera(p.bandera) + ' ' + esc(p.partido) + ' · 📅 ' + esc(cuando(p)) + '</small></div>' +
       '<button type="button" class="gz-quitar" data-accion="gz-quitar" aria-label="Quitar de la jugada">✕</button></div>' +
-      '<div class="gz-pata-datos"><label class="gz-campo"><span>Momio</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
+      '<div class="gz-pata-datos"><label class="gz-campo"><span>' + (c.sgp ? 'Momio (opcional)' : 'Momio') + '</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
       (c.tipo === 'directas' ? '<label class="gz-campo"><span>Apuesta</span><span class="gz-caja"><i>$</i><input type="text" inputmode="decimal" autocomplete="off" ' +
         'data-gz="apuesta-pata" value="' + esc(x.apuesta || '') + '" placeholder="' + esc(GZ.apuesta || '500') + '" aria-label="Apuesta de esta selección"></span></label>' +
         '<span class="gz-pata-gana" data-gz-out="pata-gana"></span>' : '') +
       (p.cuota ? '<small class="gz-justo" data-gz-out="justo" data-cuota="' + esc(p.cuota) + '"></small>' : '') + '</div>' +
-      (repetido ? '<p class="gz-aviso">⚠️ Otra selección es del mismo partido: muchas casas no dejan combinarlas.</p>' : '') + '</li>';
+      (repetido && c.tipo === 'parlay' && !c.sgp ? '<p class="gz-aviso">🧩 Otra selección es del mismo partido: en Playdoit esas van juntas como SGP. ' +
+        'El momio final escríbelo con ✏️ Ajustar.</p>' : '') + '</li>';
   }
   function panelGZ() {
     var P = GZ.patas, c = calcularGZ();
@@ -2782,12 +2831,19 @@
     }
     if (P.length > 1) {
       h += '<div class="conmutador gz-tipo" role="group" aria-label="Tipo de jugada">' +
-        '<button type="button" data-accion="gz-tipo" data-tipo="parlay" aria-pressed="' + (c.tipo === 'parlay') + '">🔗 Parlay</button>' +
+        '<button type="button" data-accion="gz-tipo" data-tipo="parlay" aria-pressed="' + (c.tipo === 'parlay') + '">' + (sgpDe(P) ? '🧩 SGP' : '🔗 Parlay') + '</button>' +
         '<button type="button" data-accion="gz-tipo" data-tipo="directas" aria-pressed="' + (c.tipo === 'directas') + '">🎯 Directas</button></div>';
+      if (c.sgp) {
+        h += '<p class="criterio gz-sgp">🧩 Las ' + P.length + ' son del mismo partido: van juntas como SGP. Ármalo en Playdoit y escribe abajo el momio que te dé.</p>';
+      }
     }
     h += '<ol class="gz-patas">' + P.map(function (x, i) { return pataGZ(x, i, c); }).join('') + '</ol>';
     h += '<div class="gz-totales">';
-    if (c.tipo === 'parlay') {
+    if (c.tipo === 'parlay' && c.sgp) {
+      h += '<div class="gz-fila"><span>📈 Momio del SGP</span><span class="gz-fin">' +
+        cajaMomio(GZ.total ? GZ.total.signo : '+', GZ.total ? GZ.total.valor : '', 'data-gz="total"', 'gz-signo-total') + '</span>' +
+        '</div><small class="gz-nota" data-gz-out="total-nota"></small>';
+    } else if (c.tipo === 'parlay') {
       h += '<div class="gz-fila"><span>📈 Momio del parlay</span>' + (GZ.total
         ? '<span class="gz-fin">' + cajaMomio(GZ.total.signo, GZ.total.valor, 'data-gz="total"', 'gz-signo-total') +
           '<button type="button" class="enlace-btn" data-accion="gz-total-auto">↺ Calcular</button></span>'
@@ -2836,7 +2892,9 @@
       var k = el.getAttribute('data-gz-out'), li = el.closest('[data-id]'), i = li ? GZ.patas.indexOf(pataDe(el)) : -1;
       if (k === 'total') { el.textContent = c.calculado ? americano(c.calculado) : '—'; }
       else if (k === 'total-nota') {
-        el.textContent = GZ.total ? 'Ajustado a mano' + (c.calculado ? ' · con los momios de cada selección sale ' + americano(c.calculado) : '')
+        el.textContent = c.sgp ? 'El que te da Playdoit al armar el SGP: por ser del mismo partido no es la multiplicación' +
+          (c.calculado ? ' (multiplicando saldría ' + americano(c.calculado) + ')' : '') + '.'
+          : GZ.total ? 'Ajustado a mano' + (c.calculado ? ' · con los momios de cada selección sale ' + americano(c.calculado) : '')
           : c.completos ? 'Calculado con el momio de cada selección.' : 'Escribe el momio de cada selección para calcularlo.';
       } else if (k === 'pago') { el.textContent = dinero(c.pago); }
       else if (k === 'utilidad') { el.textContent = c.utilidad ? 'Utilidad +' + dinero(c.utilidad) + ' sobre ' + dinero(c.apuesta) : ''; }
@@ -2896,6 +2954,7 @@
         '<button type="button" class="boton secundario gz-propia-btn" data-accion="gz-propia">✍️ Agregar una selección propia</button>' +
         '<p class="criterio gz-propia-nota">Para lo que no está en el análisis (tenis, box, béisbol…). Se combina con los escogidos en parlay o en directas.</p>' +
         '<h3>✅ De los picks escogidos ' + (otro ? 'del ' + fCorta(otro) : 'de hoy en adelante') + '</h3>' +
+        '<p class="criterio gz-sgp-nota">🧩 Para un SGP: en el partido abre «Todos los mercados», toca ＋ en cada línea que quieras y júntalas aquí.</p>' +
         (otro ? '<p class="nota">📅 Estás viendo un día que ya pasó. <a href="#/green">Volver a hoy ›</a></p>' : '') +
         (gzPicks.length ? '<div id="gz-lista">' + listaGZ() + '</div>'
           : vacio('📭', 'No hay picks escogidos ' + (otro ? 'ese día' : 'de hoy en adelante') + '. Escógelos en <a href="#/hoy">🏠 Hoy</a>.')) +
@@ -3114,7 +3173,7 @@
         (p.hora ? ' · ' + esc(p.hora) : '');
     }).join(' / ');
     return '<article class="hs pm" data-sel="' + esc(s.id) + '" data-sem="' + esc(s._sem) + '"><div class="pm-txt"><b>' + fCorta(s.fecha) + ' · ' +
-      (s.tipo === 'parlay' ? '🔗 Parlay de ' + s.patas.length + ': ' : '') + patas + '</b><small>' + info + ' · ' + niv.e + ' ' + niv.t +
+      (s.tipo === 'parlay' ? (sgpDe(s.patas) ? '🧩 SGP de ' : '🔗 Parlay de ') + s.patas.length + ': ' : '') + patas + '</b><small>' + info + ' · ' + niv.e + ' ' + niv.t +
       (s.momio ? ' · momio ' + esc(s.momio) : '') + ' ' + persona(s.por) + '</small></div>' +
       (puede ? '<div class="hs-acciones">' + ['ganada', 'perdida', 'nula'].map(function (k) {
         return '<button type="button" class="r-' + k + '" data-accion="gz-hs-resultado" data-res="' + k + '">' + RES[k][0] + ' ' + RES[k][1] + '</button>';
@@ -3257,7 +3316,7 @@
     var st = estadoSel(s, mapas), niv = NIVELES[s.nivel] || NIVELES.fuerte;
     var puede = s.por === Editor.persona || Editor.persona === 'picksin';
     return '<article class="hs r-' + st.e + '" data-sel="' + esc(s.id) + '" data-sem="' + esc(s._sem) + '">' +
-      '<div class="hs-cab"><b>' + (s.tipo === 'parlay' ? '🔗 Parlay · ' + s.patas.length : '🎯 Directa') + '</b>' +
+      '<div class="hs-cab"><b>' + (s.tipo === 'parlay' ? (sgpDe(s.patas) ? '🧩 SGP · ' : '🔗 Parlay · ') + s.patas.length : '🎯 Directa') + '</b>' +
       (nDia > 1 ? '<span class="chip neutro">' + iDia + ' de ' + nDia + ' del día</span>' : '') +
       '<span class="chip n-' + esc(s.nivel) + '">' + niv.e + ' ' + niv.t + '</span>' + persona(s.por) + '</div>' +
       '<div class="hs-res">' + RES[st.e][0] + ' ' + RES[st.e][1] + (st.auto ? ' <small>según la auditoría</small>' : '') + '</div>' +
@@ -3450,7 +3509,7 @@
     yy += 16;
     if (pintar) {
       letra(c, 800, 17); espaciado(c, 2); c.fillStyle = REP.VERDE;
-      c.fillText(s.tipo === 'parlay' ? 'PARLAY · ' + s.patas.length : 'DIRECTA', x + P, yy + 26);
+      c.fillText(s.tipo === 'parlay' ? (sgpDe(s.patas) ? 'SGP · ' : 'PARLAY · ') + s.patas.length : 'DIRECTA', x + P, yy + 26);
       espaciado(c, 0);
       if (s.momio) {
         letra(c, 900, 22);
@@ -3600,7 +3659,7 @@
         var e = estadoSel(s, mapas).e, niv = NIVELES[s.nivel] || NIVELES.fuerte, neto = netoSel(s, e);
         return '<tr class="r-' + e + '"><td class="rep-dia">' + fCorta(s.fecha) + '</td><td><span class="rep-res">' + RES[e][0] + ' ' + RES[e][1] + '</span></td>' +
           '<td class="num neto ' + (neto > 0 ? 'mas' : neto < 0 ? 'menos' : '') + '">' + netoTxt(neto) + '</td><td class="rep-jugada">' +
-          (s.tipo === 'parlay' ? '<b>🔗 Parlay de ' + s.patas.length + '</b>' : '') +
+          (s.tipo === 'parlay' ? '<b>' + (sgpDe(s.patas) ? '🧩 SGP de ' : '🔗 Parlay de ') + s.patas.length + '</b>' : '') +
           s.patas.map(function (p) { return '<span>' + deporteDe(p)[0] + ' ' + esc(p.mercado) + '</span>'; }).join('') + '</td>' +
           '<td>' + niv.e + ' ' + niv.t + '</td><td class="num">' + esc(s.momio || '—') + '</td><td class="num">' + (s.apuesta ? dinero(s.apuesta) : '—') + '</td></tr>';
       }).join('') +
@@ -4086,7 +4145,7 @@
       if ($('#gz-lista')) { $('#gz-lista').innerHTML = listaGZ(); }
     }
     else if (a === 'gz-signo' || a === 'gz-signo-total') {
-      x = a === 'gz-signo' ? pataDe(t) : GZ.total;
+      x = a === 'gz-signo' ? pataDe(t) : (GZ.total = GZ.total || { signo: '+', valor: '' });
       x.signo = x.signo === '+' ? '-' : '+';
       t.textContent = x.signo === '+' ? '+' : '−';
       guardarGZ(); salidasGZ(); renderGZ();
@@ -4163,7 +4222,7 @@
       if (b) { b.textContent = signo === '+' ? '+' : '−'; }
     }
     if (k === 'momio') { var x = pataDe(t); x.momio = v; if (signo) { x.signo = signo; } }
-    else if (k === 'total') { GZ.total = { signo: signo || GZ.total.signo, valor: v }; }
+    else if (k === 'total') { GZ.total = { signo: signo || (GZ.total ? GZ.total.signo : '+'), valor: v }; }
     else if (k === 'apuesta') {
       GZ.apuesta = v;
       $$('[data-gz="apuesta-pata"]').forEach(function (i) { i.placeholder = v || '500'; });
