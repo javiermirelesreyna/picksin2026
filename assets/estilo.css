@@ -1024,3 +1024,137 @@ details.caja.mk-sec { box-shadow: none; }
 /* ------------------------------------------------------------ escoger desde la tabla del partido (05/11/2026) */
 .mk-tabla .mk-esc { display: block; margin-top: 4px; }
 .mk-tabla .mk-esc .btn-mini { width: 30px; height: 30px; border-radius: 8px; font-size: .95rem; }
+
+/* ============================================================ PAGINA 2.5 (06/11/2026)
+   Javier: "que la pagina tambien se actualice a 2.5 de diseno", en tema claro, mezcla de lo que ya tenemos con una
+   app de apuestas. Va al final: cambia colores, tarjetas, numeros y el boton de cada pick sin tocar lo de arriba. */
+:root {
+  --fondo: #edf1f6; --fondo-2: #e3e9f1; --borde: #e3e9f0; --radio: 18px;
+  --sombra: 0 1px 2px rgba(14, 40, 72, .05), 0 4px 16px rgba(14, 40, 72, .07);
+  --num: "Bebas Picksin", "Bebas Neue", system-ui, sans-serif;
+  --tinta: #0e1a2b;
+}
+.barra { border-bottom: 0; box-shadow: 0 2px 14px rgba(14, 40, 72, .07); }
+.marca::after {
+  content: "2.5"; font: 400 .95rem/1 var(--num); letter-spacing: .5px; color: #fff; background: var(--verde-oscuro);
+  border-radius: 6px; padding: 3px 6px 2px; margin-left: -2px;
+}
+/* el menu de abajo: una rayita verde arriba de la seccion en la que estas */
+.nav a[aria-current="page"] { background: none; color: var(--tinta); font-weight: 800; }
+.nav a[aria-current="page"]::before {
+  content: ""; position: absolute; top: -7px; left: 26%; right: 26%; height: 3px; border-radius: 0 0 4px 4px; background: var(--verde);
+}
+@media (min-width: 980px) {
+  .nav a[aria-current="page"] { background: var(--azul-suave); }
+  .nav a[aria-current="page"]::before { display: none; }
+}
+/* titulos y numeros grandes con la letra de la imagen (Bebas) */
+.hoy-cab h1, .titulo-seccion h1, .cab-liga h1 { font: 400 2.05rem/1.05 var(--num); letter-spacing: .4px; text-transform: uppercase; }
+.dato-caja b, .baldosa .num, .marcador b { font-family: var(--num); font-weight: 400; font-size: 2.1rem; letter-spacing: .5px; line-height: 1.05; }
+.dato-caja { border-radius: 16px; }
+/* los dias como pestanas de app */
+.dias-tabs { background: var(--superficie); border-radius: 16px; padding: 5px; gap: 4px; box-shadow: var(--sombra); }
+.dias-tabs a { border: 0; box-shadow: none; background: transparent; border-radius: 12px; padding: 7px 4px; }
+.dias-tabs a[aria-current="true"] { background: var(--tinta); }
+.dias-tabs a[aria-current="true"] small { color: #7ee07a; }
+.filtros a, .filtros button { border-radius: 10px; }
+.filtros a[aria-current="true"], .filtros button[aria-current="true"] { background: var(--tinta); border-color: var(--tinta); }
+.conmutador { border-radius: 14px; }
+.conmutador a[aria-current="true"], .conmutador button[aria-pressed="true"] { background: var(--tinta); }
+/* chips como etiquetas de app */
+.chip { border-radius: 7px; font-size: .72rem; padding: 1px 8px; }
+/* la tarjeta de un partido: liga arriba, la hora en su pastilla y los dos equipos */
+.partido-hoy { border: 0; border-radius: 18px; box-shadow: var(--sombra); padding: 12px 14px 8px; }
+.ph-cab { flex-wrap: nowrap; }
+.ph-liga { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .78rem; }
+.ph-hora {
+  margin-left: auto; flex: none; font: 400 1.05rem/1 var(--num); letter-spacing: .6px; color: #fff; background: var(--tinta);
+  border-radius: 8px; padding: 4px 8px 3px;
+}
+.ph-hora.empezo { font: 700 .72rem/1.4 system-ui, sans-serif; background: var(--gris-suave); color: var(--suave); letter-spacing: 0; }
+.ph-cab .sello { margin-left: auto; }
+.ph-cab .sello + .ph-hora { margin-left: 0; }
+.ph-equipos { display: grid; gap: 6px; margin: 10px 0 4px; font-size: 1.02rem; }
+.ph-equipos .eq { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.eq-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.escudo {
+  flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff;
+  font: 400 .9rem/1 var(--num); letter-spacing: .3px;
+}
+/* el boton de cada pick: momio arriba (o la probabilidad, si no hay momio) y abajo lo otro */
+.cuota {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 66px; padding: 5px 8px 4px;
+  border-radius: 12px; background: #f3f6fa; border: 1px solid var(--borde-fuerte); line-height: 1.05;
+}
+.cuota b { font: 400 1.35rem/1 var(--num); letter-spacing: .6px; color: var(--tinta); }
+.cuota small { font-size: .7rem; font-weight: 800; color: var(--verde-texto); margin-top: 2px; }
+.cuota.sin b { color: var(--azul-oscuro); }
+.cuota.sin small { color: var(--tenue); font-weight: 700; }
+.fila.es-escogido .cuota { background: var(--verde-oscuro); border-color: var(--verde-oscuro); }
+.fila.es-escogido .cuota b, .fila.es-escogido .cuota small { color: #fff; }
+.fila .pp { display: none; }
+.fila { padding: 11px 0; }
+.fila .m { font-weight: 700; line-height: 1.3; }
+.pbar { display: block; height: 5px; max-width: 210px; margin-top: 6px; border-radius: 9px; background: #e6ecf2; overflow: hidden; }
+.pbar i { display: block; height: 100%; border-radius: 9px; background: linear-gradient(90deg, var(--verde), var(--verde-oscuro)); }
+.btn-mini { border-radius: 50%; width: 34px; height: 34px; }
+.precio .cuota { min-width: 78px; }
+.precio .cuota b { font-size: 1.6rem; }
+/* resultados: verde o rojo a un lado, como "mis apuestas" */
+.fila.r-acierto { box-shadow: inset 4px 0 0 var(--verde); padding-left: 12px; }
+.fila.r-fallo { box-shadow: inset 4px 0 0 var(--rojo); padding-left: 12px; }
+.fila.r-acierto .cuota { border-color: var(--verde); }
+.fila.r-fallo .cuota { border-color: #f1b4b4; }
+/* en las tarjetas de pick, el boton del momio va solo (sin la caja de antes) */
+.precio { background: none; border: 0; padding: 0; min-width: 0; box-shadow: none; }
+/* el boleto (modo editor): la jugada que se esta armando, abajo, encima del menu */
+.boleto {
+  position: fixed; z-index: 29; left: 12px; right: 12px; bottom: calc(var(--nav-movil) + 10px + env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 14px; border-radius: 16px; text-decoration: none;
+  background: var(--verde-oscuro); color: #fff; box-shadow: 0 10px 26px rgba(14, 40, 72, .28);
+}
+.boleto[hidden] { display: none; }
+.bol-ico { font-size: 1.35rem; line-height: 1; }
+.bol-txt { display: grid; line-height: 1.2; min-width: 0; }
+.bol-txt small { font-size: .78rem; color: #dcf3d7; }
+.bol-ir { margin-left: auto; flex: none; font: 400 1.25rem/1 var(--num); letter-spacing: .6px; background: #fff; color: var(--verde-oscuro); border-radius: 11px; padding: 8px 13px 7px; }
+body.con-boleto { padding-bottom: calc(var(--nav-movil) + 78px + env(safe-area-inset-bottom)); }
+body.con-boleto .aviso { bottom: calc(var(--nav-movil) + 86px + env(safe-area-inset-bottom)); }
+@media (min-width: 980px) {
+  .boleto { left: auto; right: 24px; bottom: 24px; width: 360px; }
+  body.con-boleto { padding-bottom: 96px; }
+  body.con-boleto .aviso { bottom: 100px; }
+}
+/* Inicio: lo mas seguro de hoy, arriba */
+.destacado { background: var(--superficie); border-radius: 18px; box-shadow: var(--sombra); padding: 4px 14px 6px; margin: 0 0 16px; border-top: 4px solid var(--verde); }
+.dest-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.dest-cab h2 { margin: 10px 0 2px; font-size: 1.1rem; }
+.dest-cab a { font-weight: 800; font-size: .86rem; text-decoration: none; white-space: nowrap; }
+.destacado .fila:first-child { border-top: 0; }
+/* Resultados: la racha y la grafica de la semana */
+.racha { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0 0; }
+.racha > div { background: var(--superficie); border-radius: 16px; box-shadow: var(--sombra); padding: 10px 14px; }
+.racha small { display: block; color: var(--suave); font-size: .78rem; font-weight: 700; }
+.racha b { display: block; font: 400 2.3rem/1 var(--num); color: var(--verde-texto); letter-spacing: .5px; margin-top: 2px; }
+.racha span { font-size: .78rem; color: var(--suave); }
+.grafica-sem { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; background: var(--superficie); border-radius: 16px; box-shadow: var(--sombra); padding: 12px 12px 8px; margin: 10px 0 4px; }
+.gs-dia { display: grid; justify-items: center; gap: 3px; }
+.gs-num { font: 400 .95rem/1 var(--num); letter-spacing: .4px; color: var(--suave); min-height: 1em; }
+.gs-barra { width: 100%; max-width: 30px; height: 96px; display: flex; flex-direction: column-reverse; border-radius: 7px; background: #eef2f6; overflow: hidden; }
+.gs-barra i { display: block; width: 100%; flex: none; }
+.gs-barra .ok { background: var(--verde); }
+.gs-barra .ko { background: var(--rojo); }
+.gs-dia small { font-size: .72rem; font-weight: 700; color: var(--suave); text-transform: capitalize; }
+/* Todos los mercados (07/11/2026): cada mercado se abre solo */
+details.mk { margin: 0; border-top: 1px solid var(--borde); }
+details.mk:first-child { border-top: 0; }
+details.mk > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; row-gap: 1px; align-items: center; padding: 10px 2px; }
+details.mk > summary::-webkit-details-marker { display: none; }
+details.mk > summary::after { content: "+"; grid-column: 2; grid-row: 1 / span 2; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--azul-suave); color: var(--azul-oscuro); font-weight: 800; line-height: 1; }
+details.mk[open] > summary::after { content: "−"; background: var(--tinta); color: #fff; }
+.mk-t { font-weight: 750; font-size: .92rem; color: var(--azul-oscuro); min-width: 0; }
+.mk-t { grid-column: 1; grid-row: 1; line-height: 1.3; }
+.mk-n { grid-column: 1; grid-row: 2; font-size: .76rem; color: var(--suave); }
+.mk-n b { color: var(--verde-texto); }
+details.mk .mk-tabla { margin: 0 0 12px; }

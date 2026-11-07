@@ -273,10 +273,11 @@
      que no tienen fecha salen en los rangos que llegan a hoy, para que no se pierdan */
   /* Javier (10/10/2026): "deja en cero los contadores de resultados, empezaremos de nuevo"; y otra vez el
      29/10/2026 ("vuelve a poner el contador en cero... este fin empezare con los motores"), desde el viernes
-     30/10. Resultados, ranking, el Inicio y el historial y los reportes de la Seleccion del dia cuentan desde
+     30/10; y otra vez el 07/11/2026, con la pagina 2.5 ("vuelve a poner el contador en cero para empezar de nuevo con
+     la nueva pagina"). Resultados, ranking, el Inicio y el historial y los reportes de la Seleccion del dia cuentan desde
      este dia; lo de antes (escogidos desde el 2026-09-24, selecciones del dia) sigue guardado (en su analisis,
      su auditoria y data/green/) y vuelve a contar si se cambia esta fecha. */
-  var CUENTAS_DESDE = '2026-10-30';
+  var CUENTAS_DESDE = '2026-11-07';
   /* los picks del top de tops que no estan en los rankings de su jornada se pueden escoger cuando el
      intermediario del editor (Cloudflare) ya los acepta: worker.js del 09/10/2026 */
   var TOP_ESCOGIBLE = true;                       // worker 4c6bfbe8 (09/10/2026) ya los acepta
@@ -486,6 +487,30 @@
       refrescarSeleccion();
     });
   }
+  /* Pagina 2.5 (06/11/2026): el boleto, como en una app de apuestas. En modo editor, abajo y en todas las secciones
+     menos "Del dia": la jugada que se esta armando (o, si no hay, tus escogidos de hoy que no han empezado), con su
+     boton para armarla */
+  function pintarBoleto() {
+    var b = $('#boleto');
+    if (!b) {
+      b = document.createElement('a'); b.id = 'boleto'; b.className = 'boleto'; b.href = '#/green'; b.hidden = true;
+      document.body.appendChild(b);
+    }
+    var n = Editor.activo ? GZ.patas.length : 0, m = 0;
+    if (Editor.activo && !n) {
+      for (var s in Esc.datos) {
+        Esc.datos[s].picks.forEach(function (p) { if (p.fecha === hoy() && (p.por || []).indexOf(Editor.persona) >= 0 && !empezado(p)) { m++; } });
+      }
+    }
+    var ver = !!(n || m) && !/^#\/green/.test(location.hash);
+    b.hidden = !ver;
+    document.body.classList.toggle('con-boleto', ver);
+    if (ver) {
+      b.innerHTML = '<span class="bol-ico" aria-hidden="true">🎟️</span><span class="bol-txt"><b>' + (n ? 'Tu jugada' : 'Escogidos de hoy') +
+        '</b><small>' + (n ? plural(n, 'selección', 'selecciones') : plural(m, 'pick escogido', 'picks escogidos') + ' · aún sin jugada') +
+        '</small></span><span class="bol-ir">Armar ›</span>';
+    }
+  }
   /* sin repintar la pagina: se marcan las tarjetas y se rehace el bloque de la liga */
   function refrescarSeleccion() {
     var seccion = (location.hash.replace(/^#\/?/, '').split(/[/?]/)[0]) || '';
@@ -501,6 +526,7 @@
     });
     var bloque = $('#s-escogidos');
     if (bloque && bloque.getAttribute('data-archivo') && REG.__doc) { bloque.innerHTML = bloqueEscogidosLiga(REG.__doc); }
+    pintarBoleto();
   }
 
   /* ================================================================== piezas */
@@ -539,11 +565,11 @@
     (f.avisos || []).forEach(function (a) { partes.push('<span>' + (a.tipo === 'clasico' ? '⚔️ ' : '🔥 ') + esc(a.texto) + '</span>'); });
     return '<p class="aviso-partido">' + partes.join('') + '</p>';
   }
-  /* el momio de Playdoit de un pick (Javier, 11/10/2026): solo en modo editor, como en el top de tops */
+  /* lo que acompana al momio de Playdoit de un pick en modo editor (el momio mismo ya va en su boton, para todos:
+     Javier, 06/11/2026) */
   function chipMomio(p) {
     if (!Editor.activo || !p || !p.americano) { return ''; }
-    return '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(p.americano) + '</span>' +
-      (p.pcasa != null ? chipCasa(p) : chipComb(p)) + chipEdge(p) +
+    return (p.pcasa != null ? chipCasa(p) : chipComb(p)) + chipEdge(p) +
       (p.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad: revisa información</span>' : '');
   }
   /* la probabilidad combinada motor + Playdoit (20/10/2026): solo en modo editor y solo con momio */
@@ -604,7 +630,7 @@
     var cuerpo = '<div class="pick-cuerpo"><div><h4 class="mercado">' + esc(p.mercado) + '</h4>' +
       '<p class="partido">' + esc(p.partido) +
       (o.conLiga ? (o.conDia ? ' · 📅 ' + esc(cuando(p)) : ' · 🕐 ' + esc(p.hora || cuando(p))) : '') + '</p></div>' +
-      '<div class="precio"><b>' + pct(p.p) + '</b><small>probabilidad</small></div></div>';
+      '<div class="precio">' + cuota(p, p.americano) + '</div></div>';
     return '<article class="pick' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + '" data-pid="' + esc(pid) + '">' +
       (o.cabecera || '') + cab + cuerpo + chipsPick(p, o) +
       (p.aviso ? '<p class="nota-pick">⚠️ ' + esc(p.aviso) + '</p>' : '') +
@@ -613,13 +639,23 @@
   function fila(p, o) {
     var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
     return '<li class="fila' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + '" data-pid="' + esc(pid) + '">' +
-      '<span class="m">' + esc(p.mercado) + '</span>' +
-      '<span class="fila-fin">' + sello(sel) + '<span class="pp">' + pct(p.p) + '</span>' + botonEscoger(pid, p, o, true) + '</span>' +
+      '<span class="m">' + esc(p.mercado) + barraP(p) + '</span>' +
+      '<span class="fila-fin">' + sello(sel) + cuota(p, p.americano) + botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + esc(p.partido) + ' · <span class="dia">📅 ' + esc(cuando(p)) + '</span>' +
       (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + (chipMomio(p) ? ' ' + chipMomio(p) : '') +
       (Editor.activo && p.sin_momio ? ' <span class="chip neutro" title="Playdoit todavía no lo publica">⏳ Sin momio</span>' : '') + '</span>' +
       (res ? '<span class="det">' + (ESTADO[res[0]] || ESTADO.no_comprobable).t + (res[1] ? ': ' + esc(res[1]) : '') + '</span>' : '') +
       '</li>';
+  }
+  /* Pagina 2.5 (06/11/2026): cada pick como el boton de un momio en una app de apuestas, con el momio de Playdoit
+     (Javier: "los momios si, publicos y editor") y la probabilidad del motor; sin momio, solo la probabilidad. Escogido
+     = el boton en verde, como un momio seleccionado. Debajo del mercado, la barra de la probabilidad */
+  function cuota(p, mo) {
+    return '<span class="cuota' + (mo ? '' : ' sin') + '">' + (mo ? '<b>' + esc(mo) + '</b><small>' + pct(p.p) + '</small>'
+      : '<b>' + pct(p.p) + '</b><small>' + (p.sin_momio ? 'sin momio' : 'probabilidad') + '</small>') + '</span>';
+  }
+  function barraP(p) {
+    return p && p.p != null ? '<span class="pbar" aria-hidden="true"><i style="width:' + Math.round(p.p * 100) + '%"></i></span>' : '';
   }
   /* renglon compacto (Hoy, Escogidos, Resultados): el mercado, la probabilidad y el boton; abajo
      lo que haga falta (hora, liga, partido, de donde sale, quien lo escogio). o como en tarjeta +
@@ -627,8 +663,9 @@
   function renglon(p, o) {
     var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
     return '<li class="fila renglon' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + (o.sinSello ? ' sin-sello' : '') +
-      '" data-pid="' + esc(pid) + '"><span class="m">' + esc(p.mercado) + '</span>' +
-      '<span class="fila-fin"><span class="pp">' + pct(p.p) + '</span>' + botonEscoger(pid, p, o, true) + '</span>' +
+      '" data-pid="' + esc(pid) + '"><span class="m">' + esc(p.mercado) + barraP(p) + '</span>' +
+      '<span class="fila-fin">' + cuota(p, o.momio !== undefined ? o.momio : (p.americano || (typeof p.momio === 'number' && p.momio > 1 ? americano(p.momio) : ''))) +
+      botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + sello(sel) + (o.sub || '') + '</span>' +
       (res && ESTADO[res[0]] && res[0] !== 'pendiente' && res[0] !== 'por_auditar'
         ? '<span class="det">' + ESTADO[res[0]].t + (res[1] ? ': ' + esc(res[1]) : '') + '</span>' : '') + '</li>';
@@ -753,7 +790,6 @@
   function marcasTop(t, conValor) {
     if (!t) { return ''; }
     return (t.no_comprobable ? '<span class="chip neutro" title="La tabla no trae el minuto de cada corner: el motor no ha podido comprobar que cumple lo que promete">⚠️ No comprobable</span>' : '') +
-      (Editor.activo && t.momio ? '<span class="chip momio" title="Momio de Playdoit">💲 ' + esc(t.americano || americano(t.momio)) + '</span>' : '') +
       chipComb(t) + (conValor ? chipValor(t) : '') +
       (Editor.activo && t.sin_momio ? '<span class="chip neutro" title="Playdoit todavía no lo ofrece">⏳ Sin momio</span>' : '') +
       (Editor.activo && t.oportunidad ? '<span class="chip oportunidad" title="Playdoit lo paga como si fuera mucho menos probable de lo que da el motor">🔎 Oportunidad encontrada: revisa información</span>' : '') +
@@ -771,8 +807,9 @@
       (p.aviso ? '<span class="chip neutro" title="' + esc(p.aviso) + '">' + (p.deporte === 'americano' ? '📏 compara su línea' :
         p.deporte === 'basquetbol' ? '🩹 jugador clave' : '⚠️ no validable') +
         '</span>' : '');
+    var mo = (x.top && (x.top.americano || (x.top.momio ? americano(x.top.momio) : ''))) || p.americano || '';
     return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res,
-      escoger: x.escoger });
+      escoger: x.escoger, momio: mo });
   }
   /* un partido con sus picks: a la vista los del TOP 5 y los sugeridos (o el mejor, si no tiene);
      los demas de sus rankings, al tocar "mas picks" */
@@ -788,6 +825,19 @@
         a.partido.localeCompare(b.partido);
     });
   }
+  /* Pagina 2.5: un circulo con las iniciales del equipo en lugar de su escudo (no tenemos escudos) */
+  var COLORES_EQ = ['#1279bb', '#2e8f35', '#c2410c', '#7c3aed', '#be123c', '#0f766e', '#a16207', '#334155'];
+  function escudo(n, d) {
+    var c = cortoEq(n, d), w = c.split(/[\s-]+/).filter(function (x) { return /[0-9A-Za-z\u00C0-\u00FF]/.test(x); }), h = 0;
+    var ini = (w.length > 1 ? w[0].charAt(0) + w[1].charAt(0) : c.replace(/[^0-9A-Za-z\u00C0-\u00FF]/g, '').slice(0, 2)).toUpperCase();
+    for (var i = 0; i < n.length; i++) { h = (h * 31 + n.charCodeAt(i)) % 997; }
+    return '<span class="escudo" style="background:' + COLORES_EQ[h % COLORES_EQ.length] + '" aria-hidden="true">' + esc(ini) + '</span>';
+  }
+  function equipos(partido, d) {
+    return String(partido).split(' vs ').map(function (n) {
+      return '<span class="eq">' + escudo(n, d) + '<span class="eq-n">' + esc(cortoEq(n, d)) + '</span></span>';
+    }).join('');
+  }
   function tarjetaPartido(m, todos) {
     var picks = m.picks.slice().sort(function (a, b) { return (principal(b) - principal(a)) || ((b.p.p || 0) - (a.p.p || 0)); });
     var ver = todos ? picks.filter(principal) : picks;
@@ -795,11 +845,11 @@
     var resto = picks.filter(function (x) { return ver.indexOf(x) < 0; });
     var empezo = m.ts ? Date.now() >= m.ts * 1000 : false;
     var nEsc = m.picks.filter(function (x) { return Esc.buscar(x.pid); }).length;
-    return '<article class="partido-hoy' + (empezo ? ' empezado' : '') + '"><div class="ph-cab"><span class="ph-hora">🕐 ' + esc(m.hora || '—') + '</span>' +
-      '<a class="ph-liga" href="#/analisis/' + esc(m.d.semana) + '/' + esc(m.d.archivo) + '">' + bandera(m.d.bandera) + ' ' + esc(m.d.nombre) +
+    return '<article class="partido-hoy' + (empezo ? ' empezado' : '') + '"><div class="ph-cab">' +
+      '<a class="ph-liga" href="#/analisis/' + esc(m.d.semana) + '/' + esc(m.d.archivo) + '">' + (m.d.emoji || '⚽') + ' ' + bandera(m.d.bandera) + ' ' + esc(m.d.nombre) +
       ' · ' + esc(etqJornada(m.d)) + '</a>' + (nEsc ? '<span class="sello">✅ ' + nEsc + '</span>' : '') +
-      (empezo ? '<span class="chip neutro">🔒 empezó</span>' : '') + '</div>' +
-      '<h3 class="ph-partido">' + (m.d.emoji || '⚽') + ' ' + esc(m.partido) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
+      (empezo ? '<span class="ph-hora empezo">🔒 Empezó</span>' : '<span class="ph-hora">' + esc(m.hora || '—') + '</span>') + '</div>' +
+      '<h3 class="ph-partido ph-equipos">' + equipos(m.partido, m.d) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
       '<ul class="lista">' + ver.map(function (x) { return renglonHoy(x, false); }).join('') + '</ul>' +
       (resto.length ? '<details class="ph-mas" data-k="ph-' + esc(m.d.archivo + '|' + m.partido) + '"><summary>＋ ' +
         plural(resto.length, 'pick más', 'picks más') + ' de este partido</summary><ul class="lista">' +
@@ -1252,13 +1302,13 @@
   function mejorHTML(f, d) {
     var m = f.mejor;
     if (!m) { return ''; }
-    return '<p class="mejor-partido">🏅 <b>Mejor probabilidad de todas:</b> ' + esc(m.mercado) + ' · <b>' + pct(m.p) + '</b>' + (chipMomio(m) ? ' ' + chipMomio(m) : '') + '</p>';
+    return '<p class="mejor-partido">🏅 <b>Mejor probabilidad de todas:</b> ' + esc(m.mercado) + ' · <b>' + pct(m.p) + '</b>' + (m.americano ? ' <span class="chip momio">' + esc(m.americano) + '</span>' : '') + (chipMomio(m) ? ' ' + chipMomio(m) : '') + '</p>';
   }
   /* version 2.5: los mercados de un partido se bajan al abrirlos (archivo aparte, asi Hoy y la jornada no pesan) */
   var MK_CACHE = {};
   function celdaMk(c, i, sel) {
     if (c[i] == null) { return '<td class="num">—</td>'; }
-    var extra = Editor.activo && c[i + 1] ? '<small class="mk-momio">' + esc(c[i + 1]) + (c[i + 2] != null ? ' · ' + (c[i + 2] > 0 ? '+' : '') + (c[i + 2] * 100).toFixed(0) + '%' : '') + '</small>' : '';
+    var extra = c[i + 1] ? '<small class="mk-momio">' + esc(c[i + 1]) + (Editor.activo && c[i + 2] != null ? ' · ' + (c[i + 2] > 0 ? '+' : '') + (c[i + 2] * 100).toFixed(0) + '%' : '') + '</small>' : '';
     var marca = Editor.activo && c[i + 1] ? ' mk-con' + (c[i + 2] >= 0.05 ? ' mk-edge' : '') : '';
     var b = '';
     /* escoger desde la tabla (Javier, 05/11/2026): cada linea con su boton, en modo editor y si el partido no ha empezado */
@@ -1276,8 +1326,15 @@
       familia: m.t, fecha: f.fecha, dia: f.dia, hora: f.hora, ts: f.ts, sem: f.sem },
       o: { doc: ctx.d, origen: 'Tabla del partido', auditada: !!ctx.d.auditoria } };
   }
+  /* cada mercado, su propio desplegable (Javier, 07/11/2026): cerrado dice cuantas lineas tiene y su mejor probabilidad */
   function mercadoMk(m, ctx) {
-    var h = '<div class="mk"><h5>' + esc(m.t) + '</h5>';
+    var ps = [];
+    (m.ou || []).forEach(function (r) { if (r[1] != null) { ps.push(r[1]); } if (r[4] != null) { ps.push(r[4]); } });
+    (m.op || []).forEach(function (r) { if (r[1] != null) { ps.push(r[1]); } });
+    var n = (m.ou || []).length + (m.op || []).length, mejor = ps.length ? Math.max.apply(null, ps) : null;
+    var h = '<details class="mk"><summary><span class="mk-t">' + esc(m.t) + '</span><span class="mk-n">' +
+      plural(n, (m.ou ? 'línea' : 'opción'), (m.ou ? 'líneas' : 'opciones')) + (mejor != null ? ' · hasta <b>' + (mejor * 100).toFixed(0) + '%</b>' : '') +
+      '</span></summary>';
     if (m.ou) {
       h += '<table class="mk-tabla"><thead><tr><th>Línea</th><th class="num">Más</th><th class="num">Menos</th></tr></thead><tbody>' + m.ou.map(function (r, k) {
         var par = (m.mo || [])[k] || [];
@@ -1289,7 +1346,7 @@
         return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1, selMk(ctx, m, (m.mp || [])[k], r[1])) + '</tr>';
       }).join('') + '</tbody></table>';
     }
-    return h + '</div>';
+    return h + '</details>';
   }
   function pintarMercados(det) {
     var q = det.getAttribute('data-mercados').split('|'), caja = det.querySelector('.mk-cuerpo');
@@ -2028,6 +2085,39 @@
     }
     return h;
   }
+  /* Pagina 2.5 (06/11/2026): la racha del top de tops (aciertos seguidos hasta el ultimo resultado) y la mejor */
+  function rachaTop(top) {
+    var est = [];
+    Object.keys(top.dias || {}).sort().forEach(function (f) {
+      if (!top.desde || f >= top.desde) {
+        top.dias[f].slice().sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); }).forEach(function (r) {
+          if (r.estado === 'acierto' || r.estado === 'fallo') { est.push(r.estado); }
+        });
+      }
+    });
+    if (!est.length) { return ''; }
+    var actual = 0, mejor = 0, run = 0;
+    est.forEach(function (e) { run = e === 'acierto' ? run + 1 : 0; if (run > mejor) { mejor = run; } });
+    for (var i = est.length - 1; i >= 0 && est[i] === 'acierto'; i--) { actual++; }
+    return '<div class="racha"><div><small>🔥 Racha actual</small><b>' + actual + '</b><span>' + (actual === 1 ? 'acierto seguido' : 'aciertos seguidos') +
+      '</span></div><div><small>🏅 Mejor racha</small><b>' + mejor + '</b><span>desde el ' + fCorta(top.desde || Object.keys(top.dias).sort()[0]) + '</span></div></div>';
+  }
+  /* y una grafica de la semana: por dia, aciertos (verde) y fallos (rojo) */
+  function graficaSemana(top, sem) {
+    var ds = [0, 1, 2, 3, 4, 5, 6].map(function (i) {
+      var f = masDias(sem, i), rs = (top.dias || {})[f] || [];
+      return { f: f, ok: rs.filter(function (r) { return r.estado === 'acierto'; }).length, ko: rs.filter(function (r) { return r.estado === 'fallo'; }).length };
+    });
+    var max = Math.max.apply(null, ds.map(function (d) { return d.ok + d.ko; }));
+    if (!max) { return ''; }
+    return '<div class="grafica-sem" role="img" aria-label="Aciertos y fallos por día">' + ds.map(function (d) {
+      var t = d.ok + d.ko;
+      return '<div class="gs-dia"><span class="gs-num">' + (t ? d.ok + '-' + d.ko : '') + '</span><div class="gs-barra">' +
+        (d.ok ? '<i class="ok" style="height:' + (100 * d.ok / max).toFixed(1) + '%"></i>' : '') +
+        (d.ko ? '<i class="ko" style="height:' + (100 * d.ko / max).toFixed(1) + '%"></i>' : '') + '</div><small>' +
+        DIAS[fecha(d.f).getUTCDay()].slice(0, 3) + '</small></div>';
+    }).join('') + '</div>';
+  }
   function bloqueTop(top, sem) {
     var h = '<h2 id="s-top"><span class="emoji">⭐</span>Top de tops <span class="cuenta">los más seguros de cada día</span></h2>';
     var c = top && top.semanas && top.semanas[sem];
@@ -2040,7 +2130,7 @@
       (Editor.activo && c.con_momio ? marcadorCajas([['💲 Con momio de Playdoit', c.con_momio, 'azul'],
         ['💰 Ganancia (a 1 unidad)', (c.ganancia > 0 ? '+' : '') + num(c.ganancia, 2) + ' u', c.ganancia >= 0 ? 'verde' : ''],
         ['📊 Por pick', (c.ganancia_por_pick > 0 ? '+' : '') + num(c.ganancia_por_pick, 3) + ' u', c.ganancia_por_pick >= 0 ? 'verde' : '']]) : '') +
-      tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado });
+      tira({ ok: c.aciertos, ko: c.fallos, nulo: c.anulados, pend: c.sin_resultado }) + rachaTop(top) + graficaSemana(top, sem);
     var dias = Object.keys(top.dias || {}).filter(function (f) { return f >= sem && f <= masDias(sem, 6) && (!top.desde || f >= top.desde); }).sort();
     h += '<details class="caja" data-k="top-dias" open><summary><span class="emoji">🗓️</span>Por día <span class="cuenta">' +
       plural(c.picks, 'pick', 'picks') + '</span></summary><div class="cuerpo">' + dias.map(function (f) {
@@ -3970,10 +4060,19 @@
         ['👤', 'Seleccionador', 'quién lo escogió: ' + Object.keys(COLORES).map(persona).join(' ') + '. Cada quien lleva su cuenta en el ranking.']
       ].map(fila).join('') + '</ul></div>';
   }
+  /* Pagina 2.5 (06/11/2026): en Inicio, lo primero son los mas seguros de hoy (el top de tops), como el destacado de una app */
+  function destacadoHoy(top) {
+    var th = (top && top.dias && top.dias[hoy()]) || [], prox = th.filter(function (r) { return !empezado(r); });
+    if (!th.length) { return ''; }
+    return '<section class="destacado"><div class="dest-cab"><h2><span class="emoji">⭐</span>Lo más seguro de hoy</h2>' +
+      '<a href="#/hoy?orden=top">Ver los ' + th.length + ' ›</a></div>' +
+      (prox.length ? '<ul class="lista">' + prox.slice(0, 3).map(function (r) { return renglonTop(r, th.indexOf(r) + 1); }).join('') + '</ul>'
+        : '<p class="criterio">Todos los de hoy ya empezaron: míralos en <a href="#/hoy?orden=top">Hoy</a>.</p>') + '</section>';
+  }
   function vInicio() {
-    return datosTrabajo(true).then(function (D) {
-      var e = D.escogidos, g = D.green;
-      var h = '<section class="hero-lema"><div class="lema-agua" aria-hidden="true">' + aguaHTML() + '</div>' +
+    return Promise.all([datosTrabajo(true), topDeTops().catch(function () { return null; })]).then(function (x) {
+      var D = x[0], e = D.escogidos, g = D.green;
+      var h = destacadoHoy(x[1]) + '<section class="hero-lema"><div class="lema-agua" aria-hidden="true">' + aguaHTML() + '</div>' +
         '<div class="hero-figuras"><img class="hero-logo" src="assets/logo.webp" alt="Picksin" width="150" height="177">' +
         '<img class="hero-avatar" src="assets/avatar.webp" alt=""></div>' +
         '<p class="hero-lema-txt"><span>NO ES SUERTE,</span> <b>ES CIENCIA</b></p>' +
@@ -4079,6 +4178,7 @@
         window.scrollTo(0, 0);
       }
       rutaAnterior = location.hash;
+      pintarBoleto();
     }).catch(function (e) {
       $('#app').innerHTML = '<div class="vacio error"><span class="emoji">⚠️</span>' + esc(e.message) + '</div>';
     });
