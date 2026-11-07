@@ -2105,7 +2105,7 @@
   /* y una grafica de la semana: por dia, aciertos (verde) y fallos (rojo) */
   function graficaSemana(top, sem) {
     var ds = [0, 1, 2, 3, 4, 5, 6].map(function (i) {
-      var f = masDias(sem, i), rs = (top.dias || {})[f] || [];
+      var f = masDias(sem, i), rs = !top.desde || f >= top.desde ? (top.dias || {})[f] || [] : [];      // solo desde que cuenta
       return { f: f, ok: rs.filter(function (r) { return r.estado === 'acierto'; }).length, ko: rs.filter(function (r) { return r.estado === 'fallo'; }).length };
     });
     var max = Math.max.apply(null, ds.map(function (d) { return d.ok + d.ko; }));
