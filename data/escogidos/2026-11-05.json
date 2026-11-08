@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-05",
- "actualizado": "2026-11-08T18:56:38.625Z",
+ "actualizado": "2026-11-08T19:20:43.868Z",
  "picks": [
   {
    "id": "nba-2026-11-08|Dallas Mavericks vs Brooklyn Nets|Puntos de la 1ª mitad menos de 119.5",
@@ -27,33 +27,6 @@
    ],
    "escogido": {
     "picksin": "2026-11-08T18:56:23.961Z"
-   }
-  },
-  {
-   "id": "nba-2026-11-08|Dallas Mavericks vs Brooklyn Nets|Puntos del partido menos de 230.5",
-   "archivo": "nba-2026-11-08",
-   "liga": "nba",
-   "nombre": "NBA",
-   "pais": "Estados Unidos",
-   "bandera": "🇺🇸",
-   "jornada": null,
-   "sa": "2026-11-05",
-   "origen": "Top de tops",
-   "deporte": "basquetbol",
-   "emoji": "🏀",
-   "partido": "Dallas Mavericks vs Brooklyn Nets",
-   "mercado": "Puntos del partido menos de 230.5",
-   "fecha": "2026-11-08",
-   "dia": "domingo",
-   "hora": "18:30",
-   "ts": 1794184200,
-   "p": 0.873,
-   "confianza": "Alta",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-08T18:56:38.625Z"
    }
   }
  ]
