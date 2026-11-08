@@ -1,35 +1,5 @@
 {
  "semana": "2026-11-05",
- "actualizado": "2026-11-08T18:51:58.396Z",
- "picks": [
-  {
-   "id": "spain__laliga-j12|Atletico Madrid vs FC Barcelona|Under 4.5 Corners 1H",
-   "archivo": "spain__laliga-j12",
-   "liga": "spain__laliga",
-   "nombre": "LaLiga",
-   "pais": "España",
-   "bandera": "🇪🇸",
-   "jornada": 12,
-   "sa": "2026-11-05",
-   "origen": "Córners · por edge",
-   "partido": "Atletico Madrid vs FC Barcelona",
-   "mercado": "Under 4.5 Corners 1H",
-   "fecha": "2026-11-08",
-   "dia": "domingo",
-   "hora": "14:00",
-   "ts": 1794168000,
-   "sem": "2026-11-05",
-   "p": 0.571,
-   "cuota": 1.8,
-   "confianza": "Baja",
-   "respaldo": "2/4 a favor, 2 en contra",
-   "familia": "Córners",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-08T18:51:58.396Z"
-   }
-  }
- ]
+ "actualizado": "2026-11-08T18:53:45.901Z",
+ "picks": []
 }
