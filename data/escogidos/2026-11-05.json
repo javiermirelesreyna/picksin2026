@@ -1,0 +1,36 @@
+{
+ "semana": "2026-11-05",
+ "actualizado": "2026-11-08T15:34:48.443Z",
+ "picks": [
+  {
+   "id": "portugal__segunda-j10|Sporting CP B vs Tondela|Sporting CP B gana alguna mitad: Si",
+   "archivo": "portugal__segunda-j10",
+   "liga": "portugal__segunda",
+   "nombre": "Liga Portugal 2",
+   "pais": "Portugal",
+   "bandera": "🇵🇹",
+   "jornada": 10,
+   "sa": "2026-11-05",
+   "origen": "Goles por mitad · por edge",
+   "partido": "Sporting CP B vs Tondela",
+   "mercado": "Sporting CP B gana alguna mitad: Si",
+   "fecha": "2026-11-08",
+   "dia": "domingo",
+   "hora": "12:00",
+   "ts": 1794160800,
+   "sem": "2026-11-05",
+   "p": 0.638,
+   "cuota": 1.62,
+   "confianza": "Media",
+   "respaldo": "2/4 a favor, 2 en contra",
+   "familia": "Goles por mitad",
+   "liga_joven": true,
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-08T15:34:48.443Z"
+   }
+  }
+ ]
+}
