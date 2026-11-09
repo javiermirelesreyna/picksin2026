@@ -179,7 +179,8 @@
     nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️',
     nba_ganador: '🏆', nba_handicap: '⚖️', nba_total: '🏀', nba_total_local: '🏠', nba_total_visita: '✈️', nba_1m_ganador: '🏆',
     nba_1m_total: '⏱️', nba_1m_local: '🏠', nba_1m_visita: '✈️', nba_q1_total: '⏱️', nba_q1_local: '🏠', nba_q1_visita: '✈️',
-    nba_2m_total: '⏱️'
+    nba_2m_total: '⏱️', nba_1m_handicap: '⚖️', nba_ambos: '🤝',
+    nba_carrera_10: '🏁', nba_carrera_20: '🏁', nba_carrera_30: '🏁', nba_carrera_40: '🏁', nba_carrera_50: '🏁'
   };
   var EMOJI_PERSONA = { a_el_muro: '🧱', b_la_disparidad: '⚖️', c_la_boveda: '🔐', d_el_espejismo: '🏜️', e_el_radar: '📡' };
   var EMOJI_METRICA = { remates: '🎯', sot: '🥅', corners: '⛳', tarjetas: '🟨', faltas: '🦵', offsides: '🚩' };
@@ -1336,7 +1337,8 @@
       plural(n, (m.ou ? 'línea' : 'opción'), (m.ou ? 'líneas' : 'opciones')) + (mejor != null ? ' · hasta <b>' + (mejor * 100).toFixed(0) + '%</b>' : '') +
       '</span></summary>';
     if (m.ou) {
-      h += '<table class="mk-tabla"><thead><tr><th>Línea</th><th class="num">Más</th><th class="num">Menos</th></tr></thead><tbody>' + m.ou.map(function (r, k) {
+      var hh = m.h || ['Línea', 'Más', 'Menos'];      /* encabezados propios (NBA, 09/11/2026): Local / Visitante, Sí / No */
+      h += '<table class="mk-tabla"><thead><tr><th>' + esc(hh[0]) + '</th><th class="num">' + esc(hh[1]) + '</th><th class="num">' + esc(hh[2]) + '</th></tr></thead><tbody>' + m.ou.map(function (r, k) {
         var par = (m.mo || [])[k] || [];
         return '<tr><td>' + esc(r[0]) + '</td>' + celdaMk(r, 1, selMk(ctx, m, par[0], r[1])) + celdaMk(r, 4, selMk(ctx, m, par[1], r[4])) + '</tr>';
       }).join('') + '</tbody></table>';
@@ -1390,13 +1392,17 @@
     { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos y touchdowns de la 1ª y la 2ª mitad',
       s: ['nfl_1m_total', 'nfl_1m_local', 'nfl_1m_visita', 'nfl_td_1m', 'nfl_2m_total'] }
   ];
-  /* la NBA (27/10/2026): sus 13 rankings en 4 desplegables */
+  /* la NBA (27/10/2026): sus rankings en 4 desplegables; fase 10b (09/11/2026): hándicap de la 1ª mitad, ambos anotan
+     100 / 110 y el 1er cuarto de cada equipo en "anotará 25 / 30 / 35" */
   var GRUPOS_NBA = [
-    { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'del partido y de la 1ª mitad', s: ['nba_ganador', 'nba_handicap', 'nba_1m_ganador'] },
-    { id: 'puntos', e: '🏀', t: 'Puntos', d: 'del partido, del local y del visitante', s: ['nba_total', 'nba_total_local', 'nba_total_visita'] },
+    { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'del partido y de la 1ª mitad', s: ['nba_ganador', 'nba_handicap', 'nba_1m_ganador', 'nba_1m_handicap'] },
+    { id: 'puntos', e: '🏀', t: 'Puntos', d: 'del partido, de cada equipo y ambos anotan 100 / 110',
+      s: ['nba_total', 'nba_total_local', 'nba_total_visita', 'nba_ambos'] },
     { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos de la 1ª mitad (partido y cada equipo) y de la 2ª mitad',
       s: ['nba_1m_total', 'nba_1m_local', 'nba_1m_visita', 'nba_2m_total'] },
-    { id: 'cuarto', e: '⏱️', t: '1er cuarto', d: 'puntos del partido y de cada equipo', s: ['nba_q1_total', 'nba_q1_local', 'nba_q1_visita'] }
+    { id: 'carreras', e: '🏁', t: 'Carreras', d: 'quién llega primero a 10, 20, 30, 40 y 50 puntos',
+      s: ['nba_carrera_10', 'nba_carrera_20', 'nba_carrera_30', 'nba_carrera_40', 'nba_carrera_50'] },
+    { id: 'cuarto', e: '⏱️', t: '1er cuarto', d: 'anotará 25 / 30 / 35 de cada equipo', s: ['nba_q1_local', 'nba_q1_visita', 'nba_q1_total'] }
   ];
   function gruposMercado(rankings, grupos) {
     var ult = grupos.length - 1;
@@ -1754,7 +1760,7 @@
     var k = 'f-' + d.archivo + f.local;
     var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
       sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">';
-    if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f) + '</div></details>'; }
+    if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f, d) + '</div></details>'; }
     if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
       return cab + '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p></div></details>';
@@ -1820,7 +1826,7 @@
   /* ficha de un partido NBA (27/10/2026): lo esperado (puntos del partido, de la 1a mitad y del 1er cuarto de cada
      equipo, ritmo, probabilidad de ganar y de prorroga), los 3 jugadores clave de cada equipo con su estado en el
      reporte oficial de lesiones (aviso J de Javier: no cambia la probabilidad) y todas las metricas */
-  function fichaBasquetbol(f) {
+  function fichaBasquetbol(f, d) {
     var e = f.esperado, pp = f.partidos_previos || {}, S = f.siglas || {}, C = f.claves || {};
     var sL = esc(S.local || f.local), sV = esc(S.visita || f.visita);
     var x = function (v) { return v == null ? '—' : num(v, 2); };
@@ -1855,7 +1861,11 @@
       '. Los índices de las justificaciones de los picks combinan estas métricas con los pesos del motor.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
       '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
-      filas + '</tbody></table></div>';
+      filas + '</tbody></table></div>' +
+      /* fase 10c (09/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como el futbol 2.5 */
+      (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
+        '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
+        '<div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '');
   }
 
   /* ================================================================== 3. escogidos */
