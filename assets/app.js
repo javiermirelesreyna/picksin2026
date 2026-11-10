@@ -180,7 +180,10 @@
     nba_ganador: '🏆', nba_handicap: '⚖️', nba_total: '🏀', nba_total_local: '🏠', nba_total_visita: '✈️', nba_1m_ganador: '🏆',
     nba_1m_total: '⏱️', nba_1m_local: '🏠', nba_1m_visita: '✈️', nba_q1_total: '⏱️', nba_q1_local: '🏠', nba_q1_visita: '✈️',
     nba_2m_total: '⏱️', nba_1m_handicap: '⚖️', nba_ambos: '🤝',
-    nba_carrera_10: '🏁', nba_carrera_20: '🏁', nba_carrera_30: '🏁', nba_carrera_40: '🏁', nba_carrera_50: '🏁'
+    nba_carrera_10: '🏁', nba_carrera_20: '🏁', nba_carrera_30: '🏁', nba_carrera_40: '🏁', nba_carrera_50: '🏁',
+    nba_triples: '🎯', nba_triples_local: '🎯', nba_triples_visita: '🎯', nba_asistencias: '🤲', nba_asistencias_local: '🤲',
+    nba_asistencias_visita: '🤲', nba_robos: '🧤', nba_robos_local: '🧤', nba_robos_visita: '🧤', nba_bloqueos: '✋',
+    nba_bloqueos_local: '✋', nba_bloqueos_visita: '✋'
   };
   var EMOJI_PERSONA = { a_el_muro: '🧱', b_la_disparidad: '⚖️', c_la_boveda: '🔐', d_el_espejismo: '🏜️', e_el_radar: '📡' };
   var EMOJI_METRICA = { remates: '🎯', sot: '🥅', corners: '⛳', tarjetas: '🟨', faltas: '🦵', offsides: '🚩' };
@@ -1357,7 +1360,8 @@
     var url = 'data/semanas/' + q[0] + '/' + q[1] + '-mercados.json';
     Promise.all([MK_CACHE[url] || (MK_CACHE[url] = cargar(url)),
       Editor.activo ? cargar('data/semanas/' + q[0] + '/' + q[1] + '.json').catch(function () { return null; }) : null]).then(function (xs) {
-      var d = xs[0], doc = xs[1], f = doc && doc.v25 ? fichaDe(doc, q[2]) : null;
+      var d = xs[0], doc = xs[1], f = doc && doc.v25 ? fichaDe(doc, q[2]) :
+        (doc && doc.tablas ? (doc.partidos || []).filter(function (x) { return x.partido === q[2]; })[0] || null : null);
       var ctx = f ? { d: doc, f: f, partido: q[2] } : null;
       var secs = (d.partidos || {})[q[2]] || [];
       caja.innerHTML = secs.length ? (Editor.activo ? '<p class="criterio">💲 Debajo de cada probabilidad, el momio de Playdoit y el edge. En verde, lo que tiene momio; en verde fuerte, con edge de 5% o más.' +
@@ -1400,6 +1404,9 @@
       s: ['nba_total', 'nba_total_local', 'nba_total_visita', 'nba_ambos'] },
     { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos de la 1ª mitad (partido y cada equipo) y de la 2ª mitad',
       s: ['nba_1m_total', 'nba_1m_local', 'nba_1m_visita', 'nba_2m_total'] },
+    { id: 'estadisticas', e: '📊', t: 'Estadísticas de equipo', d: 'triples, asistencias, robos y bloqueos (partido y cada equipo)',
+      s: ['nba_triples', 'nba_triples_local', 'nba_triples_visita', 'nba_asistencias', 'nba_asistencias_local', 'nba_asistencias_visita',
+        'nba_robos', 'nba_robos_local', 'nba_robos_visita', 'nba_bloqueos', 'nba_bloqueos_local', 'nba_bloqueos_visita'] },
     { id: 'carreras', e: '🏁', t: 'Carreras', d: 'quién llega primero a 10, 20, 30, 40 y 50 puntos',
       s: ['nba_carrera_10', 'nba_carrera_20', 'nba_carrera_30', 'nba_carrera_40', 'nba_carrera_50'] },
     { id: 'cuarto', e: '⏱️', t: '1er cuarto', d: 'anotará 25 / 30 / 35 de cada equipo', s: ['nba_q1_local', 'nba_q1_visita', 'nba_q1_total'] }
