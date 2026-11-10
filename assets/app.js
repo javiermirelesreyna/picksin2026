@@ -1846,7 +1846,8 @@
     };
     var claves = '<div class="datos">' + jug(f.local, C.local) + jug(f.visita, C.visita) + '</div>' +
       (f.aviso ? '<p class="nota-pick">⚠️ ' + esc(f.aviso) + '</p>' : '') +
-      (C.reporte ? '<p class="criterio">🩺 ' + esc(C.reporte) + ' El motor no ajusta la probabilidad por jugadores: es un aviso.</p>' : '');
+      (C.reporte ? '<p class="criterio">🩺 ' + esc(C.reporte) + (C.descontadas ? ' El motor ya descuenta en la probabilidad a los clave que faltan (fuera, completo; en duda, a la mitad aprox.).' :
+        ' El motor no ajusta la probabilidad por jugadores: es un aviso.') + '</p>' : '');
     if (!e || f.sin_proyeccion) {
       return '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p>' + claves;
     }
