@@ -1158,3 +1158,28 @@ details.mk[open] > summary::after { content: "−"; background: var(--tinta); co
 .mk-n { grid-column: 1; grid-row: 2; font-size: .76rem; color: var(--suave); }
 .mk-n b { color: var(--verde-texto); }
 details.mk .mk-tabla { margin: 0 0 12px; }
+
+/* ============================================================ la app (10/11/2026) */
+.instalar {
+  position: relative; display: flex; gap: 12px; align-items: flex-start; margin: 0 0 16px; padding: 14px 40px 14px 14px;
+  background: var(--superficie); border-radius: 18px; box-shadow: var(--sombra); border-left: 0;
+}
+.ins-icono { flex: none; width: 54px; height: 54px; border-radius: 14px; box-shadow: 0 2px 8px rgba(14, 40, 72, .15); }
+.ins-txt { display: grid; gap: 4px; min-width: 0; }
+.ins-txt > b { font-size: 1.02rem; }
+.ins-txt > span { color: var(--suave); font-size: .86rem; line-height: 1.4; }
+.ins-boton { justify-self: start; margin-top: 6px; background: var(--verde-oscuro); }
+.ins-pasos { margin: 6px 0 0; padding-left: 20px; font-size: .86rem; line-height: 1.5; }
+.ins-cerrar {
+  position: absolute; top: 8px; right: 8px; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  background: var(--gris-suave); color: var(--suave); font-size: 1.15rem; line-height: 1; cursor: pointer;
+}
+/* ya instalada: el boton de actualizar arriba (sin barra del navegador no hay como recargar) y sin "Instalar" en el pie */
+.refrescar {
+  display: none; margin-left: auto; width: 38px; height: 38px; border: 1px solid var(--borde); border-radius: 50%;
+  background: var(--superficie); color: var(--azul-oscuro); font-size: 1.25rem; line-height: 1; cursor: pointer;
+}
+html.app .refrescar { display: inline-grid; place-items: center; }
+html.app .editor-barra:not([hidden]) + .refrescar { margin-left: 8px; }
+html.app .pie-app { display: none; }
+html.app .barra { padding-top: env(safe-area-inset-top); }

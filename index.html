@@ -14,7 +14,13 @@
   <meta property="og:image" content="https://javiermirelesreyna.github.io/picksin2026/assets/compartir.png">
   <link rel="icon" type="image/png" href="assets/icono.png">
   <link rel="apple-touch-icon" href="assets/icono-apple.png">
-  <link rel="stylesheet" href="assets/estilo.css?v=22">
+  <!-- la app instalable (10/11/2026): manifiesto y lo que pide el iPhone para abrirla a pantalla completa -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Picksin">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="stylesheet" href="assets/estilo.css?v=23">
   <script>
     /* Windows no dibuja las banderas en emoji (salen dos letras): ahi se usa la fuente propia. */
     (function () {
@@ -39,6 +45,7 @@
         <span>Picksin</span>
       </a>
       <div id="editor-barra" class="editor-barra" hidden></div>
+      <button type="button" class="refrescar" data-accion="refrescar" aria-label="Actualizar" title="Actualizar">↻</button>
       <nav class="nav" aria-label="Secciones">
         <a href="#/hoy" data-nav="hoy"><span class="nav-emoji" aria-hidden="true">🏠</span><span>Hoy</span></a>
         <a href="#/analisis" data-nav="analisis"><span class="nav-emoji" aria-hidden="true">📊</span><span>Análisis</span></a>
@@ -58,7 +65,7 @@
       respaldo bilateral: lo que hace cada equipo y lo que permite su rival.</p>
     <p>Reportes de lunes a domingo · análisis y auditoría por el ciclo de cada deporte · fechas y horas del
       centro de México · banderas de <a href="https://github.com/twitter/twemoji" rel="noopener">Twemoji</a> (CC BY 4.0).</p>
-    <p><a href="#/inicio">🧭 Inicio y cómo leer un pick</a> · <button type="button" class="enlace-editor" data-accion="editor">🔑 Modo editor</button></p>
+    <p><a href="#/inicio">🧭 Inicio y cómo leer un pick</a> · <button type="button" class="enlace-editor" data-accion="editor">🔑 Modo editor</button><span class="pie-app"> · <button type="button" class="enlace-editor" data-accion="instalar-ver">📲 Instalar la app</button></span></p>
   </footer>
 
   <div id="aviso" class="aviso" role="status" aria-live="polite" hidden></div>
@@ -80,6 +87,6 @@
     </form>
   </dialog>
 
-  <script src="assets/app.js?v=37"></script>
+  <script src="assets/app.js?v=38"></script>
 </body>
 </html>

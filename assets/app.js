@@ -4086,10 +4086,53 @@
       (prox.length ? '<ul class="lista">' + prox.slice(0, 3).map(function (r) { return renglonTop(r, th.indexOf(r) + 1); }).join('') + '</ul>'
         : '<p class="criterio">Todos los de hoy ya empezaron: míralos en <a href="#/hoy?orden=top">Hoy</a>.</p>') + '</section>';
   }
+  /* ================================================================== la app (10/11/2026)
+     Javier: "hagamos la app". La pagina se instala en el celular como app web (sin tiendas): manifest.webmanifest y
+     sw.js en la raiz. Aqui: el registro del service worker, la invitacion a instalarla en Inicio (boton en Android;
+     los pasos en iPhone, que no tiene boton) y, ya instalada, el boton de actualizar (sin la barra del navegador no hay
+     como recargar) y la recarga sola al volver despues de un rato */
+  var App = { evento: null };
+  App.instalada = !!((window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true);
+  if (App.instalada) { document.documentElement.classList.add('app'); }
+  function esIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    App.evento = e;
+    var c = $('#instalar');
+    if (c) { c.outerHTML = instalarHTML(); }
+  });
+  window.addEventListener('appinstalled', function () {
+    App.evento = null;
+    var c = $('#instalar');
+    if (c) { c.parentNode.removeChild(c); }
+    avisar('✅ Picksin quedó instalada: búscala en tu pantalla de inicio.');
+  });
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || /^(localhost|127\.0\.0\.1)$/.test(location.hostname))) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () { /* sin app: la pagina sigue igual */ }); });
+  }
+  var escondidaDesde = 0;
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { escondidaDesde = Date.now(); return; }
+    if (App.instalada && escondidaDesde && Date.now() - escondidaDesde > 15 * 60e3) { location.reload(); }
+  });
+  /* la invitacion: se puede cerrar ("Ahora no", 14 dias) y volver a ver desde el pie de la pagina */
+  function instalarHTML() {
+    if (App.instalada) { return ''; }
+    var no = ls('picksin.app-no');
+    if (no && masDias(no, 14) > hoy()) { return ''; }
+    var como = App.evento ? '<button type="button" class="boton ins-boton" data-accion="instalar">📲 Instalar app</button>'
+      : esIOS() ? '<ol class="ins-pasos"><li>Toca <b>Compartir</b> <span class="ins-ico-ios" aria-hidden="true">⬆️</span> en Safari</li>' +
+        '<li>Elige <b>Agregar a inicio</b></li><li>Toca <b>Agregar</b></li></ol>'
+        : '<ol class="ins-pasos"><li>En iPhone: <b>Compartir</b> ⬆️ y <b>Agregar a inicio</b></li>' +
+          '<li>En Android: menú <b>⋮</b> y <b>Instalar app</b> (o <b>Agregar a la pantalla principal</b>)</li></ol>';
+    return '<section class="instalar" id="instalar"><img class="ins-icono" src="assets/icono-192.png" alt="" width="54" height="54">' +
+      '<div class="ins-txt"><b>Instala Picksin en tu celular</b><span>Ábrela desde tu pantalla de inicio, como app: a pantalla completa y más rápida.</span>' +
+      como + '</div><button type="button" class="ins-cerrar" data-accion="instalar-no" aria-label="Ahora no">×</button></section>';
+  }
   function vInicio() {
     return Promise.all([datosTrabajo(true), topDeTops().catch(function () { return null; })]).then(function (x) {
       var D = x[0], e = D.escogidos, g = D.green;
-      var h = destacadoHoy(x[1]) + '<section class="hero-lema"><div class="lema-agua" aria-hidden="true">' + aguaHTML() + '</div>' +
+      var h = destacadoHoy(x[1]) + instalarHTML() + '<section class="hero-lema"><div class="lema-agua" aria-hidden="true">' + aguaHTML() + '</div>' +
         '<div class="hero-figuras"><img class="hero-logo" src="assets/logo.webp" alt="Picksin" width="150" height="177">' +
         '<img class="hero-avatar" src="assets/avatar.webp" alt=""></div>' +
         '<p class="hero-lema-txt"><span>NO ES SUERTE,</span> <b>ES CIENCIA</b></p>' +
@@ -4231,6 +4274,20 @@
     }
     else if (a === 'editor') { if (Editor.activo) { salir(); } else { abrirDialogo(); } }
     else if (a === 'intro' || a === 'logo') { entrada(); }
+    else if (a === 'instalar') {
+      if (App.evento) {
+        App.evento.prompt();
+        App.evento.userChoice.then(function (r) { if (r && r.outcome === 'accepted') { var c = $('#instalar'); if (c) { c.parentNode.removeChild(c); } } });
+        App.evento = null;
+      }
+    }
+    else if (a === 'instalar-no') { ls('picksin.app-no', hoy()); var ci = $('#instalar'); if (ci) { ci.parentNode.removeChild(ci); } }
+    else if (a === 'instalar-ver') {
+      ls('picksin.app-no', null);
+      if (/^#\/(inicio)?$/.test(location.hash || '#/')) { router(true).then(function () { var c = $('#instalar'); if (c) { c.scrollIntoView({ block: 'center', behavior: 'smooth' }); } }); }
+      else { location.hash = '#/inicio'; }
+    }
+    else if (a === 'refrescar') { location.reload(); }
     else if (a === 'editor-salir') { salir(); }
     else if (a === 'editor-cancelar') { cerrarDialogo(); }
     else if (a === 'reintentar') { pintarEditor('guardando'); guardar(); }
