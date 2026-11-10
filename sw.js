@@ -3,7 +3,7 @@
    - lo de assets/ con version (?v=): de lo guardado (la version cambia cuando cambia el archivo); sin version
      (imagenes, letras): lo guardado al instante y se refresca por detras;
    - lo que no es de la pagina (el intermediario del modo editor, Playdoit...) no se toca. */
-var CACHE = 'picksin-app-1';
+var CACHE = 'picksin-app-2';              // 2: icono con fondo negro (10/11/2026)
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(['./', 'index.html']); }).then(function () { return self.skipWaiting(); }));

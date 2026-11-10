@@ -4126,7 +4126,7 @@
         '<li>Elige <b>Agregar a inicio</b></li><li>Toca <b>Agregar</b></li></ol>'
         : '<ol class="ins-pasos"><li>En iPhone: <b>Compartir</b> ⬆️ y <b>Agregar a inicio</b></li>' +
           '<li>En Android: menú <b>⋮</b> y <b>Instalar app</b> (o <b>Agregar a la pantalla principal</b>)</li></ol>';
-    return '<section class="instalar" id="instalar"><img class="ins-icono" src="assets/icono-192.png" alt="" width="54" height="54">' +
+    return '<section class="instalar" id="instalar"><img class="ins-icono" src="assets/icono-app-192.png" alt="" width="54" height="54">' +
       '<div class="ins-txt"><b>Instala Picksin en tu celular</b><span>Ábrela desde tu pantalla de inicio, como app: a pantalla completa y más rápida.</span>' +
       como + '</div><button type="button" class="ins-cerrar" data-accion="instalar-no" aria-label="Ahora no">×</button></section>';
   }
