@@ -177,6 +177,10 @@
     nfl_total: '🏈', nfl_total_local: '🏠', nfl_total_visita: '✈️', nfl_td_partido: '🙌', nfl_td_local: '🏠', nfl_td_visita: '✈️',
     nfl_td_carrera: '🏃', nfl_yardas_partido: '📏', nfl_yardas_local: '🏠', nfl_yardas_visita: '✈️', nfl_1m_total: '⏱️',
     nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️',
+    nfl_ganador: '🏆', nfl_handicap: '⚖️', nfl_1m_handicap: '⚖️', nfl_1m_ganador: '🏆', nfl_2m_ganador: '🏆', nfl_td_carrera_local: '🏃', nfl_td_carrera_visita: '🏃',
+    nfl_td_1m_local: '🙌', nfl_td_1m_visita: '🙌', nfl_fg_partido: '🥅', nfl_fg_local: '🏠', nfl_fg_visita: '✈️', nfl_fg_1m: '🥅', nfl_fg_1m_local: '🏠', nfl_fg_1m_visita: '✈️',
+    nfl_intentos_local: '🏃', nfl_intentos_visita: '🏃', nfl_recepcion_local: '🙌', nfl_recepcion_visita: '🙌', nfl_yardas_cr_local: '📏', nfl_yardas_cr_visita: '📏',
+    nfl_carrera_10: '🏁', nfl_carrera_15: '🏁', nfl_carrera_20: '🏁', nfl_carrera_25: '🏁', nfl_carrera_30: '🏁', nfl_carrera_35: '🏁', nfl_carrera_40: '🏁',
     nba_ganador: '🏆', nba_handicap: '⚖️', nba_total: '🏀', nba_total_local: '🏠', nba_total_visita: '✈️', nba_1m_ganador: '🏆',
     nba_1m_total: '⏱️', nba_1m_local: '🏠', nba_1m_visita: '✈️', nba_q1_total: '⏱️', nba_q1_local: '🏠', nba_q1_visita: '✈️',
     nba_2m_total: '⏱️', nba_1m_handicap: '⚖️', nba_ambos: '🤝',
@@ -1387,14 +1391,20 @@
     { id: 'mitades', e: '🧩', t: 'Mitades y carreras', d: 'gol en ambas mitades, mitad con más goles, carreras a 3 y 5 córners, ambos con 2+ tarjetas',
       s: ['r9f_consistencia_goleadora', 'r9g_mitad_mas_goles', 'r9h_carrera_3_corners', 'r9d_carrera_5_corners', 'r9e_intensidad_compartida'] }
   ];
-  /* la NFL igual (sugerencia aprobada por Javier, 10/10): sus 15 rankings en 4 desplegables */
+  /* la NFL: sus rankings en desplegables (10/10; fase 10, 10/11/2026: mercados nuevos de lo que Javier usa en Playdoit) */
   var GRUPOS_NFL = [
+    { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'del partido y de cada mitad', s: ['nfl_ganador', 'nfl_handicap', 'nfl_1m_handicap', 'nfl_1m_ganador', 'nfl_2m_ganador'] },
     { id: 'puntos', e: '🏈', t: 'Puntos', d: 'del partido, del local y del visitante', s: ['nfl_total', 'nfl_total_local', 'nfl_total_visita'] },
     { id: 'td', e: '🙌', t: 'Touchdowns', d: 'del partido, de cada equipo y de carrera',
-      s: ['nfl_td_partido', 'nfl_td_local', 'nfl_td_visita', 'nfl_td_carrera'] },
-    { id: 'yardas', e: '🏃', t: 'Yardas por tierra', d: 'del partido y de cada equipo', s: ['nfl_yardas_partido', 'nfl_yardas_local', 'nfl_yardas_visita'] },
+      s: ['nfl_td_partido', 'nfl_td_local', 'nfl_td_visita', 'nfl_td_carrera', 'nfl_td_carrera_local', 'nfl_td_carrera_visita'] },
+    { id: 'fg', e: '🥅', t: 'Goles de campo', d: 'del partido, de cada equipo y de la 1ª mitad',
+      s: ['nfl_fg_partido', 'nfl_fg_local', 'nfl_fg_visita', 'nfl_fg_1m', 'nfl_fg_1m_local', 'nfl_fg_1m_visita'] },
+    { id: 'yardas', e: '🏃', t: 'Yardas e intentos', d: 'por tierra, recepción, carrera + recepción e intentos de carrera',
+      s: ['nfl_yardas_partido', 'nfl_yardas_local', 'nfl_yardas_visita', 'nfl_intentos_local', 'nfl_intentos_visita', 'nfl_recepcion_local', 'nfl_recepcion_visita', 'nfl_yardas_cr_local', 'nfl_yardas_cr_visita'] },
     { id: 'mitades', e: '⏱️', t: 'Mitades', d: 'puntos y touchdowns de la 1ª y la 2ª mitad',
-      s: ['nfl_1m_total', 'nfl_1m_local', 'nfl_1m_visita', 'nfl_td_1m', 'nfl_2m_total'] }
+      s: ['nfl_1m_total', 'nfl_1m_local', 'nfl_1m_visita', 'nfl_td_1m', 'nfl_td_1m_local', 'nfl_td_1m_visita', 'nfl_2m_total'] },
+    { id: 'carreras', e: '🏁', t: 'Carreras', d: 'quién llega primero a 10, 15, 20, 25, 30, 35 y 40 puntos',
+      s: ['nfl_carrera_10', 'nfl_carrera_15', 'nfl_carrera_20', 'nfl_carrera_25', 'nfl_carrera_30', 'nfl_carrera_35', 'nfl_carrera_40'] }
   ];
   /* la NBA (27/10/2026): sus rankings en 4 desplegables; fase 10b (09/11/2026): hándicap de la 1ª mitad, ambos anotan
      100 / 110 y el 1er cuarto de cada equipo en "anotará 25 / 30 / 35" */
@@ -1768,7 +1778,7 @@
     var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
       sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">';
     if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f, d) + '</div></details>'; }
-    if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f) + '</div></details>'; }
+    if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f, d) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
       return cab + '<p class="criterio">💤 Sin proyección: ' + esc(f.sin_proyeccion || 'sin datos suficientes') + '.</p></div></details>';
     }
@@ -1793,7 +1803,7 @@
 
   /* ficha de un partido NFL: lo esperado (puntos, touchdowns, yardas por tierra, probabilidad de ganar),
      las lineas limite de las yardas de cada equipo (la casa pone una por partido) y todas las metricas */
-  function fichaAmericano(f) {
+  function fichaAmericano(f, d) {
     var e = f.esperado, pp = f.partidos_previos || {}, L = f.yardas_lineas || {}, S = f.siglas || {};
     var sL = esc(S.local || f.local), sV = esc(S.visita || f.visita);
     var x = function (v) { return v == null ? '—' : num(v, 2); };
@@ -1827,7 +1837,11 @@
       'estas métricas con los pesos del motor.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
       '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
-      filas + '</tbody></table></div>';
+      /* NFL fase 10 (10/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como la NBA y el futbol 2.5 */
+      filas + '</tbody></table></div>' +
+      (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
+        '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
+        '<div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '');
   }
 
   /* ficha de un partido NBA (27/10/2026): lo esperado (puntos del partido, de la 1a mitad y del 1er cuarto de cada
