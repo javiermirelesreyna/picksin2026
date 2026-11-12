@@ -1754,6 +1754,8 @@
         var r = d.auditoria.resumen;
         mapa = {};
         d.auditoria.picks.forEach(function (p) { mapa[p[0] + '|' + p[1]] = [p[3], p[4]]; });
+        /* mejores seguros y de valor del dia (12/11/2026): su resultado va aparte; el marcador del dia sigue siendo el del motor */
+        (d.auditoria.listas || []).forEach(function (p) { if (!mapa[p[0] + '|' + p[1]]) { mapa[p[0] + '|' + p[1]] = [p[3], p[4]]; } });
         h += '<div class="acciones"><a class="boton secundario" href="#/analisis/' + esc(d.semana) + '/' + esc(d.archivo) + '">📊 Ver el análisis</a></div>';
         h += '<h2><span class="emoji">🎯</span>Marcador del día</h2>' +
           marcadorCajas([['✅ Acertados', r.aciertos, 'verde'], ['❌ Fallados', r.fallos, 'rojo'], ['🎯 Acierto real', pct(r.acierto), 'verde'],
@@ -1773,8 +1775,9 @@
         ((d.partidos || []).length ? (d.partidos || []).slice().sort(function (a, b) { return (a.hora || '99').localeCompare(b.hora || '99'); })
           .map(function (f) { return fichaOtro(f, d); }).join('') : vacio('📭', 'Sin partidos este día.')) +
         '</section>';
-      h += '<nav class="indice" aria-label="En este día">' + (aud ? [['s-top5', '🏆 TOP 5'], ['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']]
-        : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'], ['s-mercados', '📊 Mercados']]).map(function (x) {
+      var conSeg = d.reglas_otro ? [['s-seguros', '🛡️ Seguros']] : [];
+      h += '<nav class="indice" aria-label="En este día">' + (aud ? [['s-top5', '🏆 TOP 5']].concat(conSeg, [['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']])
+        : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5']].concat(conSeg, [['s-mercados', '📊 Mercados']])).map(function (x) {
         return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
       }).join('') + '</nav>';
       if (!aud) { h += partidos + '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>'; }
@@ -1796,6 +1799,25 @@
       resumenCaja('s-top5', 'top5', '🏆', 'TOP 5 del día', '', aud && top5.length ? cuentaAud(top5, res) : top5.length, top5.length
         ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
         : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.'));
+    if (d.reglas_otro) {
+      /* mejores seguros y de valor del dia, como los picks de la jornada del futbol 2.5 (Javier, 12/11/2026) */
+      var R = d.reglas_otro, sugs = d.sugeridos || [];
+      var seg = sugs.filter(function (s) { return s.clave === 'seguros' && s.pick; }).map(function (s) { return s.pick; });
+      var val = sugs.filter(function (s) { return s.clave === 'valor' && s.pick; }).map(function (s) { return s.pick; });
+      var cnt = function (L) { return aud && L.length ? cuentaAud(L, res) : L.length; };
+      var grid = function (L, origen) { return '<div class="grid-picks">' + L.map(function (p) { return tarjeta(p, o({ origen: origen, resultado: res(p) })); }).join('') + '</div>'; };
+      var tope = R.tope ? ' En ' + esc(d.nombre) + ' no entra si el motor da más de ' + num(100 * R.tope, 0) + ' puntos sobre Playdoit (ahí la casa sabe más).' : '';
+      h += resumenCaja('s-seguros', 'seguros', '🛡️', 'Mejores seguros', 'los más probables que siguen', cnt(seg),
+        (Editor.activo && R.seguros ? '<p class="criterio">De ' + pct(R.seguros.piso) + ' o más, pagando mejor que ' + esc(americano(R.seguros.momio)) +
+          ' en Playdoit, con el respaldo del motor y sin repetir el TOP 5; ' + esc(R.por_partido || 2) + ' por partido como máximo.' + tope + '</p>' : '') +
+        (seg.length ? grid(seg, '🛡️ Seguro') : vacio('🛡️', 'Ninguno llega todavía. Cuando se actualizan los momios, entran los que cumplen.')));
+      if (Editor.activo) {
+        h += resumenCaja('s-valor', 'valor', '💎', 'Mejores de valor', 'bien pagados, con la mayor ventaja sobre la casa', cnt(val),
+          (R.valor ? '<p class="criterio">' + esc(americano(R.valor.momio)) + ' o mejor, de ' + pct(R.valor.piso) + ' o más, si con la probabilidad combinada motor–casa dejan ' +
+            pct(R.valor.ve_combinada) + ' o más por unidad. Primero el que más da la combinada.' + tope + '</p>' : '') +
+          (val.length ? grid(val, '💎 Valor') : vacio('💎', 'Ninguno todavía: entran cuando Playdoit publica sus momios y el motor tiene ventaja sobre la casa.')));
+      }
+    }
     h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + ((d.rankings || []).length
       ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : depDe(d) === 'basquetbol' ? GRUPOS_NBA :
         (depDe(d) === 'hockey' && (d.rankings || []).some(function (r) { return GRUPOS_NHL.some(function (g) { return g.s.indexOf(r.seccion) >= 0 && r.seccion !== 'nhl_total' && r.seccion !== 'nhl_local' && r.seccion !== 'nhl_visita'; }); }) ? GRUPOS_NHL : null), aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
