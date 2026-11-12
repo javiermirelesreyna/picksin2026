@@ -1244,12 +1244,17 @@
       (tm ? '<small class="sum-uno">🧭 ' + pct(tm.p) + ' · ' + esc(mercadoCorto(tm.mercado, f, d)) + '</small>' : '') + '</span>';
   }
   /* la explicacion del partido y de cada equipo (Javier, 11/10/2026: "de los 2 involucrados") */
-  function explicaHTML(x, f) {
+  function explicaHTML(x, f, d) {
     if (!x) { return ''; }
     if (typeof x === 'string') { return '<p class="explica">📝 ' + esc(x) + '</p>'; }
     return '<div class="explica"><p>📝 ' + esc(x.partido || '') + '</p>' +
-      (x.local ? '<p>🏠 <b>' + esc(cortoEq(f.local)) + ':</b> ' + esc(x.local) + '</p>' : '') +
-      (x.visitante ? '<p>✈️ <b>' + esc(cortoEq(f.visitante)) + ':</b> ' + esc(x.visitante) + '</p>' : '') + '</div>';
+      (x.local ? '<p>🏠 <b>' + esc(cortoEq(f.local, d)) + ':</b> ' + esc(x.local) + '</p>' : '') +
+      (x.visitante ? '<p>✈️ <b>' + esc(cortoEq(f.visitante || f.visita, d)) + ':</b> ' + esc(x.visitante) + '</p>' : '') + '</div>';
+  }
+  /* la tabla de metricas de un partido, plegada (Javier, 12/11/2026: "que la tabla de metricas sea desplegable") */
+  function metricasPlegadas(k, n, sub, html) {
+    return '<details class="caja tabla-met" data-k="' + esc(k) + '"><summary><span class="emoji">📏</span><span class="sum-txt">Métricas del partido' +
+      '<small>' + plural(n, 'métrica', 'métricas') + ' · ' + sub + '</small></span></summary><div class="cuerpo">' + html + '</div></details>';
   }
   /* la tendencia maestra del partido (Javier, 11/10/2026): si es uno de los picks publicados se puede
      escoger como cualquier otro; si no, solo se muestra */
@@ -1302,7 +1307,7 @@
     var tm = f.tendencia;
     return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' +
       sumPartido(f, d, f.visitante, f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</summary><div class="cuerpo">' +
-      lineaPartido(f) + explicaHTML(f.explicacion, f) + tendenciaHTML(tm, d) + mejorHTML(f, d) +
+      lineaPartido(f) + explicaHTML(f.explicacion, f, d) + tendenciaHTML(tm, d) + mejorHTML(f, d) +
       '<div class="x12"><div>🏠 Local<b>' + pct(g.p_local) + '</b></div><div>🤝 Empate<b>' + pct(g.p_empate) + '</b></div>' +
       '<div>✈️ Visitante<b>' + pct(g.p_visitante) + '</b></div></div>' +
       '<div class="datos"><div><span>⚽ Goles esperados</span> <b>' + num(g.total, 2) + '</b></div>' +
@@ -1310,9 +1315,10 @@
       '<div><span>🔁 Ambos marcan</span> <b>' + pct(g.btts) + '</b></div>' +
       '<div><span>⚡ Gol en el 1T</span> <b>' + pct(g.over05_1t) + '</b></div></div>' +
       (marc ? '<p class="criterio">🎯 Marcadores más probables: ' + marc + '</p>' : '') +
-      (filas ? '<div class="tabla-scroll"><table><thead><tr><th>Partido completo</th><th class="num">Proyección</th>' +
+      (filas ? metricasPlegadas('m-' + d.archivo + f.local, (f.metricas || []).length, 'proyección, rango y línea de cada una',
+        '<div class="tabla-scroll"><table><thead><tr><th>Partido completo</th><th class="num">Proyección</th>' +
         '<th class="num">Rango 80%</th><th class="num">Línea</th><th class="num">Más de la línea</th>' +
-        '<th class="num">Local hace más</th></tr></thead><tbody>' + filas + '</tbody></table></div>' : '') +
+        '<th class="num">Local hace más</th></tr></thead><tbody>' + filas + '</tbody></table></div>') : '') +
       (d.v25 ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.local + ' vs ' + f.visitante) + '"><summary><span class="emoji">📚</span><span class="sum-txt">Todos los mercados<small>la probabilidad de cada mercado, en las 5 secciones</small></span></summary><div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '') +
       '</div></details>';
   }
@@ -1800,7 +1806,8 @@
   function fichaOtro(f, d) {
     var k = 'f-' + d.archivo + f.local;
     var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
-      sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">';
+      sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">' +
+      explicaHTML(f.explicacion, f, d) + tendenciaHTML(f.tendencia, d);           // como el futbol (12/11/2026)
     if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f, d) + '</div></details>'; }
     if (f.esperado && !f.sin_proyeccion) { return cab + fichaAmericano(f, d) + '</div></details>'; }
     if (f.sin_proyeccion || !f.goles_esperados) {
@@ -1817,13 +1824,14 @@
       '<div><span>🥅 Goles esperados del partido</span> <b>' + num((g.local || 0) + (g.visita || 0), 2) + '</b></div>' +
       '<div><span>🧤 Portería (1.00 = liga; más alto, más goles permite)</span> <b>' + x(c.porteria_local) + ' · ' + x(c.porteria_visita) + '</b></div>' +
       '<div><span>🎯 Definición (1.00 = liga; más alto, más convierte)</span> <b>' + x(c.definicion_local) + ' · ' + x(c.definicion_visita) + '</b></div></div>' +
+      metricasPlegadas(k.replace(/^f-/, 'm-'), (f.espejo || []).length, 'lo que hace cada equipo y lo que permite su rival',
       '<p class="criterio">Lo que <b>hace</b> cada equipo contra lo que <b>permite</b> su rival, en cada métrica (1.00 = media de la liga). ' +
       'Los goles de ' + esc(f.local) + ' salen de lo que hace ' + esc(f.local) + ' y lo que permite ' + esc(f.visita) + ', y al revés. ' +
       'Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) + '.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">Hace ' + esc(f.local) + '</th><th class="num">Permite ' +
       esc(f.visita) + '</th><th class="num">Hace ' + esc(f.visita) + '</th><th class="num">Permite ' + esc(f.local) + '</th></tr></thead><tbody>' +
       /* NHL fase 10 (11/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como la NBA y la NFL */
-      filas + '</tbody></table></div>' +
+      filas + '</tbody></table></div>') +
       (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
         '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
         '<div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '') + '</div></details>';
@@ -1859,6 +1867,7 @@
       '<div><span>📈 Probabilidad de que gane ' + esc(f.local) + '</span> <b>' + pct(e.p_local) + '</b></div></div>' +
       lin(f.local, L.local) + lin(f.visita, L.visita) +
       (f.campo_neutral ? '<p class="criterio">🌍 Campo neutral: sin ventaja de local.</p>' : '') +
+      metricasPlegadas('m-' + d.archivo + f.local, (f.espejo || []).length, 'lo que hace cada equipo y lo que permite su rival',
       '<p class="criterio">Lo que <b>hace</b> cada equipo contra lo que <b>permite</b> su rival, en cada métrica (1.00 = media de la liga). ' +
       'Lo de ' + esc(f.local) + ' (' + sL + ') sale de lo que hace ' + sL + ' y lo que permite ' + esc(f.visita) + ' (' + sV + '), y al revés. ' +
       'Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) + '. Los índices de las justificaciones de los picks combinan ' +
@@ -1866,7 +1875,7 @@
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
       '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
       /* NFL fase 10 (10/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como la NBA y el futbol 2.5 */
-      filas + '</tbody></table></div>' +
+      filas + '</tbody></table></div>') +
       (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
         '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
         '<div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '');
@@ -1905,13 +1914,14 @@
       '<div><span>📈 Probabilidad de que gane ' + esc(f.local) + '</span> <b>' + pct(e.p_local) + '</b></div>' +
       '<div><span>⏳ Probabilidad de prórroga</span> <b>' + pct(e.p_prorroga) + '</b></div></div>' + claves +
       (f.campo_neutral ? '<p class="criterio">🌍 Campo neutral: sin ventaja de local.</p>' : '') +
+      metricasPlegadas('m-' + d.archivo + f.local, (f.espejo || []).length, 'lo que hace cada equipo y lo que permite su rival',
       '<p class="criterio">Lo que <b>hace</b> cada equipo contra lo que <b>permite</b> su rival, en cada métrica (1.00 = media de la liga; ' +
       'conteos llevados a 48 minutos). Lo de ' + esc(f.local) + ' (' + sL + ') sale de lo que hace ' + sL + ' y lo que permite ' + esc(f.visita) +
       ' (' + sV + '), y al revés; los partidos recientes pesan más. Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) +
       '. Los índices de las justificaciones de los picks combinan estas métricas con los pesos del motor.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">' + sL + '<br>hace</th><th class="num">' + sV +
       '<br>permite</th><th class="num">' + sV + '<br>hace</th><th class="num">' + sL + '<br>permite</th></tr></thead><tbody>' +
-      filas + '</tbody></table></div>' +
+      filas + '</tbody></table></div>') +
       /* fase 10c (09/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como el futbol 2.5 */
       (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
         '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
