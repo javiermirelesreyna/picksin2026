@@ -1,34 +1,5 @@
 {
  "semana": "2026-11-12",
- "actualizado": "2026-11-12T19:08:42.123Z",
- "picks": [
-  {
-   "id": "nba-2026-11-12|Philadelphia 76ers vs Toronto Raptors|Hándicap visitante +7.5",
-   "archivo": "nba-2026-11-12",
-   "liga": "nba",
-   "nombre": "NBA",
-   "pais": "Estados Unidos",
-   "bandera": "🇺🇸",
-   "jornada": null,
-   "sa": "2026-11-12",
-   "origen": "Tabla del partido",
-   "deporte": "basquetbol",
-   "emoji": "🏀",
-   "partido": "Philadelphia 76ers vs Toronto Raptors",
-   "mercado": "Hándicap visitante +7.5",
-   "fecha": "2026-11-12",
-   "dia": "jueves",
-   "hora": "18:00",
-   "ts": 1794528000,
-   "p": 0.642,
-   "cuota": 1.61,
-   "familia": "Hándicap",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-12T19:08:42.123Z"
-   }
-  }
- ]
+ "actualizado": "2026-11-12T19:09:11.152Z",
+ "picks": []
 }
