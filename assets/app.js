@@ -174,6 +174,12 @@
     r9d_carrera_5_corners: '🏎️', r9e_intensidad_compartida: '🔥', r9f_consistencia_goleadora: '🔁',
     r9g_mitad_mas_goles: '⏳', r9h_carrera_3_corners: '⛳',
     nhl_total: '🥅', nhl_local: '🏠', nhl_visita: '✈️',
+    nhl_ganador: '🏆', nhl_handicap: '⚖️', nhl_1x2: '🏆', nhl_doble: '🛡️', nhl_dnb: '🏆', nhl_handicap3: '⚖️', nhl_margen: '📐',
+    nhl_total_reg: '⏱️', nhl_ambos: '🤝', nhl_que_marca: '🤝', nhl_prorroga: '⏳', nhl_primer_gol: '🥇', nhl_periodo_max: '📊',
+    nhl_carrera2: '🏁', nhl_carrera3: '🏁', nhl_carrera4: '🏁', nhl_carrera5: '🏁', nhl_carrera6: '🏁',
+    nhl_p1_1x2: '1️⃣', nhl_p1_total: '1️⃣', nhl_p1_local: '🏠', nhl_p1_visita: '✈️', nhl_p1_handicap: '⚖️', nhl_p1_ambos: '🤝',
+    nhl_p1_doble: '🛡️', nhl_p1_dnb: '1️⃣', nhl_p1_primer_gol: '🥇', nhl_p2_1x2: '2️⃣', nhl_p2_total: '2️⃣', nhl_p2_local: '🏠',
+    nhl_p2_visita: '✈️', nhl_p3_1x2: '3️⃣', nhl_p3_total: '3️⃣', nhl_p3_local: '🏠', nhl_p3_visita: '✈️',
     nfl_total: '🏈', nfl_total_local: '🏠', nfl_total_visita: '✈️', nfl_td_partido: '🙌', nfl_td_local: '🏠', nfl_td_visita: '✈️',
     nfl_td_carrera: '🏃', nfl_yardas_partido: '📏', nfl_yardas_local: '🏠', nfl_yardas_visita: '✈️', nfl_1m_total: '⏱️',
     nfl_1m_local: '🏠', nfl_1m_visita: '✈️', nfl_td_1m: '🙌', nfl_2m_total: '⏱️',
@@ -1408,6 +1414,19 @@
   ];
   /* la NBA (27/10/2026): sus rankings en 4 desplegables; fase 10b (09/11/2026): hándicap de la 1ª mitad, ambos anotan
      100 / 110 y el 1er cuarto de cada equipo en "anotará 25 / 30 / 35" */
+  /* la NHL (fase 10, 11/11/2026: los mercados de Playdoit que usa Javier): sus rankings en 4 desplegables */
+  var GRUPOS_NHL = [
+    { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'con prórroga y penales, y del tiempo reglamentario (1x2, doble oportunidad, sin empate, margen)',
+      s: ['nhl_ganador', 'nhl_handicap', 'nhl_1x2', 'nhl_doble', 'nhl_dnb', 'nhl_handicap3', 'nhl_margen'] },
+    { id: 'goles', e: '🥅', t: 'Goles', d: 'del partido y de cada equipo, del tiempo reglamentario, ambos marcan y prórroga',
+      s: ['nhl_total', 'nhl_local', 'nhl_visita', 'nhl_total_reg', 'nhl_ambos', 'nhl_que_marca', 'nhl_prorroga'] },
+    { id: 'carreras', e: '🏁', t: 'Primer gol y carreras', d: 'quién anota primero y quién llega primero a 2, 3, 4, 5 y 6 goles',
+      s: ['nhl_primer_gol', 'nhl_carrera2', 'nhl_carrera3', 'nhl_carrera4', 'nhl_carrera5', 'nhl_carrera6'] },
+    { id: 'periodos', e: '⏱️', t: 'Periodos', d: '1x2, goles y goles de cada equipo de cada periodo, y el periodo con más goles',
+      s: ['nhl_p1_1x2', 'nhl_p1_doble', 'nhl_p1_dnb', 'nhl_p1_handicap', 'nhl_p1_total', 'nhl_p1_local', 'nhl_p1_visita', 'nhl_p1_ambos',
+        'nhl_p1_primer_gol', 'nhl_p2_1x2', 'nhl_p2_total', 'nhl_p2_local', 'nhl_p2_visita', 'nhl_p3_1x2', 'nhl_p3_total', 'nhl_p3_local',
+        'nhl_p3_visita', 'nhl_periodo_max'] }
+  ];
   var GRUPOS_NBA = [
     { id: 'lado', e: '🏆', t: 'Ganador y hándicap', d: 'del partido y de la 1ª mitad', s: ['nba_ganador', 'nba_handicap', 'nba_1m_ganador', 'nba_1m_handicap'] },
     { id: 'puntos', e: '🏀', t: 'Puntos', d: 'del partido, de cada equipo y ambos anotan 100 / 110',
@@ -1768,7 +1787,8 @@
         ? '<div class="grid-picks">' + top5.map(function (p) { return tarjeta(p, o({ origen: 'TOP 5', resultado: res(p) })); }).join('') + '</div>'
         : vacio('🏆', d.nota ? esc(d.nota) : 'Ningún pick de este día alcanzó el nivel del TOP 5.'));
     h += '<section id="s-mercados"><h2><span class="emoji">📊</span>Rankings por mercado</h2>' + ((d.rankings || []).length
-      ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : depDe(d) === 'basquetbol' ? GRUPOS_NBA : null, aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
+      ? rankingsHTML(d.rankings, depDe(d) === 'americano' ? GRUPOS_NFL : depDe(d) === 'basquetbol' ? GRUPOS_NBA :
+        (depDe(d) === 'hockey' && (d.rankings || []).some(function (r) { return GRUPOS_NHL.some(function (g) { return g.s.indexOf(r.seccion) >= 0 && r.seccion !== 'nhl_total' && r.seccion !== 'nhl_local' && r.seccion !== 'nhl_visita'; }); }) ? GRUPOS_NHL : null), aud, res, o) : vacio('📊', 'Este día no tiene picks publicados.')) + '</section>';
     return h;
   }
   /* ficha de un partido de hockey: goles esperados, lo que hace cada equipo contra lo que permite el
@@ -1798,7 +1818,11 @@
       'Partidos previos: ' + esc(pp.local) + ' y ' + esc(pp.visita) + '.</p>' +
       '<div class="tabla-scroll"><table><thead><tr><th>Métrica</th><th class="num">Hace ' + esc(f.local) + '</th><th class="num">Permite ' +
       esc(f.visita) + '</th><th class="num">Hace ' + esc(f.visita) + '</th><th class="num">Permite ' + esc(f.local) + '</th></tr></thead><tbody>' +
-      filas + '</tbody></table></div></div></details>';
+      /* NHL fase 10 (11/11/2026): todas las lineas de cada mercado con su probabilidad y el momio de Playdoit, como la NBA y la NFL */
+      filas + '</tbody></table></div>' +
+      (d && d.tablas ? '<details class="caja mk-todos" data-mercados="' + esc(d.semana + '|' + d.archivo + '|' + f.partido) + '"><summary><span class="emoji">📚</span>' +
+        '<span class="sum-txt">Todos los mercados<small>cada línea con la probabilidad del motor y el momio de Playdoit</small></span></summary>' +
+        '<div class="cuerpo mk-cuerpo"><p class="criterio">Cargando…</p></div></details>' : '') + '</div></details>';
   }
 
   /* ficha de un partido NFL: lo esperado (puntos, touchdowns, yardas por tierra, probabilidad de ganar),
