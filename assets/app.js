@@ -915,7 +915,9 @@
           ' o más de valor (📈), con el respaldo del motor como en el top. Aciertan menos que los seguros, pero cada acierto paga más: ' +
           'esta lista se mide por la ganancia, no por el acierto. Primero el más seguro.</p>') +
       '<p class="criterio top-explica">🤝 <b>Combinada:</b> la probabilidad del motor mezclada con la de Playdoit sin su margen, con el peso que ' +
-      'el motor se ha ganado en cada mercado con el archivo de momios (se recalcula cada jueves). Máximo ' + esc(R.maximo) + ' por día, ' +
+      'el motor se ha ganado en cada mercado con el archivo de momios (se recalcula cada semana: el jueves en el fútbol' +
+      (listas && listas.otros_desde ? ' y el martes en la NHL, la NFL y la NBA; en la NFL y la NBA hoy manda la casa, así que casi nunca entra uno' : '') +
+      '). Máximo ' + esc(R.maximo) + ' por día, ' +
       esc(R.por_partido) + ' del mismo partido y una sola línea de cada mercado. Cuando empieza su partido, un pick ya no entra ni sale. ' +
       '<b>Solo modo editor:</b> se mide aquí antes de pasar al grupo.' + (listas && listas.momios_de ? ' Momios de Playdoit de las ' +
       esc(horaMx(listas.momios_de)) + '.' : '') + '</p></div></details>';
@@ -1063,7 +1065,9 @@
                 'mercado (de Under 6.5 y Under 5.5 de tarjetas del mismo partido entra solo una)' : '') + '. Cuando empieza su partido, un pick ya no entra ' +
                 'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
                 (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
-                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ' + (r7 ? '⏳ Sin momio: Playdoit todavía no publica ese mercado; entra si la línea queda cerca de lo que proyecta el motor y da hasta ' + pct(top.techo_sin_momio) + ', y compite junto con los demás (actualiza momios). En resultado y hándicap no entra si el motor da más de 5 puntos sobre Playdoit. En los otros deportes, lo que no tiene momio va después. ' : '⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ') +
+                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ' + (r7 ? '⏳ Sin momio: Playdoit todavía no publica ese mercado; entra si la línea queda cerca de lo que proyecta el motor y da hasta ' + pct(top.techo_sin_momio) + ', y compite junto con los demás (actualiza momios). En resultado y hándicap no entra si el motor da más de 5 puntos sobre Playdoit. ' +
+                  (top.tope_otros ? 'En la NBA y la NFL, lo que tiene momio no entra si el motor da más de ' + num(100 * (top.tope_otros.nba || top.tope_otros.nfl), 0) +
+                    ' puntos sobre Playdoit (ahí la casa sabe más). ' : '') + 'En los otros deportes, lo que no tiene momio va después. ' : '⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ') +
                   '🔎 Oportunidad encontrada: Playdoit lo paga como si fuera mucho menos probable; revisa información antes de jugarlo. ' +
                   '🚧 Diferencia motor–casa: en esa liga Playdoit pone la línea de ese mercado muy lejos de lo que espera el motor; ' +
                   'manda el motor, pero revisa información.</p>' : '')
