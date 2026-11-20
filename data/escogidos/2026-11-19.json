@@ -1,41 +1,7 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-20T00:09:22.712Z",
+ "actualizado": "2026-11-20T00:11:24.759Z",
  "picks": [
-  {
-   "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ambos equipos anotan 100: sí",
-   "archivo": "nba-2026-11-19",
-   "liga": "nba",
-   "nombre": "NBA",
-   "pais": "Estados Unidos",
-   "bandera": "🇺🇸",
-   "jornada": null,
-   "sa": "2026-11-19",
-   "origen": "🛡️ Seguro",
-   "deporte": "basquetbol",
-   "emoji": "🏀",
-   "partido": "Memphis Grizzlies vs Golden State Warriors",
-   "mercado": "Ambos equipos anotan 100: sí",
-   "fecha": "2026-11-19",
-   "dia": "jueves",
-   "hora": "19:00",
-   "ts": 1795136400,
-   "sem": "2026-11-19",
-   "p": 0.7896,
-   "cuota": 1.32,
-   "confianza": "Alta",
-   "respaldo": "1/4 a favor, 1 en contra",
-   "familia": "Ambos equipos anotan 100 / 110",
-   "aviso": "Aviso: jugadores clave Ty Jerome (Grizzlies): fuera; Stephen Curry (Warriors): fuera en el reporte oficial de lesiones. El motor no ajusta la probabilidad por jugadores.",
-   "ciclo": "2026-11-17",
-   "liquidacion": "Con prórroga",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-20T00:09:22.712Z"
-   }
-  },
   {
    "id": "nba-2026-11-19|Milwaukee Bucks vs Portland Trail Blazers|Puntos del local en la 1ª mitad menos de 58.5",
    "archivo": "nba-2026-11-19",
