@@ -1,0 +1,34 @@
+{
+ "semana": "2026-11-19",
+ "actualizado": "2026-11-20T00:08:46.918Z",
+ "picks": [
+  {
+   "id": "nba-2026-11-19|Milwaukee Bucks vs Portland Trail Blazers|Puntos del local en la 1ª mitad menos de 58.5",
+   "archivo": "nba-2026-11-19",
+   "liga": "nba",
+   "nombre": "NBA",
+   "pais": "Estados Unidos",
+   "bandera": "🇺🇸",
+   "jornada": null,
+   "sa": "2026-11-19",
+   "origen": "Tabla del partido",
+   "deporte": "basquetbol",
+   "emoji": "🏀",
+   "partido": "Milwaukee Bucks vs Portland Trail Blazers",
+   "mercado": "Puntos del local en la 1ª mitad menos de 58.5",
+   "fecha": "2026-11-19",
+   "dia": "jueves",
+   "hora": "19:00",
+   "ts": 1795136400,
+   "p": 0.723,
+   "cuota": 1.43,
+   "familia": "Puntos de Bucks en la 1ª mitad",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-20T00:08:46.918Z"
+   }
+  }
+ ]
+}
