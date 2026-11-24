@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-24T17:57:26.291Z",
+ "actualizado": "2026-11-24T19:22:52.918Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -89,35 +89,6 @@
    ],
    "escogido": {
     "picksin": "2026-11-24T17:57:26.291Z"
-   }
-  },
-  {
-   "id": "europe__champions-j5|Como vs AEK Athens|Under 3.5 Goles Como",
-   "archivo": "europe__champions-j5",
-   "liga": "europe__champions",
-   "nombre": "UEFA Champions League",
-   "pais": "Europa",
-   "bandera": "🇪🇺",
-   "jornada": 5,
-   "sa": "2026-11-19",
-   "origen": "TOP 5",
-   "partido": "Como vs AEK Athens",
-   "mercado": "Under 3.5 Goles Como",
-   "fecha": "2026-11-24",
-   "dia": "martes",
-   "hora": "14:00",
-   "ts": 1795550400,
-   "sem": "2026-11-19",
-   "p": 0.876,
-   "cuota": 1.19,
-   "confianza": "Alta",
-   "respaldo": "1/2 a favor, 1 en contra",
-   "familia": "Resultado y goles del partido",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-24T17:54:14.694Z"
    }
   }
  ]
