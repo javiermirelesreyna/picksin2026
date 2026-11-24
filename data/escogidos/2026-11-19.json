@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-24T19:22:52.918Z",
+ "actualizado": "2026-11-24T23:48:42.018Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -89,6 +89,40 @@
    ],
    "escogido": {
     "picksin": "2026-11-24T17:57:26.291Z"
+   }
+  },
+  {
+   "id": "nba-2026-11-24|Orlando Magic vs Detroit Pistons|Puntos del visitante en la 1ª mitad menos de 59.5",
+   "archivo": "nba-2026-11-24",
+   "liga": "nba",
+   "nombre": "NBA",
+   "pais": "Estados Unidos",
+   "bandera": "🇺🇸",
+   "jornada": null,
+   "sa": "2026-11-19",
+   "origen": "TOP 5",
+   "deporte": "basquetbol",
+   "emoji": "🏀",
+   "partido": "Orlando Magic vs Detroit Pistons",
+   "mercado": "Puntos del visitante en la 1ª mitad menos de 59.5",
+   "fecha": "2026-11-24",
+   "dia": "martes",
+   "hora": "18:00",
+   "ts": 1795564800,
+   "sem": "2026-11-19",
+   "p": 0.7894,
+   "cuota": 1.32,
+   "confianza": "Alta",
+   "respaldo": "2/2 a favor, 0 en contra",
+   "familia": "Puntos del visitante en la 1ª mitad",
+   "aviso": "Aviso: jugador clave Duncan Robinson (Pistons): fuera en el reporte oficial de lesiones. El motor ya descuenta estas bajas en la probabilidad.",
+   "ciclo": "2026-11-24",
+   "liquidacion": "Solo la 1ª mitad",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-24T23:48:42.018Z"
    }
   }
  ]
