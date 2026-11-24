@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-24T17:54:14.694Z",
+ "actualizado": "2026-11-24T17:57:26.291Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -62,6 +62,33 @@
    ],
    "escogido": {
     "picksin": "2026-11-20T00:08:46.918Z"
+   }
+  },
+  {
+   "id": "italy__serie-b-j13|Benevento vs Empoli|Benevento gana Corners 1H (1x2)",
+   "archivo": "italy__serie-b-j13",
+   "liga": "italy__serie-b",
+   "nombre": "Serie B",
+   "pais": "Italia",
+   "bandera": "🇮🇹",
+   "jornada": 13,
+   "sa": "2026-11-19",
+   "origen": "Tabla del partido",
+   "partido": "Benevento vs Empoli",
+   "mercado": "Benevento gana Corners 1H (1x2)",
+   "fecha": "2026-11-24",
+   "dia": "martes",
+   "hora": "13:00",
+   "ts": 1795546800,
+   "sem": "2026-11-19",
+   "p": 0.596,
+   "cuota": 1.73,
+   "familia": "1ª mitad: córners 1x2",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-24T17:57:26.291Z"
    }
   },
   {
