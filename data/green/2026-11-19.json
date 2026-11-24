@@ -1,0 +1,51 @@
+{
+ "semana": "2026-11-19",
+ "actualizado": "2026-11-24T17:58:48.047Z",
+ "selecciones": [
+  {
+   "id": "mwv00nv5-8n3pn2",
+   "fecha": "2026-11-24",
+   "tipo": "parlay",
+   "nivel": "ultrafuerte",
+   "momio": "+108",
+   "dec": 2.0761,
+   "apuesta": 1000,
+   "pago": 2076.1461,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇮🇹",
+     "nombre": "Serie B",
+     "partido": "Benevento vs Empoli",
+     "mercado": "Benevento gana Corners 1H (1x2)",
+     "fecha": "2026-11-24",
+     "hora": "13:00",
+     "momio": "-234",
+     "dec": 1.4274,
+     "p": 0.596,
+     "archivo": "italy__serie-b-j13",
+     "sa": "2026-11-19"
+    },
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇪🇺",
+     "nombre": "UEFA Champions League",
+     "partido": "Como vs AEK Athens",
+     "mercado": "Under 3.5 Goles Como",
+     "fecha": "2026-11-24",
+     "hora": "14:00",
+     "momio": "-220",
+     "dec": 1.4545,
+     "p": 0.876,
+     "archivo": "europe__champions-j5",
+     "sa": "2026-11-19"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-11-24T17:58:48.047Z",
+   "resultado": null
+  }
+ ]
+}
