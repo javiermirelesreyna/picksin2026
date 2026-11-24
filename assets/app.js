@@ -153,8 +153,17 @@
 
   function semanaDefecto(idx, tipo) {
     var campo = (tipo === 'auditoria' || tipo === 'resultados') ? 'auditadas' : 'analisis';
-    var s = (idx.semanas || []).filter(function (x) { return x[campo] > 0; })[0];
-    return s ? s.id : null;
+    var sems = (idx.semanas || []).filter(function (x) { return x[campo] > 0; });
+    /* Analisis abre en la semana de hoy ("esta semana"), no en la mas nueva: la Europa y la Conference del jueves
+       siguiente ya estan en la proxima semana y escondian la Champions y las ligas de esta (Javier, 23/11/2026).
+       Si esta semana no tiene analisis, la mas reciente que no sea futura; si no hay, la mas nueva. */
+    if (campo === 'analisis') {
+      var h = hoy();
+      var s0 = sems.filter(function (x) { return x.desde <= h && h <= x.hasta; })[0] ||
+        sems.filter(function (x) { return x.desde <= h; })[0];
+      if (s0) { return s0.id; }
+    }
+    return sems[0] ? sems[0].id : null;
   }
 
   /* ================================================================== emojis */
@@ -1168,6 +1177,20 @@
         var con = {};
         ligas.forEach(function (L) { con[L.liga] = true; });
         var faltan = idx.ligas.filter(function (L) { return !con[L.id]; });
+        /* las que ya tienen su analisis en una semana que todavia no empieza (la Europa y la Conference del jueves) no
+           estan "sin analisis": van aparte, con su enlace (Javier, 23/11/2026) */
+        var hHoy = hoy();
+        var luego = faltan.filter(function (L) { return L.ultima && L.ultima.semana > hHoy; });
+        faltan = faltan.filter(function (L) { return luego.indexOf(L) < 0; });
+        if (luego.length) {
+          h += '<h2 class="pais"><span class="bandera" aria-hidden="true">📅</span>Ya analizadas para la semana que viene</h2>' +
+            '<div class="rejilla">' + luego.map(function (L) {
+              return '<a class="liga" href="#/analisis/' + esc(L.ultima.semana) + '/' + esc(L.ultima.archivo) + '"><div class="liga-txt">' +
+                '<div class="liga-nombre">' + bandera(L.bandera) + ' ⚽ ' + esc(L.nombre) + '</div>' +
+                '<div class="liga-linea">📅 Jornada <b>' + esc(L.ultima.jornada) + '</b> · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
+                '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
+            }).join('') + '</div>';
+        }
         if (faltan.length) {
           h += '<details class="caja" data-k="sin-analisis" style="margin-top:26px"><summary><span class="emoji">💤</span>Sin análisis esta semana' +
             '<span class="cuenta">' + faltan.length + '</span></summary><div class="cuerpo"><div class="liga-apagada">' +
