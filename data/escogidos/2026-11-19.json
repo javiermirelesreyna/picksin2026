@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-24T23:49:22.198Z",
+ "actualizado": "2026-11-24T23:51:06.210Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -89,6 +89,34 @@
    ],
    "escogido": {
     "picksin": "2026-11-24T17:57:26.291Z"
+   }
+  },
+  {
+   "id": "nba-2026-11-24|Orlando Magic vs Detroit Pistons|Ganador del partido: el local",
+   "archivo": "nba-2026-11-24",
+   "liga": "nba",
+   "nombre": "NBA",
+   "pais": "Estados Unidos",
+   "bandera": "🇺🇸",
+   "jornada": null,
+   "sa": "2026-11-19",
+   "origen": "Tabla del partido",
+   "deporte": "basquetbol",
+   "emoji": "🏀",
+   "partido": "Orlando Magic vs Detroit Pistons",
+   "mercado": "Ganador del partido: el local",
+   "fecha": "2026-11-24",
+   "dia": "martes",
+   "hora": "18:00",
+   "ts": 1795564800,
+   "p": 0.615,
+   "cuota": 1.68,
+   "familia": "Ganador del partido",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-24T23:51:06.210Z"
    }
   }
  ]
