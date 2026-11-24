@@ -650,7 +650,7 @@
     var cab = '<div class="pick-cab">' +
       (o.conLiga ? ligaMini(o.doc) : '<span class="pick-dia">📅 ' + esc(cuando(p)) + '</span>') +
       sello(sel) + '</div>';
-    var cuerpo = '<div class="pick-cuerpo"><div><h4 class="mercado">' + esc(p.mercado) + '</h4>' +
+    var cuerpo = '<div class="pick-cuerpo"><div><h4 class="mercado">' + mkHTML(p, o.doc) + '</h4>' +
       '<p class="partido">' + esc(p.partido) +
       (o.conLiga ? (o.conDia ? ' · 📅 ' + esc(cuando(p)) : ' · 🕐 ' + esc(p.hora || cuando(p))) : '') + '</p></div>' +
       '<div class="precio">' + cuota(p, p.americano) + '</div></div>';
@@ -662,7 +662,7 @@
   function fila(p, o) {
     var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
     return '<li class="fila' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + '" data-pid="' + esc(pid) + '">' +
-      '<span class="m">' + esc(p.mercado) + barraP(p) + '</span>' +
+      '<span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
       '<span class="fila-fin">' + sello(sel) + cuota(p, p.americano) + botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + esc(p.partido) + ' · <span class="dia">📅 ' + esc(cuando(p)) + '</span>' +
       (p.respaldo ? ' · ⚖️ ' + esc(p.respaldo) : '') + (chipMomio(p) ? ' ' + chipMomio(p) : '') +
@@ -686,7 +686,7 @@
   function renglon(p, o) {
     var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
     return '<li class="fila renglon' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + (o.sinSello ? ' sin-sello' : '') +
-      '" data-pid="' + esc(pid) + '"><span class="m">' + esc(p.mercado) + barraP(p) + '</span>' +
+      '" data-pid="' + esc(pid) + '"><span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
       '<span class="fila-fin">' + cuota(p, o.momio !== undefined ? o.momio : (p.americano || (typeof p.momio === 'number' && p.momio > 1 ? americano(p.momio) : ''))) +
       botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + sello(sel) + (o.sub || '') + '</span>' +
@@ -1142,6 +1142,68 @@
       '✅ Escogidos y 🏅 Resultados como los del fútbol.</p></div>', d.t);
     return Promise.resolve();
   }
+  /* el analisis del futbol por continente (Javier, 24/11/2026): primero America, despues Europa, las copas europeas
+     (Champions, Europa y Conference) y Asia; cada continente, desplegable, y dentro sus paises como antes */
+  var CONTINENTES = [['america', '🌎', 'América'], ['europa', '🌍', 'Europa'], ['copas', '🏆', 'Copas europeas'], ['asia', '🌏', 'Asia']];
+  var PAIS_CONT = { mexico: 'america', brazil: 'america', argentina: 'america', usa: 'america', canada: 'america', colombia: 'america',
+    chile: 'america', uruguay: 'america', peru: 'america', ecuador: 'america', paraguay: 'america', bolivia: 'america', venezuela: 'america',
+    china: 'asia', japan: 'asia', korea: 'asia', 'south-korea': 'asia', saudi: 'asia', 'saudi-arabia': 'asia', qatar: 'asia', uae: 'asia',
+    india: 'asia', australia: 'asia', europe: 'copas' };
+  function continenteDe(L) { return PAIS_CONT[String(L.liga || L.id || L.archivo || '').split('__')[0]] || 'europa'; }
+  function tarjetaLigaAnalisis(L, sem) {
+    var n = Esc.deArchivo(L.archivo).length;
+    return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
+      '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
+      (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
+      '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
+      '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
+      (n ? ' · <span class="sello">✅ ' + n + ' escogido' + (n === 1 ? '' : 's') + '</span>' : '') + '</div>' +
+      '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
+  }
+  function tarjetaLigaLuego(L) {
+    return '<a class="liga" href="#/analisis/' + esc(L.ultima.semana) + '/' + esc(L.ultima.archivo) + '"><div class="liga-txt">' +
+      '<div class="liga-nombre">' + bandera(L.bandera) + ' ⚽ ' + esc(L.nombre) + '</div>' +
+      '<div class="liga-linea">📅 Jornada <b>' + esc(L.ultima.jornada) + '</b> · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
+      '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
+  }
+  /* tarjeta(L, sem): la tarjeta de cada liga; resumen(ls): lo que se agrega a la cuenta del continente (escogidos en
+     Analisis; aciertos en Auditoria, Javier 24/11/2026: "tambien ordena Auditoria por continente") */
+  function porContinente(ligas, luego, sem, tarjeta, resumen) {
+    tarjeta = tarjeta || tarjetaLigaAnalisis;
+    resumen = resumen || function (ls) {
+      var nEsc = ls.reduce(function (s, L) { return s + Esc.deArchivo(L.archivo).length; }, 0);
+      return nEsc ? ' · ✅ ' + nEsc : '';
+    };
+    return CONTINENTES.map(function (c) {
+      var ls = ligas.filter(function (L) { return continenteDe(L) === c[0]; }), lg = luego.filter(function (L) { return continenteDe(L) === c[0]; });
+      if (!ls.length && !lg.length) { return ''; }
+      var n = ls.length + lg.length;
+      var cuerpo = c[0] === 'copas'
+        ? '<div class="rejilla">' + ls.map(function (L) { return tarjeta(L, sem); }).join('') + lg.map(tarjetaLigaLuego).join('') + '</div>'
+        : porPais(ls).map(function (g) {
+          return '<h2 class="pais">' + bandera(g.bandera) + esc(g.pais) + '</h2><div class="rejilla">' +
+            g.ligas.map(function (L) { return tarjeta(L, sem); }).join('') + '</div>';
+        }).join('');
+      return '<details class="caja continente" data-k="cont-' + c[0] + '"><summary><span class="emoji">' + c[1] + '</span>' + c[2] +
+        '<span class="cuenta">' + (c[0] === 'copas' ? plural(n, 'torneo', 'torneos') : plural(n, 'liga', 'ligas')) +
+        resumen(ls) + '</span></summary><div class="cuerpo">' + cuerpo + '</div></details>';
+    }).join('');
+  }
+  function tarjetaLigaAuditoria(L, sem) {
+    var r = L.auditoria;
+    return '<a class="liga" href="#/' + (r ? 'auditoria' : 'analisis') + '/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
+      '<div class="liga-nombre">⚽ ' + esc(L.nombre) + '</div>' +
+      '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
+      (r ? '<div class="liga-linea">✅ <b>' + r.aciertos + ' de ' + r.picks + '</b> · acierto <b>' + pct(r.acierto) + '</b> · prometido ' + pct(r.prometido) + '</div>' +
+        '<div class="barra-acierto" aria-hidden="true"><i style="width:' + (r.acierto * 100).toFixed(1) + '%"></i></div>'
+        : '<div class="liga-linea">⏳ Pendiente de auditar: se audita al terminar la jornada</div>') +
+      '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
+  }
+  function resumenAuditoria(ls) {
+    var a = 0, n = 0;
+    ls.forEach(function (L) { if (L.auditoria) { a += L.auditoria.aciertos; n += L.auditoria.picks; } });
+    return n ? ' · ✅ ' + a + ' de ' + n + ' (' + pct(a / n) + ')' : '';
+  }
   function vAnalisis(partes, q) {
     var pronto = proximamente('analisis', q);
     if (pronto) { return pronto; }
@@ -1160,19 +1222,6 @@
           var hasta = ligas.map(function (L) { return L.hasta; }).filter(Boolean).sort().pop();
           h += '<p class="sub">⚽ <b>' + ligas.length + '</b> ' + (ligas.length === 1 ? 'liga analizada' : 'ligas analizadas') +
             (desde ? ' · partidos del ' + rango(desde, hasta) : '') + '</p>';
-          h += porPais(ligas).map(function (g) {
-            return '<h2 class="pais">' + bandera(g.bandera) + esc(g.pais) + '</h2><div class="rejilla">' +
-              g.ligas.map(function (L) {
-                var n = Esc.deArchivo(L.archivo).length;
-                return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
-                  '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
-                  (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
-                  '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
-                  '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
-                  (n ? ' · <span class="sello">✅ ' + n + ' escogido' + (n === 1 ? '' : 's') + '</span>' : '') + '</div>' +
-                  '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
-              }).join('') + '</div>';
-          }).join('');
         }
         var con = {};
         ligas.forEach(function (L) { con[L.liga] = true; });
@@ -1182,6 +1231,11 @@
         var hHoy = hoy();
         var luego = faltan.filter(function (L) { return L.ultima && L.ultima.semana > hHoy; });
         faltan = faltan.filter(function (L) { return luego.indexOf(L) < 0; });
+        /* por continente (Javier, 24/11/2026): las copas que ya estan analizadas para la semana que viene van en "Copas" */
+        if (ligas.length || luego.some(function (L) { return continenteDe(L) === 'copas'; })) {
+          h += porContinente(ligas, luego.filter(function (L) { return continenteDe(L) === 'copas'; }), sem);
+        }
+        luego = luego.filter(function (L) { return continenteDe(L) !== 'copas'; });
         if (luego.length) {
           h += '<h2 class="pais"><span class="bandera" aria-hidden="true">📅</span>Ya analizadas para la semana que viene</h2>' +
             '<div class="rejilla">' + luego.map(function (L) {
@@ -1255,6 +1309,109 @@
     var q = p.filter(function (x) { return !SIGLAS_FUERA[x.toLowerCase().replace(/\./g, '')]; });
     return (q.length ? q : p).join(' ');
   }
+  /* El nombre de cada pick (Javier, 24/11/2026): primero el mercado, en negro, y despues el tipo de mercado y el
+     equipo, en verde. En el futbol el equipo va siempre como "local" o "visita" ("Under 3.5" · "goles local",
+     "Corners 1H" · "gana local", sin el "(1x2)"); en la NHL, la NFL y la NBA, siempre con su nombre ("Ganador del
+     partido" · "Grizzlies", "Menos de 58.5 1ra mitad" · "puntos Bucks"). Solo cambia como se escribe: el pick, su
+     clave y lo guardado siguen igual. Lo usan la pagina (mkHTML) y la imagen de Green Zone (en mayusculas).
+     nom: como se escribe el nombre de un equipo; conNombre: en el futbol, el equipo con su nombre (donde no se ve
+     el partido) */
+  var DEP_EQUIPO = { hockey: 1, americano: 1, basquetbol: 1 };
+  var RE_OTRO = /\b(del|el) (local|visitante)\b|\bdel partido\b/;
+  function ordinales(t) {
+    return String(t).replace(/(\d)ª (mitad)/g, function (_, n, q) { return n + (n === '1' ? 'ra' : 'da') + ' ' + q; })
+      .replace(/(\d)(?:º|er) (cuarto|periodo)/g, function (_, n, q) { return n + ({ 1: 'er', 2: 'do', 3: 'er', 4: 'to' }[n] || 'º') + ' ' + q; });
+  }
+  function mayus1(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : ''; }
+  function siNo(t) { return /^s[ií]$/i.test(t) ? 'Sí' : /^no$/i.test(t) ? 'No' : t; }
+  function partesFutbol(t, local, visita, conNombre, nom) {
+    var s = t, A = '\u0001', B = '\u0002', r;
+    [[local, A], [visita, B]].filter(function (x) { return x[0]; }).sort(function (a, b) { return b[0].length - a[0].length; })
+      .forEach(function (x) { s = s.split(x[0]).join(x[1]); });
+    var lado = function (x) {
+      if (x === A) { return conNombre ? nom(local) : 'local'; }
+      if (x === B) { return conNombre ? nom(visita) : 'visita'; }
+      return /^(empate|ninguno|igual|ambos)$/i.test(x) ? x.toLowerCase() : x;
+    };
+    var tipo = function (x) { return String(x).toLowerCase().replace(/\b(\d)h\b/g, '$1H').replace(/\bmas\b/g, 'más'); };
+    var acento = function (x) { return String(x).replace(/\bmas\b/g, 'más').replace(/\bPorteria\b/g, 'Portería').replace(/\bHandicap\b/g, 'Hándicap'); };
+    if ((r = /^(Over|Under) (\d+(?:\.\d+)?) (.+?)(?: ([\u0001\u0002]))?$/i.exec(s))) { return [r[1] + ' ' + r[2], tipo(r[3]) + (r[4] ? ' ' + lado(r[4]) : '')]; }
+    if ((r = /^([\u0001\u0002]) gana alguna mitad: (Si|No)$/i.exec(s))) { return ['Gana alguna mitad', lado(r[1]) + ': ' + siNo(r[2])]; }
+    if ((r = /^([\u0001\u0002]) gana (.+?)(?: \((1x2|sin empate)\))?$/i.exec(s))) {
+      return [mayus1(tipo(r[2])) + (/sin/i.test(r[3] || '') ? ' (sin empate)' : ''), 'gana ' + lado(r[1])];
+    }
+    if ((r = /^([\u0001\u0002]) marca(.*?): (Si|No)$/i.exec(s))) { return ['Marca' + tipo(r[2]), lado(r[1]) + ': ' + siNo(r[3])]; }
+    if ((r = /^([\u0001\u0002]): mas (.+?)(?: \((?:1x2|sin empate)\))?$/i.exec(s))) { return ['Más ' + tipo(r[2]), lado(r[1])]; }
+    if ((r = /^H[aá]ndicap Asi[aá]tico ([\u0001\u0002]) ([+-]\d+(?:\.\d+)?)$/i.exec(s))) { return ['Hándicap asiático ' + r[2], lado(r[1])]; }
+    if ((r = /^H[aá]ndicap (.+?) ([\u0001\u0002]) ([+-]\d+(?:\.\d+)?)$/i.exec(s))) { return ['Hándicap ' + r[3], tipo(r[1]) + ' ' + lado(r[2])]; }
+    if ((r = /^Carrera a (\d+) (.+?): (.+)$/i.exec(s))) { return ['Carrera a ' + r[1] + ' ' + tipo(r[2]), lado(r[3])]; }
+    if ((r = /^[12] \(([\u0001\u0002])\) con PA$/i.exec(s))) { return ['Gana con PA', lado(r[1])]; }
+    if (/^X \(Empate\)$/i.test(s)) { return ['Empate', '']; }
+    if ((r = /^Porter[ií]a a cero(.*?) ([\u0001\u0002]): (Si|No)$/i.exec(s))) { return ['Portería a cero' + tipo(r[1]), lado(r[2]) + ': ' + siNo(r[3])]; }
+    if ((r = /^Ambas mitades (Over|Under) (\d+(?:\.\d+)?) (.+?): (Si|No)$/i.exec(s))) { return ['Ambas mitades ' + r[1] + ' ' + r[2], tipo(r[3]) + ': ' + siNo(r[4])]; }
+    if ((r = /^Ambos (\d+\+) (.+?): (Si|No)$/i.exec(s))) { return ['Ambos ' + r[1], tipo(r[2]) + ': ' + siNo(r[3])]; }
+    if ((r = /^Ambos equipos reciben (\d+\+) (.+)$/i.exec(s))) { return ['Ambos reciben ' + r[1], tipo(r[2])]; }
+    if ((r = /^Escala (.+?) (\d+(?:-\d+|\+))$/i.exec(s))) { return ['Escala ' + r[2], tipo(r[1])]; }
+    if ((r = /^BTTS(?: (\dH))? (Si|No)$/i.exec(s))) { return ['BTTS' + (r[1] ? ' ' + r[1] : '') + ': ' + siNo(r[2]), '']; }
+    if ((r = /^Doble (1X|X2|12)$/i.exec(s))) { return ['Doble oportunidad ' + r[1], '']; }
+    if ((r = /^DNB ([\u0001\u0002])$/i.exec(s))) { return ['DNB', lado(r[1])]; }
+    if ((r = /^(\dH) 1X2: (.+)$/i.exec(s))) { return /[\u0001\u0002]/.test(r[2]) ? ['Gana ' + r[1], lado(r[2])] : ['Resultado ' + r[1], lado(r[2])]; }
+    if ((r = /^Margen: ([\u0001\u0002]) por (.+)$/i.exec(s))) { return ['Margen por ' + r[2], lado(r[1])]; }
+    if ((r = /^(.+?) \((?:1x2|sin empate)\): (.+)$/i.exec(s))) { return [mayus1(tipo(r[1])), lado(r[2])]; }
+    if ((r = /^(.+?): (.+)$/.exec(s))) {
+      if (/^(Si|No)$/i.test(r[2])) { return [acento(r[1]) + ': ' + siNo(r[2]), '']; }
+      if (/^[\u0001\u0002]$/.test(r[2]) || /^(empate|ninguno|igual|ambos)$/i.test(r[2])) { return [acento(r[1]), lado(r[2])]; }
+    }
+    if ((r = /^(.*?)\s*([\u0001\u0002])\s*(.*)$/.exec(s))) {
+      return [mayus1(acento((r[1] + ' ' + r[3]).replace(/\s*:\s*$/, '').replace(/\s+/g, ' ').trim())), lado(r[2])];
+    }
+    return [acento(s), ''];
+  }
+  function partesEquipo(t, Ln, Vn) {
+    var eq = function (x) { return String(x).replace(/(?:\bel )?\blocal\b/g, Ln).replace(/(?:\bel )?\bvisitante\b/g, Vn); };
+    var PER = '(\\d+(?:ª|º|er) (?:mitad|cuarto|periodo))', r;
+    t = t.replace(/\s*\(anotará [^)]*\)$/i, '');
+    if ((r = /^(.+?) del (local|visitante|partido)( \(tiempo reglamentario\))?(?: en (?:la|el) (.+?))? (más|menos) de (\d+(?:\.\d+)?)$/.exec(t))) {
+      return [mayus1(r[5]) + ' de ' + r[6] + (r[4] ? ' ' + ordinales(r[4]) : '') + (r[3] ? ' (tiempo reglamentario)' : ''),
+        r[1].toLowerCase() + ' ' + (r[2] === 'partido' ? 'partido' : eq(r[2]))];
+    }
+    if ((r = new RegExp('^(.+?) (?:de la|del) ' + PER + ' (más|menos) de (\\d+(?:\\.\\d+)?)$').exec(t))) {
+      return [mayus1(r[3]) + ' de ' + r[4] + ' ' + ordinales(r[2]), r[1].toLowerCase() + ' partido'];
+    }
+    if ((r = /^(.+?) (más|menos) de (\d+(?:\.\d+)?)$/.exec(t))) { return [mayus1(r[2]) + ' de ' + r[3], r[1].toLowerCase() + ' partido']; }
+    if ((r = new RegExp('^Hándicap(?: (?:de la |del )?' + PER + ')? (?:el )?(local|visitante) ([+-]\\d+(?:\\.\\d+)?)$').exec(t))) {
+      return ['Hándicap ' + r[3] + (r[1] ? ' ' + ordinales(r[1]) : ''), eq(r[2])];
+    }
+    if ((r = /^(.+?): (.+)$/.exec(t))) {
+      var mk = ordinales(r[1].replace(new RegExp(' (?:de la|del|en la|en el) ' + PER), ' $1')).replace(/^1x2\b ?/, 'Ganador ');
+      if (/^(sí|si|no)$/i.test(r[2])) { return [mk + ': ' + siNo(r[2]), '']; }
+      var por = /^(?:el )?(local|visitante) (por .+)$/.exec(r[2]);
+      return por ? [mk + ' ' + por[2], eq(por[1])] : [mk, eq(r[2])];
+    }
+    return [eq(t), ''];
+  }
+  /* [lo negro, lo verde] de un mercado */
+  function partesMk(m, local, visita, dep, nom, conNombre) {
+    var t = String(m || '').trim().replace(/\s*\(si alguien llega\)$/i, '');
+    nom = nom || function (n) { return n; };
+    if (DEP_EQUIPO[dep] || (dep !== 'futbol' && RE_OTRO.test(t)) || (dep === 'futbol' && RE_OTRO.test(t) && !(local && t.indexOf(local) >= 0))) {
+      return partesEquipo(t, nom(local), nom(visita));
+    }
+    return partesFutbol(t, local, visita, conNombre, nom);
+  }
+  /* las partes de un pick de la pagina (p: el pick; d: su jornada, si se tiene) */
+  function partesPick(p, d, conNombre) {
+    if (!p || p.manual) { return [String((p && p.mercado) || ''), '']; }           // la seleccion propia, como la escribio
+    var eq = String(p.partido || '').split(' vs '), L = p.local || eq[0] || '', V = p.visitante || p.visita || eq[1] || '';
+    var dep = p.deporte && p.deporte !== 'futbol' ? p.deporte : (d ? depDe(d) : (p.archivo ? depDe({ archivo: p.archivo }) : 'futbol'));
+    var dd = { deporte: dep };
+    return partesMk(p.mercado, L, V, dep, function (n) { return cortoEq(n, dd); }, conNombre);
+  }
+  function mkHTML(p, d) {
+    var x = partesPick(p, d);
+    return '<span class="mk-a">' + esc(x[0]) + '</span>' + (x[1] ? ' <span class="mk-b">' + esc(x[1]) + '</span>' : '');
+  }
+  function mkTexto(p, d, conNombre) { var x = partesPick(p, d, conNombre); return x[0] + (x[1] ? ' ' + x[1] : ''); }
   function mercadoCorto(m, f, d) {
     var t = String(m || '').replace(/^Handicap Asiatico /, 'Hándicap ').replace(/ \(si alguien llega\)$/, '');
     [f.local, f.visitante || f.visita].forEach(function (n) { if (n) { t = t.split(n).join(cortoEq(n, d)); } });
@@ -1264,7 +1421,7 @@
     var tm = f.tendencia;
     return '<span class="sum-txt"><span class="sum-fila"><span class="sum-uno">' + esc(cortoEq(f.local, d)) + ' vs ' + esc(cortoEq(visita, d)) + '</span>' +
       (hora ? '<span class="sum-hora">' + hora + '</span>' : '') + '</span>' +
-      (tm ? '<small class="sum-uno">🧭 ' + pct(tm.p) + ' · ' + esc(mercadoCorto(tm.mercado, f, d)) + '</small>' : '') + '</span>';
+      (tm ? '<small class="sum-uno">🧭 ' + pct(tm.p) + ' · ' + mkHTML({ mercado: tm.mercado, partido: tm.partido || f.partido || (f.local + ' vs ' + visita) }, d) + '</small>' : '') + '</span>';
   }
   /* la explicacion del partido y de cada equipo (Javier, 11/10/2026: "de los 2 involucrados") */
   function explicaHTML(x, f, d) {
@@ -1349,7 +1506,7 @@
   function mejorHTML(f, d) {
     var m = f.mejor;
     if (!m) { return ''; }
-    return '<p class="mejor-partido">🏅 <b>Mejor probabilidad de todas:</b> ' + esc(m.mercado) + ' · <b>' + pct(m.p) + '</b>' + (m.americano ? ' <span class="chip momio">' + esc(m.americano) + '</span>' : '') + (chipMomio(m) ? ' ' + chipMomio(m) : '') + '</p>';
+    return '<p class="mejor-partido">🏅 <b>Mejor probabilidad de todas:</b> ' + mkHTML({ mercado: m.mercado, partido: m.partido || f.partido || (f.local + ' vs ' + (f.visitante || f.visita)) }, d) + ' · <b>' + pct(m.p) + '</b>' + (m.americano ? ' <span class="chip momio">' + esc(m.americano) + '</span>' : '') + (chipMomio(m) ? ' ' + chipMomio(m) : '') + '</p>';
   }
   /* version 2.5: los mercados de un partido se bajan al abrirlos (archivo aparte, asi Hoy y la jornada no pesan) */
   var MK_CACHE = {};
@@ -1643,18 +1800,7 @@
         if (!ligas.length) {
           h += vacio('📭', 'No hay jornadas archivadas en esta semana.');
         } else {
-          h += porPais(ligas).map(function (g) {
-            return '<h2 class="pais">' + bandera(g.bandera) + esc(g.pais) + '</h2><div class="rejilla">' + g.ligas.map(function (L) {
-              var r = L.auditoria;
-              return '<a class="liga" href="#/' + (r ? 'auditoria' : 'analisis') + '/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
-                '<div class="liga-nombre">⚽ ' + esc(L.nombre) + '</div>' +
-                '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
-                (r ? '<div class="liga-linea">✅ <b>' + r.aciertos + ' de ' + r.picks + '</b> · acierto <b>' + pct(r.acierto) + '</b> · prometido ' + pct(r.prometido) + '</div>' +
-                  '<div class="barra-acierto" aria-hidden="true"><i style="width:' + (r.acierto * 100).toFixed(1) + '%"></i></div>'
-                  : '<div class="liga-linea">⏳ Pendiente de auditar: se audita al terminar la jornada</div>') +
-                '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
-            }).join('') + '</div>';
-          }).join('');
+          h += porContinente(ligas, [], sem, tarjetaLigaAuditoria, resumenAuditoria);      // por continente (24/11/2026)
         }
         var acum = idx.ligas.filter(function (L) { return L.acierto; });
         if (acum.length) {
@@ -2560,7 +2706,7 @@
       picks: P.map(function (x, i) {
         var p = x.pick, eq = String(p.partido || '').split(' vs ');
         var hora = dia.varios && p.fecha ? DIAS_C[fecha(p.fecha).getUTCDay()].toUpperCase() + ' ' + (p.hora || '') : (p.hora || '');
-        return { bandera: primeraBandera(p.bandera), deporte: deporteDe(p)[0], dep: p.deporte || 'futbol', liga: nombreDe(p), mercado: p.mercado,
+        return { bandera: primeraBandera(p.bandera), deporte: deporteDe(p)[0], dep: p.deporte || 'futbol', liga: nombreDe(p), mercado: p.mercado, manual: !!p.manual,
           local: p.local || eq[0] || '', visita: p.visitante || eq[1] || '', hora: hora.trim(), momio: calc.decs[i] ? americano(calc.decs[i]) : '' };
       }),
       momio: calc.tipo !== 'directas' && calc.dec ? americano(calc.dec) : null,
@@ -2699,7 +2845,13 @@
       .replace(/ (EN|DE) LA (\d)ª MITAD/g, ' $2ª MITAD').replace(/ POR TIERRA/g, ' TIERRA').replace(/REMATES AL ARCO/g, 'REMATES ARCO')
       .replace(/ \(SIN EMPATE\)/g, '').replace(/ \(SI ALGUIEN LLEGA\)/g, '').trim();
   }
-  function partesMercado(m, local, visita, dep) {
+  function partesMercado(p) {
+    if (p.manual) { return partesPropia(p.mercado, p.local, p.visita, depDe(p)); }
+    var dep = depDe(p), x = partesMk(p.mercado, p.local, p.visita, dep, function (n) { return corto(n, dep); });
+    return [cortaMercado(x[0].toUpperCase()).replace(/^GANADOR PARTIDO$/, 'GANADOR DEL PARTIDO'), cortaMercado(x[1].toUpperCase())];
+  }
+  /* la seleccion propia: como la escribio, con lo negro y lo verde de antes */
+  function partesPropia(m, local, visita, dep) {
     var t = String(m || '').toUpperCase(), r;
     if ((r = /^(OVER|UNDER) (\d+(?:\.\d+)?) (.+)$/.exec(t))) { return [r[1] + ' ' + r[2], cortaMercado(r[3])]; }
     if ((r = /^(.+?) ((?:MÁS|MENOS) DE \d+(?:\.\d+)?)$/.exec(t))) { return [r[2], cortaMercado(r[1])]; }
@@ -2802,7 +2954,7 @@
       var tm = 35; while (tm > 24 && ancho(c, p.momio, tm) > 95) { tm -= 1; }
       T(c, p.momio, 922.5, y + 42, tm, '#ffffff', 'center');
     }
-    var pm = partesMercado(p.mercado, p.local, p.visita, depDe(p)), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
+    var pm = partesMercado(p), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
     var tam = 77, cabe = (p.momio ? 846 : 972) - 121;
     while (tam > 40 && ancho(c, negro + verde, tam, 1.045) > cabe) { tam -= 1; }
     var xx = 120 + T(c, negro, 120, y + 55, tam, C.texto, 0, 1.045);
@@ -2843,7 +2995,7 @@
       var tm = 35; while (tm > 24 && ancho(c, p.momio, tm) > 95) { tm -= 1; }
       T(c, p.momio, 922.5, y + 42, tm, '#ffffff', 'center');
     }
-    var pm = partesMercado(p.mercado, p.local, p.visita, depDe(p)), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
+    var pm = partesMercado(p), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
     var tam = 77, cabe = (p.momio ? 846 : 972) - 121;
     while (tam > 40 && ancho(c, negro + verde, tam, 1.045) > cabe) { tam -= 1; }
     var xx = 120 + T(c, negro, 120, y + 55, tam, C.texto, 0, 1.045);
@@ -2958,7 +3110,7 @@
   function itemGZ(p) {
     var dentro = GZ.patas.some(function (x) { return x.id === p.id; }), bloq = cerrado(p, false);
     return '<li><button type="button" class="gz-item" data-accion="gz-alternar" data-id="' + esc(p.id) + '" aria-pressed="' + dentro + '">' +
-      '<span class="gz-check" aria-hidden="true">✓</span><span class="gz-item-txt"><b>' + esc(p.mercado) + '</b>' +
+      '<span class="gz-check" aria-hidden="true">✓</span><span class="gz-item-txt"><b>' + mkHTML(p) + '</b>' +
       '<small>' + esc(p.partido) + '</small><small>' + bandera(p.bandera) + ' ' + esc(p.nombre) + ' · 📅 ' + esc(cuando(p)) +
       ' · 📈 ' + pct(p.p) + (bloq ? ' · 🔒 ya empezó' : '') + '</small><span class="gz-item-por">' + personas(p.por) + '</span></span></button></li>';
   }
@@ -3018,7 +3170,7 @@
     if (x.manual) { return pataPropiaGZ(x, i, c); }
     var p = x.pick, repetido = GZ.patas.filter(function (y) { return y.pick.partido === p.partido; }).length > 1;
     return '<li class="gz-pata" data-id="' + esc(x.id) + '"><div class="gz-pata-cab">' + (GZ.patas.length > 1 ? '<span class="gz-num">' + (i + 1) + '</span>' : '') +
-      '<div class="gz-pata-txt"><b>' + esc(p.mercado) + '</b><small>' + bandera(p.bandera) + ' ' + esc(p.partido) + ' · 📅 ' + esc(cuando(p)) + '</small></div>' +
+      '<div class="gz-pata-txt"><b>' + mkHTML(p) + '</b><small>' + bandera(p.bandera) + ' ' + esc(p.partido) + ' · 📅 ' + esc(cuando(p)) + '</small></div>' +
       '<button type="button" class="gz-quitar" data-accion="gz-quitar" aria-label="Quitar de la jugada">✕</button></div>' +
       '<div class="gz-pata-datos"><label class="gz-campo"><span>' + (c.sgp ? 'Momio (opcional)' : 'Momio') + '</span>' + cajaMomio(x.signo, x.momio, 'data-gz="momio"', 'gz-signo') + '</label>' +
       (c.tipo === 'directas' ? '<label class="gz-campo"><span>Apuesta</span><span class="gz-caja"><i>$</i><input type="text" inputmode="decimal" autocomplete="off" ' +
@@ -3123,7 +3275,7 @@
   function agregarPropiaGZ() {
     GZ.patas.push({ id: 'propia-' + Date.now().toString(36), manual: true, signo: '-', momio: '', apuesta: '',
       pick: { manual: true, deporte: 'futbol', pais: 'MX', bandera: banderaDe('MX'), nombre: '', local: '', visitante: '',
-        partido: '', mercado: '', fecha: GZ.dia && GZ.dia !== '*' ? GZ.dia : hoy(), hora: '', just: '', p: null, pTxt: '' } });
+        partido: '', mercado: '', fecha: hoy(), hora: '', just: '', p: null, pTxt: '' } });       // siempre el dia de hoy (Javier, 24/11/2026)
     GZ.total = null;
     guardarGZ();
     pintarPanelGZ();
@@ -3372,7 +3524,7 @@
   /* una seleccion por marcar, con sus botones a la mano */
   function tarjetaMarcar(s) {
     var puede = s.por === Editor.persona || Editor.persona === 'picksin', niv = NIVELES[s.nivel] || NIVELES.fuerte;
-    var patas = s.patas.map(function (p) { return deporteDe(p)[0] + ' ' + esc(p.mercado); }).join(' + ');
+    var patas = s.patas.map(function (p) { return deporteDe(p)[0] + ' ' + mkHTML(p); }).join(' + ');
     var info = s.patas.map(function (p) {
       return (p.bandera ? bandera(p.bandera) + ' ' : '') + esc(p.nombre || deporteDe(p)[1]) + (p.partido ? ' · ' + esc(p.partido) : '') +
         (p.hora ? ' · ' + esc(p.hora) : '');
@@ -3526,7 +3678,7 @@
       '<span class="chip n-' + esc(s.nivel) + '">' + niv.e + ' ' + niv.t + '</span>' + persona(s.por) + '</div>' +
       '<div class="hs-res">' + RES[st.e][0] + ' ' + RES[st.e][1] + (st.auto ? ' <small>según la auditoría</small>' : '') + '</div>' +
       '<ol class="hs-patas">' + s.patas.map(function (p) {
-        return '<li><span class="hs-m">' + deporteDe(p)[0] + ' ' + esc(p.mercado) + '</span>' + (p.momio ? '<span class="hs-momio">' + esc(p.momio) + '</span>' : '') +
+        return '<li><span class="hs-m">' + deporteDe(p)[0] + ' ' + mkHTML(p) + '</span>' + (p.momio ? '<span class="hs-momio">' + esc(p.momio) + '</span>' : '') +
           '<small>' + (p.bandera ? bandera(p.bandera) + ' ' : '') + esc(p.nombre || '') + (p.partido ? ' · ' + esc(p.partido) : '') +
           (p.hora ? ' · ' + esc(p.hora) : '') + '</small></li>';
       }).join('') + '</ol>' +
@@ -3692,7 +3844,7 @@
     yy += 52 + 14;
     s.patas.slice(0, 4).forEach(function (p) {
       letra(c, 800, 22);
-      partir(c, deporteDe(p)[0] + ' ' + p.mercado, iw, 2).forEach(function (l) {
+      partir(c, deporteDe(p)[0] + ' ' + mkTexto(p, null, true), iw, 2).forEach(function (l) {
         yy += 28;
         if (pintar) { c.fillStyle = '#fff'; c.fillText(l, x + P, yy); }
       });
@@ -3865,7 +4017,7 @@
         return '<tr class="r-' + e + '"><td class="rep-dia">' + fCorta(s.fecha) + '</td><td><span class="rep-res">' + RES[e][0] + ' ' + RES[e][1] + '</span></td>' +
           '<td class="num neto ' + (neto > 0 ? 'mas' : neto < 0 ? 'menos' : '') + '">' + netoTxt(neto) + '</td><td class="rep-jugada">' +
           (s.tipo === 'parlay' ? '<b>' + (sgpDe(s.patas) ? '🧩 SGP de ' : '🔗 Parlay de ') + s.patas.length + '</b>' : '') +
-          s.patas.map(function (p) { return '<span>' + deporteDe(p)[0] + ' ' + esc(p.mercado) + '</span>'; }).join('') + '</td>' +
+          s.patas.map(function (p) { return '<span>' + deporteDe(p)[0] + ' ' + esc(mkTexto(p, null, true)) + '</span>'; }).join('') + '</td>' +
           '<td>' + niv.e + ' ' + niv.t + '</td><td class="num">' + esc(s.momio || '—') + '</td><td class="num">' + (s.apuesta ? dinero(s.apuesta) : '—') + '</td></tr>';
       }).join('') +
       '<tr class="total"><td>Total</td><td>' + tot.ganada + '–' + tot.perdida + ' · ' + pct(tot.efectividad) + '</td>' +

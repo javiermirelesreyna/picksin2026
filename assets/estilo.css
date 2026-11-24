@@ -1186,3 +1186,11 @@ html.app .barra { padding-top: env(safe-area-inset-top); }
 
 /* la tabla de metricas de cada partido, plegada (12/11/2026) */
 .tabla-met { margin-top: 10px; }
+
+/* el nombre de cada pick (24/11/2026): primero el mercado en negro y despues el tipo de mercado y el equipo en verde */
+.mk-a { color: var(--texto); }
+.mk-b { color: var(--verde-texto); }
+/* el analisis del futbol por continente (24/11/2026): America, Europa, Copas y Asia, cada uno desplegable */
+details.continente { margin-top: 14px; }
+details.continente > summary { font-size: 1.08rem; font-weight: 800; }
+details.continente > .cuerpo > .pais:first-child { margin-top: 4px; }
