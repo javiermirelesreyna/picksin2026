@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-25T19:34:58.099Z",
+ "actualizado": "2026-11-25T19:50:36.497Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -89,35 +89,6 @@
    ],
    "escogido": {
     "picksin": "2026-11-24T17:57:26.291Z"
-   }
-  },
-  {
-   "id": "europe__champions-j5|Club Brugge vs Liverpool|Liverpool: mas faltas realizadas (1x2)",
-   "archivo": "europe__champions-j5",
-   "liga": "europe__champions",
-   "nombre": "UEFA Champions League",
-   "pais": "Europa",
-   "bandera": "🇪🇺",
-   "jornada": 5,
-   "sa": "2026-11-19",
-   "origen": "Tarjetas y faltas · por edge",
-   "partido": "Club Brugge vs Liverpool",
-   "mercado": "Liverpool: mas faltas realizadas (1x2)",
-   "fecha": "2026-11-25",
-   "dia": "miércoles",
-   "hora": "14:00",
-   "ts": 1795636800,
-   "sem": "2026-11-19",
-   "p": 0.742,
-   "cuota": 1.4,
-   "confianza": "Alta",
-   "respaldo": "3/4 a favor, 1 en contra",
-   "familia": "Tarjetas y faltas",
-   "por": [
-    "picksin"
-   ],
-   "escogido": {
-    "picksin": "2026-11-25T19:34:58.099Z"
    }
   }
  ]
