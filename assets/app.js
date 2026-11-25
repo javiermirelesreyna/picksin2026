@@ -978,7 +978,7 @@
           return '<a href="' + urlHoy(d, filtro, orden, cual) + '" aria-current="' + (d === dia) + '"><b>' + nombre(d, i) + '</b><span>' + fCorta(d) + '</span>' +
             '<small>' + plural(porDia[i].length, 'pick', 'picks') + (e ? ' · ✅ ' + e : '') + '</small></a>';
         }).join('') + '</nav>';
-        if (Editor.activo && sels) { h += bloquePendientes(sels, mapas, dia); }
+        if (Editor.activo && sels) { h += bloquePendientes(sels, mapas, dia, idx); }
 
         /* los escogidos que ya empezaron, al final y plegados (sugerencia aprobada por Javier, 10/10) */
         var escProx = escDia.filter(function (p) { return !empezado(p); }), escEmp = escDia.filter(empezado);
@@ -3536,11 +3536,49 @@
         return '<button type="button" class="r-' + k + '" data-accion="gz-hs-resultado" data-res="' + k + '">' + RES[k][0] + ' ' + RES[k][1] + '</button>';
       }).join('') + '</div>' : '<p class="criterio">La marca ' + esc(s.por) + ' o picksin.</p>') + '</article>';
   }
-  /* lo pendiente, arriba de Hoy: selecciones por marcar, la jugada armada sin guardar y la seleccion del dia */
-  function bloquePendientes(sels, mapas, dia) {
+  /* avisos del ciclo (24/11/2026, Javier: "la 1 con los aplazados, pero en lunes en vez de domingo"): los ciclos cortos
+     de las jornadas dobles y los aplazados que el ciclo del jueves no cubre (data/index.json -> avisos_ciclo, de
+     automatizacion/avisos_ciclo.py). Solo para picksin, que es quien corre los ciclos. */
+  function fhTs(ts) {
+    var d = new Date(ts * 1000 - 6 * 3600 * 1000);
+    return DIAS_C[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MESES_C[d.getUTCMonth()] + ' · ' +
+      ('0' + d.getUTCHours()).slice(-2) + ':' + ('0' + d.getUTCMinutes()).slice(-2);
+  }
+  function avisosCiclo(idx) {
+    var A = idx && idx.avisos_ciclo, ahora = Date.now() / 1000, ult = {};
+    var abiertos = [], proximos = [], aplazados = [], perdidos = [];       // en ese orden: lo que hay que hacer, primero
+    if (!A || Editor.persona !== 'picksin' || !(ahora < A.corte)) { return { it: [], urgentes: 0 }; }
+    (idx.ligas || []).forEach(function (L) { ult[L.id] = L.ultima ? L.ultima.jornada : 0; });
+    (A.cortos || []).forEach(function (c) {
+      if ((ult[c.liga] || 0) >= c.jornada) { return; }                 // ya se hizo: esa jornada ya esta en la pagina
+      var liga = bandera(c.bandera) + ' ' + esc(c.nombre) + ' · J' + c.jornada;
+      if (c.cruce) {
+        perdidos.push('<div class="pend ciclo perdido"><b>⚠️ Ciclo corto · ' + liga + '</b><small>Empieza el ' + fhTs(c.hasta) +
+          ', antes de que acabe la jornada anterior: no hay ventana. Pregúntale a Claude.</small></div>');
+      } else if (ahora < c.desde) {
+        proximos.push('<div class="pend ciclo"><b>🔔 Ciclo corto · ' + liga + '</b><small>Se abre el ' + fhTs(c.desde) +
+          ' · cierra el ' + fhTs(c.hasta) + '</small></div>');
+      } else if (ahora < c.hasta) {
+        abiertos.push('<div class="pend ciclo abierto"><b>🔔 Ciclo corto · ' + liga + '</b><small><b>ABIERTO</b> · tienes hasta el ' +
+          fhTs(c.hasta) + '</small><small class="frase">Dile a Claude: «haz el ciclo corto de ' + esc(c.nombre) + '»</small></div>');
+      } else {
+        perdidos.push('<div class="pend ciclo perdido"><b>❌ ' + liga + ' se quedó sin picks</b><small>El ciclo corto cerró el ' +
+          fhTs(c.hasta) + '</small></div>');
+      }
+    });
+    (A.aplazados || []).forEach(function (p) {
+      if (p.ts <= ahora) { return; }                                    // ya empezo
+      aplazados.push('<div class="pend ciclo"><b>📅 Aplazado sin análisis · ' + bandera(p.bandera) + ' ' + esc(p.nombre) + ' · J' + p.jornada +
+        '</b><small>' + esc(p.partido) + ' · ' + fhTs(p.ts) + '</small></div>');
+    });
+    return { it: abiertos.concat(proximos, aplazados, perdidos), urgentes: abiertos.length };
+  }
+  /* lo pendiente, arriba de Hoy: avisos del ciclo, selecciones por marcar, la jugada armada sin guardar y la seleccion del dia */
+  function bloquePendientes(sels, mapas, dia, idx) {
     var marcar = sels.filter(function (x) { return estadoPend(x, mapas) === 'marcar'; });
     var delDia = sels.filter(function (x) { return x.fecha === dia; });
-    var borrador = GZ.patas.length > 0 && !guardadaGZ(), it = [], n = marcar.length + (borrador ? 1 : 0);
+    var av = avisosCiclo(idx), borrador = GZ.patas.length > 0 && !guardadaGZ(), it = av.it.slice(),
+      n = marcar.length + (borrador ? 1 : 0) + av.urgentes;
     var etq = dia === hoy() ? 'de hoy' : 'del ' + fCorta(dia);
     pintarBadge(marcar.length);
     if (marcar.length) {
@@ -3556,7 +3594,7 @@
       ? '<a class="pend ok" href="#/historial"><span>🟢 Selección del día ' + etq + ': <b>' + plural(delDia.length, 'guardada', 'guardadas') + '</b> · ' +
         delDia.map(function (x) { var e = estadoPend(x, mapas); return RES[e][0] + ' ' + RES[e][1]; }).join(' · ') + '</span><b class="ir">Ver ›</b></a>'
       : '<a class="pend" href="#/green"><span>🟢 Todavía no hay selección del día ' + etq + ' guardada.</span><b class="ir">Armarla ›</b></a>');
-    return '<section class="pendientes' + (marcar.length ? ' con-alerta' : '') + '"><h2><span class="emoji">📌</span>Pendientes' +
+    return '<section class="pendientes' + (marcar.length || av.urgentes ? ' con-alerta' : '') + '"><h2><span class="emoji">📌</span>Pendientes' +
       (n ? ' <span class="badge">' + n + '</span>' : ' <span class="cuenta">✓ nada por marcar</span>') + '</h2>' + it.join('') + '</section>';
   }
   function contarHist(sels, mapas) {

@@ -771,6 +771,15 @@ td.neto.menos { color: var(--rojo-texto); }
 .pend.ok { background: var(--verde-suave); }
 .pend.alerta { display: block; background: var(--rojo-suave); color: var(--rojo-texto); }
 .pend.alerta > p { margin: 0 0 6px; }
+/* avisos del ciclo (24/11/2026): ciclos cortos de las jornadas dobles y aplazados sin analisis, solo para picksin */
+.pend.ciclo { display: block; }
+.pend.ciclo > b { display: block; line-height: 1.35; }
+.pend.ciclo small { display: block; color: var(--suave); font-size: .82rem; margin-top: 3px; }
+.pend.ciclo small b { color: var(--ambar-texto); }
+.pend.ciclo small.frase { color: var(--texto); }
+.pend.ciclo.abierto { background: var(--ambar-suave); box-shadow: inset 4px 0 0 var(--ambar-texto); }
+.pend.ciclo.perdido { background: var(--rojo-suave); }
+.pend.ciclo.perdido > b { color: var(--rojo-texto); }
 .hs.pm { border-left-color: var(--rojo); padding: 10px 12px; margin-top: 8px; color: var(--texto); gap: 8px; }
 .pm-txt b { display: block; line-height: 1.35; }
 .pm-txt small { display: block; color: var(--suave); font-size: .8rem; margin-top: 2px; }
