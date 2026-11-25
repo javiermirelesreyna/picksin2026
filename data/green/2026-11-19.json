@@ -1,5 +1,36 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-24T21:03:19.277Z",
- "selecciones": []
+ "actualizado": "2026-11-25T19:35:24.843Z",
+ "selecciones": [
+  {
+   "id": "mwwiwq9s-w72cbh",
+   "fecha": "2026-11-25",
+   "tipo": "directa",
+   "nivel": "superfuerte",
+   "momio": "+108",
+   "dec": 2.08,
+   "apuesta": 1000,
+   "pago": 2080,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇪🇺",
+     "nombre": "UEFA Champions League",
+     "partido": "Club Brugge vs Liverpool",
+     "mercado": "Liverpool: mas faltas realizadas (1x2)",
+     "fecha": "2026-11-25",
+     "hora": "14:00",
+     "momio": "+108",
+     "dec": 2.08,
+     "p": 0.742,
+     "archivo": "europe__champions-j5",
+     "sa": "2026-11-19"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-11-25T19:35:24.843Z",
+   "resultado": null
+  }
+ ]
 }
