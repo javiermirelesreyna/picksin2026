@@ -140,7 +140,20 @@
     }
     return memo[url];
   }
-  var indice = function () { return cargar('data/index.json'); };
+  /* liguilla (24/11/2026): nombre de cada jornada de liguilla por liga ("Cuartos de final · ida"), de data/index.json */
+  var FASES = {};
+  var indice = function () {
+    return cargar('data/index.json').then(function (idx) {
+      (idx.ligas || []).forEach(function (L) { if (L.fases) { FASES[L.id] = L.fases; } });
+      return idx;
+    });
+  };
+  function faseDe(x) { var f = x && FASES[x.liga]; return (f && x.jornada != null && f[String(x.jornada)]) || null; }
+  function jornadaTxt(x) { var f = faseDe(x); return f ? 'Liguilla · ' + f.largo : 'Jornada ' + x.jornada; }
+  function lineaJornada(x) {
+    var f = faseDe(x);
+    return f ? '🏆 Liguilla · <b>' + esc(f.largo) + '</b>' : '📅 Jornada <b>' + esc(x.jornada) + '</b>';
+  }
   var semanaIdx = function (s) { return cargar('data/semanas/' + s + '/index.json', true); };
   var docLiga = function (s, a) { return cargar('data/semanas/' + s + '/' + a + '.json'); };
   var resultados = function (s) { return cargar('data/semanas/' + s + '/resultados.json', true); };
@@ -229,7 +242,7 @@
   }
   function esFutbol(x) { return depDe(x) === 'futbol'; }
   function emojiDe(x) { return (x && x.emoji) || ({ hockey: '🏒', basquetbol: '🏀', americano: '🏈' })[depDe(x)] || '⚽'; }
-  function etqJornada(x) { return x.jornada != null ? 'J' + x.jornada : (x.fecha ? fCorta(x.fecha) : ''); }
+  function etqJornada(x) { var f = faseDe(x); return f ? f.corto : x.jornada != null ? 'J' + x.jornada : (x.fecha ? fCorta(x.fecha) : ''); }
 
   /* ---------------------------------------------------------------- seleccionadores */
   function colorDe(n) {
@@ -1155,7 +1168,7 @@
     return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
       '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
       (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
-      '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
+      '<div class="liga-linea">' + lineaJornada(L) + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
       '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
       (n ? ' · <span class="sello">✅ ' + n + ' escogido' + (n === 1 ? '' : 's') + '</span>' : '') + '</div>' +
       '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
@@ -1163,7 +1176,7 @@
   function tarjetaLigaLuego(L) {
     return '<a class="liga" href="#/analisis/' + esc(L.ultima.semana) + '/' + esc(L.ultima.archivo) + '"><div class="liga-txt">' +
       '<div class="liga-nombre">' + bandera(L.bandera) + ' ⚽ ' + esc(L.nombre) + '</div>' +
-      '<div class="liga-linea">📅 Jornada <b>' + esc(L.ultima.jornada) + '</b> · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
+      '<div class="liga-linea">' + lineaJornada({ liga: L.id, jornada: L.ultima.jornada }) + ' · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
       '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
   }
   /* tarjeta(L, sem): la tarjeta de cada liga; resumen(ls): lo que se agrega a la cuenta del continente (escogidos en
@@ -1193,7 +1206,7 @@
     var r = L.auditoria;
     return '<a class="liga" href="#/' + (r ? 'auditoria' : 'analisis') + '/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
       '<div class="liga-nombre">⚽ ' + esc(L.nombre) + '</div>' +
-      '<div class="liga-linea">📅 Jornada <b>' + esc(L.jornada) + '</b>' + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
+      '<div class="liga-linea">' + lineaJornada(L) + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
       (r ? '<div class="liga-linea">✅ <b>' + r.aciertos + ' de ' + r.picks + '</b> · acierto <b>' + pct(r.acierto) + '</b> · prometido ' + pct(r.prometido) + '</div>' +
         '<div class="barra-acierto" aria-hidden="true"><i style="width:' + (r.acierto * 100).toFixed(1) + '%"></i></div>'
         : '<div class="liga-linea">⏳ Pendiente de auditar: se audita al terminar la jornada</div>') +
@@ -1241,7 +1254,7 @@
             '<div class="rejilla">' + luego.map(function (L) {
               return '<a class="liga" href="#/analisis/' + esc(L.ultima.semana) + '/' + esc(L.ultima.archivo) + '"><div class="liga-txt">' +
                 '<div class="liga-nombre">' + bandera(L.bandera) + ' ⚽ ' + esc(L.nombre) + '</div>' +
-                '<div class="liga-linea">📅 Jornada <b>' + esc(L.ultima.jornada) + '</b> · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
+                '<div class="liga-linea">' + lineaJornada({ liga: L.id, jornada: L.ultima.jornada }) + ' · semana del ' + rangoSemana(L.ultima.semana) + '</div>' +
                 '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
             }).join('') + '</div>';
         }
@@ -1751,7 +1764,7 @@
       return Promise.all(sems.map(Esc.cargar)).then(function () {
         REG.__doc = d;
         var h = '<a class="migas" href="#/analisis/' + esc(d.semana) + '">‹ Análisis · semana del ' + rangoSemana(d.semana) + '</a>';
-        h += cabLiga(d, '📅 Jornada ' + esc(d.jornada) + (d.desde ? ' · ' + rango(d.desde, d.hasta) : '') +
+        h += cabLiga(d, (faseDe(d) ? '🏆 ' + esc(jornadaTxt(d)) : '📅 Jornada ' + esc(d.jornada)) + (d.desde ? ' · ' + rango(d.desde, d.hasta) : '') +
           (d.generado ? ' · generado el ' + esc(d.generado) : ''));
         var acc = [];
         if (d.auditoria) { acc.push('<a class="boton secundario" href="#/auditoria/' + esc(d.semana) + '/' + esc(d.archivo) + '">🔍 Ver su auditoría</a>'); }
@@ -1760,6 +1773,11 @@
           /* un solo aviso por liga, no en cada pick (pedido de Javier, 10/10) */
           h += '<p class="nota">🌱 Inicio de temporada: mientras la liga acumula jornadas, algunos mercados se calculan con lo ' +
             'que se ha medido en las otras ligas.</p>';
+        }
+        if (faseDe(d)) {
+          /* un solo aviso por liga, como el de inicio de temporada (liguilla, 24/11/2026) */
+          h += '<p class="nota">🏆 Liguilla: el motor proyecta estos partidos con lo que cada equipo hizo en la fase regular. ' +
+            'Su estudio propio de liguillas está en curso; mientras tanto, cada ronda se audita como cualquier jornada.</p>';
         }
         if (d.fechas_deducidas) { h += '<p class="nota">📅 Algunas fechas se dedujeron del día de la semana: la hora de esos partidos está por confirmar.</p>'; }
         /* primero los partidos y despues los picks (pedido de Javier, 10/10) */
@@ -1772,7 +1790,7 @@
           plural((d.partidos || []).length, 'partido', 'partidos') + '</span></h2>' + tablaConsolidada(d) + fichasPorDia(d) + '</section>';
         h += '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>';
         h += cuerpoJornada(d, null);
-        pintar(h, d.nombre + ' J' + d.jornada);
+        pintar(h, d.nombre + ' ' + etqJornada(d));
       });
     });
   }
@@ -1822,7 +1840,8 @@
       var sems = unicos([d.semana].concat(todosLosPicks(d).map(function (p) { return p.sem; })));
       return Promise.all(sems.map(Esc.cargar)).then(function () {
         var h = '<a class="migas" href="#/auditoria/' + esc(d.semana) + '">‹ Auditoría · semana del ' + rangoSemana(d.semana) + '</a>';
-        h += cabLiga(d, '🔍 Auditoría de la jornada ' + esc(d.jornada) + (d.desde ? ' · ' + rango(d.desde, d.hasta) : ''));
+        h += cabLiga(d, '🔍 Auditoría ' + (faseDe(d) ? '· ' + esc(jornadaTxt(d)) : 'de la jornada ' + esc(d.jornada)) +
+          (d.desde ? ' · ' + rango(d.desde, d.hasta) : ''));
         if (!d.auditoria) {
           return pintar(h + vacio('⏳', 'Esta jornada todavía no se audita: se hace al terminar, con el resultado real de cada partido.') +
             '<p><a class="boton" href="#/analisis/' + esc(d.semana) + '/' + esc(d.archivo) + '">📊 Ver el análisis</a></p>', d.nombre);
@@ -1845,7 +1864,7 @@
               '<span class="pt">' + esc(p[0]) + (e ? ' · ✅ ' + personas(e.pick.por) : '') + '</span><span class="det">' + (ESTADO[p[3]] || ESTADO.no_comprobable).t +
               (p[4] ? ': ' + esc(p[4]) : '') + '</span></li>';
           }).join('') + '</ul></div></details>';
-        pintar(h, 'Auditoría ' + d.nombre + ' J' + d.jornada);
+        pintar(h, 'Auditoría ' + d.nombre + ' ' + etqJornada(d));
       });
     });
   }
@@ -2218,7 +2237,7 @@
         h += grupos.map(function (a) {
           var lista = picks.filter(function (p) { return p.archivo === a; }), r = lista[0];
           return '<h2 class="pais">' + bandera(r.bandera) + emojiDe(docDe(r)) + ' ' + esc(r.nombre) + ' <span class="cuenta">' +
-            (r.jornada != null ? 'Jornada ' + esc(r.jornada) : esc(fLarga(r.fecha))) + ' · ' +
+            (r.jornada != null ? esc(jornadaTxt(r)) : esc(fLarga(r.fecha))) + ' · ' +
             plural(lista.length, 'pick', 'picks') + '</span></h2><ul class="lista tabla-caja">' +
             lista.map(function (p) { return renglonEscogido(p, null, { conDia: true }); }).join('') + '</ul>';
         }).join('');
