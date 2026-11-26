@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-26T01:01:17.884Z",
+ "actualizado": "2026-11-26T05:05:31.086Z",
  "selecciones": [
   {
    "id": "mwwiwq9s-w72cbh",
@@ -33,51 +33,6 @@
    "resultado": "ganada",
    "resuelto_por": "picksin",
    "resuelto": "2026-11-26T01:01:17.884Z"
-  },
-  {
-   "id": "mwwuaylw-d5yy90",
-   "fecha": "2026-11-25",
-   "tipo": "parlay",
-   "nivel": "fuerte",
-   "momio": "+137",
-   "dec": 2.37,
-   "apuesta": 1000,
-   "pago": 2370,
-   "patas": [
-    {
-     "manual": false,
-     "deporte": "futbol",
-     "bandera": "🇲🇽",
-     "nombre": "Liga MX",
-     "partido": "CF Monterrey vs Club America",
-     "mercado": "Under 3.5 Goles",
-     "fecha": "2026-11-25",
-     "hora": "21:00",
-     "momio": "-313",
-     "dec": 1.3195,
-     "p": 0.808,
-     "archivo": "mexico__liga-mx-j18",
-     "sa": "2026-11-19"
-    },
-    {
-     "manual": false,
-     "deporte": "futbol",
-     "bandera": "🇲🇽",
-     "nombre": "Liga MX",
-     "partido": "CF Monterrey vs Club America",
-     "mercado": "Under 5.5 Tarjetas",
-     "fecha": "2026-11-25",
-     "hora": "21:00",
-     "momio": "-134",
-     "dec": 1.7463,
-     "p": 0.833,
-     "archivo": "mexico__liga-mx-j18",
-     "sa": "2026-11-19"
-    }
-   ],
-   "por": "picksin",
-   "creado": "2026-11-26T00:54:22.796Z",
-   "resultado": null
   }
  ]
 }
