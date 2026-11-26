@@ -1217,3 +1217,7 @@ details.continente > .cuerpo > .pais:first-child { margin-top: 4px; }
 .pausa { text-align: center; padding: 48px 16px 24px; }
 .pausa-logo { width: 120px; height: auto; margin-bottom: 8px; }
 .pausa h1 { margin: 8px 0; }
+
+/* el free pick para redes (26/11/2026) */
+.fp-hacer { width: 100%; margin-top: 4px; }
+.fp-botones .boton { flex: 1 1 auto; }

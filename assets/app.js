@@ -3183,8 +3183,120 @@
     if (A.greenzone) { c.drawImage(A.greenzone, 462.2, pb + 67.9, 549.9, 549.9 * A.greenzone.height / A.greenzone.width); }
     return H;
   }
-    return { dibujar: dibujar };
+  /* FREE PICK para redes (Javier, 26/11/2026): copia fiel de su diseno (1080 x 1838): su fondo de brochazos azul y
+     verde, el logo, su titulo "FREE PICK" con "NO ES SUERTE, ES CIENCIA" en la brocha azul, el cuadro blanco con la
+     seleccion (raya verde de 11 px, el mercado como en Green Zone, el momio en una caja azul grande y la segunda
+     linea), la caja de momio, apuesta y total, y abajo su avatar y el logo negro de Green Zone. Medidas tomadas de su
+     imagen; con mas de una seleccion el cuadro crece hacia abajo (170 px por cada una) y el fondo se estira parejo. */
+  var FP_H = 1838, FP_PASO = 170, FP_ALTO = 0.88;          // la segunda linea: la de Green Zone, mas baja (su imagen)
+  function filaFree(c, p, y, cortas) {                     // y: donde empieza la raya verde
+    c.fillStyle = C.barra; redondo(c, 98, y, 11, 128, 5.5); c.fill();
+    if (p.momio) {
+      var g = c.createLinearGradient(0, y + 12, 0, y + 112); g.addColorStop(0, C.azul[0]); g.addColorStop(1, C.azul[1]);
+      c.fillStyle = g; redondo(c, 801, y + 12, 173, 100, 22); c.fill();
+      var tm = 57; while (tm > 30 && ancho(c, p.momio, tm) > 150) { tm -= 1; }
+      T(c, p.momio, 887.5, y + 81, tm, '#ffffff', 'center', 1.045);
+    }
+    var pm = partesMercado(p), negro = pm[0] ? pm[0] + ' ' : '', verde = pm[1];
+    var tam = 77, cabe = (p.momio ? 785 : 975) - 130;
+    while (tam > 40 && ancho(c, negro + verde, tam, 1.045) > cabe) { tam -= 1; }
+    var xx = 130 + T(c, negro, 130, y + 67, tam, C.texto, 0, 1.045);
+    T(c, verde, xx, y + 67, tam, C.verde, 0, 1.045);
+    var liga = ligaDe(p), partes = lineaDos(c, p, cortas[liga] ? LIGA_CORTA[liga] : liga), t2 = T2, cabe2 = (p.momio ? 790 : 975) - 134;
+    while (t2 > 20 && partes.mide(t2) > cabe2) { t2 -= 0.5; }
+    var e = t2 / 33;
+    var emojis = [];
+    c.save(); c.translate(0, y + 112); c.scale(1, FP_ALTO);
+    xx = 134;
+    partes.forEach(function (q) {
+      if (q.esp) { xx += q.esp * e; return; }
+      if (q.raya) { c.fillStyle = C.suave; c.fillRect(xx, -25 * e, 3, 30 * e); xx += 3; return; }
+      if (q.e) { var we = anchoEmoji(c, q.e, E2 * e); emojis.push([q.e, xx + we / 2, E2 * e]); xx += we; return; }
+      xx += T(c, q.t, xx, 0, t2 * q.k, q.c);
+    });
+    c.restore();
+    emojis.forEach(function (m) { emoji(c, m[0], m[1], y + 112 - 11 * e * FP_ALTO, m[2]); });      // las banderas y el balon, sin aplastar
+  }
+  function dibujarFree(c, A, D) {
+    var n = D.picks.length, extra = (n - 1) * FP_PASO, H = FP_H + extra;
+    c.canvas.width = W; c.canvas.height = H;
+    c.fillStyle = '#ffffff'; c.fillRect(0, 0, W, H);
+    if (A.fondo) {
+      var k = Math.max(W / A.fondo.width, H / A.fondo.height), fw = A.fondo.width * k, fh = A.fondo.height * k;
+      c.drawImage(A.fondo, (W - fw) / 2, (H - fh) / 2, fw, fh);
+    }
+    if (A.titulo) { c.drawImage(A.titulo, 84.2, 303.2, 900, 900 * A.titulo.height / A.titulo.width); }
+    if (A.logo) { var lw = 306.8, lh = lw * A.logo.height / A.logo.width; c.drawImage(A.logo, 572.5 - lw / 2, 212 - lh / 2, lw, lh); }
+    var cols = [['MOMIO', D.momio, C.texto, 214.5], ['APUESTA', D.apuesta, C.texto, 512.5], ['TOTAL', D.total, C.total, 830.5]]
+      .filter(function (x) { return x[1]; });
+    var py = 1204, ty = py + 180 + extra, pb = cols.length ? ty + 145 : py + 200 + extra;
+    c.fillStyle = '#ffffff'; redondo(c, 58, py, 968, pb - py, 60); c.fill();
+    var cortas = {};
+    D.picks.forEach(function (p) { var l = ligaDe(p); if (LIGA_CORTA[l] && lineaDos(c, p, l).mide(T2) > 656) { cortas[l] = true; } });
+    D.picks.forEach(function (p, i) { filaFree(c, p, py + 30 + i * FP_PASO, cortas); });
+    if (cols.length) {
+      c.fillStyle = C.caja; redondo(c, 105, ty, 869, 100, 20); c.fill();
+      var tres = cols.length === 3, cw = 869 / cols.length;
+      cols.forEach(function (x, j) {
+        var cx = tres ? x[3] : 105 + cw * j + cw / 2, cabe = tres ? [220, 310, 280][j] : cw - 40;
+        if (j) { c.fillStyle = C.divide; c.fillRect((tres ? [0, 338.5, 673.5][j] : 105 + cw * j - 1), ty + 17, 2, 60); }
+        T(c, x[0], cx, ty + 26, 20, C.etiqueta, 'center', 0.93);
+        var t = 56; while (t > 30 && ancho(c, x[1], t, 0.97) > cabe) { t -= 1; }
+        T(c, x[1], cx, ty + 77, t, x[2], 'center', 0.97);
+      });
+    }
+    if (A.avatar) {
+      var aw = A.avatar.width * 0.4964, ah = A.avatar.height * 0.4964;
+      c.save(); c.translate(206.7, 1703 + extra); c.rotate(-0.1745); c.drawImage(A.avatar, -aw / 2, -ah / 2, aw, ah); c.restore();
+    }
+    if (A.greenzone) { c.drawImage(A.greenzone, 422.3, 1572.3 + extra, 576, 576 * A.greenzone.height / A.greenzone.width); }
+    return H;
+  }
+    return { dibujar: dibujar, dibujarFree: dibujarFree };
   })();
+  /* el free pick: se hace al pedirlo en "Del dia" y se rehace si cambia la jugada; no se guarda ni borra la jugada */
+  var fpBlob = null, fpUrl = null, fpTurno = 0, fpVer = false;
+  function recursosFree() {
+    var letra = function (f, t) { return document.fonts && document.fonts.load ? document.fonts.load(f, t).catch(function () { return null; }) : null; };
+    return Promise.all([imagen('assets/logo.webp'), imagen('assets/gz-avatar.webp'), imagen('assets/fp-fondo.webp'), imagen('assets/fp-titulo.webp'),
+      imagen('assets/fp-greenzone.webp'), letra('40px "Banderas Picksin"', '🇲🇽'), letra('40px "Bebas Picksin"', 'ABC')]).then(function (r) {
+      return { logo: r[0], avatar: r[1], fondo: r[2], titulo: r[3], greenzone: r[4] };
+    });
+  }
+  function dibujarFP() {
+    var turno = ++fpTurno;
+    return recursosFree().then(function (A) {
+      var l = document.createElement('canvas');
+      GZ3.dibujarFree(l.getContext('2d'), A, datosGZ());
+      return new Promise(function (ok) { l.toBlob(ok, 'image/png'); });
+    }).then(function (b) {
+      if (turno !== fpTurno || !b) { return; }
+      fpBlob = b;
+      if (fpUrl) { URL.revokeObjectURL(fpUrl); }
+      fpUrl = URL.createObjectURL(b);
+      var img = $('#fp-img');
+      if (img) { img.src = fpUrl; img.closest('.gz-vista').classList.remove('preparando'); }
+      $$('.fp-tras').forEach(function (x) { x.disabled = false; });
+    });
+  }
+  function nombreFP() { return 'free-pick-' + diaGZ(GZ.patas).fecha + '.png'; }
+  function descargarFP() {
+    if (!fpUrl) { return; }
+    var a = document.createElement('a');
+    a.href = fpUrl; a.download = nombreFP();
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    avisar('📥 Free pick descargado: súbelo a tus redes desde tu galería.');
+  }
+  function compartirFP() {
+    if (!fpBlob) { avisar('⏳ El free pick se está preparando: vuelve a tocar en un segundo.'); return; }
+    var archivo = null;
+    try { archivo = new File([fpBlob], nombreFP(), { type: 'image/png' }); } catch (e) { archivo = null; }
+    if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      navigator.share({ files: [archivo] }).catch(function (e) { if (e && e.name !== 'AbortError') { descargarFP(); } });
+      return;
+    }
+    descargarFP();
+  }
   function dibujarGZ() {
     var turno = ++gzTurno;
     return recursosGZ().then(function (A) {
@@ -3202,11 +3314,11 @@
   }
   function renderGZ() {
     clearTimeout(gzReloj);
-    gzBlob = null;
-    var v = $('.gz-vista');
-    if (v) { v.classList.add('preparando'); }
+    gzBlob = null; fpBlob = null;
+    $$('.gz-vista').forEach(function (v) { v.classList.add('preparando'); });
+    $$('.fp-tras').forEach(function (b) { b.disabled = true; });
     if (!GZ.patas.length) { return; }
-    gzReloj = setTimeout(dibujarGZ, 220);
+    gzReloj = setTimeout(function () { dibujarGZ(); if (fpVer) { dibujarFP(); } }, 220);
   }
   function nombreGZ() { return 'green-zone-' + diaGZ(GZ.patas).fecha + '.png'; }
 
@@ -3333,6 +3445,12 @@
       '<div class="gz-mas"><button type="button" class="boton secundario gz-tras" data-accion="gz-descargar">⬇️ Descargar imagen</button>' +
       '<button type="button" class="boton secundario gz-tras" data-accion="gz-copiar">📋 Copiar texto</button>' +
       '<button type="button" class="boton secundario" data-accion="gz-limpiar">🧹 Empezar otra</button></div>';
+    h += '<h2><span class="emoji">3️⃣</span>Free pick para tus redes</h2>' +
+      '<p class="criterio">La misma jugada como FREE PICK, para tus historias y publicaciones. No se guarda en el historial ni borra la jugada.</p>' +
+      (fpVer ? '<div class="gz-vista fp-vista preparando"><img id="fp-img" alt="Vista previa del free pick"' + (fpUrl ? ' src="' + fpUrl + '"' : '') + '></div>' +
+        '<div class="gz-mas fp-botones"><button type="button" class="boton fp-tras" data-accion="gz-fp-compartir" disabled>📤 Compartir en mis redes</button>' +
+        '<button type="button" class="boton secundario fp-tras" data-accion="gz-fp-descargar" disabled>⬇️ Descargar</button></div>'
+        : '<button type="button" class="boton fp-hacer" data-accion="gz-fp-hacer">📣 Hacer el free pick</button>');
     return h;
   }
   /* lo que cambia al escribir, sin repintar (para no perder el cursor) */
@@ -3498,6 +3616,7 @@
     borrar('📥 Imagen descargada: súbela a PICKSTERLAND. La jugada se borró: no quedó guardada.');
   }
   function limpiarGZ() {
+    fpVer = false;
     GZ.patas = []; GZ.total = null; GZ.hechos = null; GZ.ids = null; GZ.guardado = null; guardarGZ();
     $$('.gz-item').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); });
     pintarPanelGZ();
@@ -4728,6 +4847,9 @@
       $$('.gz-niveles button').forEach(function (b) { b.setAttribute('aria-pressed', b === t); });
       guardarGZ(); renderGZ();
     }
+    else if (a === 'gz-fp-hacer') { fpVer = true; pintarPanelGZ(); }
+    else if (a === 'gz-fp-compartir') { compartirFP(); }
+    else if (a === 'gz-fp-descargar') { if (fpBlob) { descargarFP(); } else { avisar('⏳ El free pick se está preparando: vuelve a tocar en un segundo.'); } }
     else if (a === 'gz-compartir') { compartirGZ(); }
     else if (a === 'gz-pickster') { compartirPickster(); }
     else if ((a === 'gz-descargar' || a === 'gz-copiar') && !guardadaGZ()) { avisar('🔒 Primero guárdala en el historial.'); }
