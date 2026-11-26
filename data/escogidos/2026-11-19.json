@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-19",
- "actualizado": "2026-11-26T01:05:37.533Z",
+ "actualizado": "2026-11-26T01:11:50.142Z",
  "picks": [
   {
    "id": "nba-2026-11-19|Memphis Grizzlies vs Golden State Warriors|Ganador del partido: el local",
@@ -89,6 +89,35 @@
    ],
    "escogido": {
     "picksin": "2026-11-24T17:57:26.291Z"
+   }
+  },
+  {
+   "id": "mexico__liga-mx-j18|CF Monterrey vs Club America|Under 2.5 Tarjetas Club America",
+   "archivo": "mexico__liga-mx-j18",
+   "liga": "mexico__liga-mx",
+   "nombre": "Liga MX",
+   "pais": "México",
+   "bandera": "🇲🇽",
+   "jornada": 18,
+   "sa": "2026-11-19",
+   "origen": "💎 Valor",
+   "partido": "CF Monterrey vs Club America",
+   "mercado": "Under 2.5 Tarjetas Club America",
+   "fecha": "2026-11-25",
+   "dia": "miércoles",
+   "hora": "21:00",
+   "ts": 1795662000,
+   "sem": "2026-11-19",
+   "p": 0.723,
+   "cuota": 1.43,
+   "confianza": "Alta",
+   "respaldo": "1/2 a favor, 1 en contra",
+   "familia": "Tarjetas y faltas",
+   "por": [
+    "picksin"
+   ],
+   "escogido": {
+    "picksin": "2026-11-26T01:11:50.142Z"
    }
   }
  ]
