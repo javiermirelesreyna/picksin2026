@@ -68,7 +68,7 @@ h1, h2, h3, h4 { letter-spacing: -.01em; }
 
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
-  display: grid; grid-template-columns: repeat(5, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   background: #fff; border-top: 1px solid var(--borde);
   padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
   box-shadow: 0 -4px 18px rgba(14, 40, 72, .06);
@@ -1203,3 +1203,17 @@ html.app .barra { padding-top: env(safe-area-inset-top); }
 details.continente { margin-top: 14px; }
 details.continente > summary { font-size: 1.08rem; font-weight: 800; }
 details.continente > .cuerpo > .pais:first-child { margin-top: 4px; }
+
+/* 25/11/2026: Del dia es solo la jugada; Resultados > Semana con las jugadas enviadas; la pagina publica en pausa */
+.gz.gz-sola { grid-template-columns: minmax(0, 1fr); max-width: 680px; margin: 0 auto; }
+.gz-como { margin: 4px 0 12px; }
+.gz-panel .gz-propia-btn { width: 100%; margin-bottom: 6px; }
+.envios { display: grid; gap: 12px; margin: 10px 0 18px; }
+.hs.envio .envio-patas { margin: 8px 0; }
+.hs.envio .envio-pata .det { font-weight: 600; }
+.hs-tot b.mas { color: var(--verde-texto); }
+.hs-tot b.menos { color: #c0392b; }
+.en-pausa .nav, .en-pausa .refrescar { display: none; }
+.pausa { text-align: center; padding: 48px 16px 24px; }
+.pausa-logo { width: 120px; height: auto; margin-bottom: 8px; }
+.pausa h1 { margin: 8px 0; }

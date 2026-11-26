@@ -184,10 +184,10 @@
     analisis: ['📊', 'Análisis por liga', 'La próxima jornada de cada liga: TOP 5, sugeridos, mercados y partidos.'],
     auditoria: ['🔍', 'Auditoría por liga', 'Cada jornada jugada, contrastada pick por pick con el resultado real.'],
     escogidos: ['✅', 'Picks escogidos', 'De hoy en adelante. Los de días pasados están en 🏅 Resultados.'],
-    resultados: ['🏅', 'Resultados', 'Cómo le fue a la selección cada semana, de lunes a domingo.'],
+    resultados: ['🏅', 'Resultados', 'Las jugadas que mandaste, de lunes a domingo, cada pick con su resultado.'],
     ayuda: ['🧭', 'Cómo leer un pick', 'Qué significa cada dato y cómo está ordenada la página.'],
     seleccionadores: ['👥', 'Seleccionadores', 'Quién escogió cada pick y cuántas buenas y malas lleva cada uno.'],
-    green: ['🟢', 'Selección del día', 'Arma la jugada para Green Zone con los picks escogidos: directa o parlay, con su momio, la apuesta y el nivel.']
+    green: ['🟢', 'Selección del día', 'Tu jugada para Green Zone con lo que agregaste con ＋: directa, parlay o SGP, con su momio, la apuesta y el nivel.']
   };
   var EMOJI_SECCION = {
     top_a_moneyline_btts: '🥅', top_b_ou_goles_remates_sot: '🎯', top_c_ou_tarjetas_corners_faltas: '📏',
@@ -254,7 +254,7 @@
   function persona(n) { return '<span class="por" style="--c:' + colorDe(n) + '">' + esc(n) + '</span>'; }
   function personas(lista) { return (lista || []).map(persona).join(''); }
   /* el sello de un pick escogido: ✅ y quien lo escogio (se ve siempre, tambien en auditorias) */
-  function sello(e) { return '<span class="sello">' + (e ? '✅ ' + personas(e.pick.por) : '') + '</span>'; }
+  function sello(e) { return '<span class="sello">' + (e ? (e.pata ? '🎟️ En tu jugada' : '✅ ' + personas(e.pick.por)) : '') + '</span>'; }
 
   /* ================================================================== picks escogidos */
   /* un escogido: copia del pick + `por` (quienes lo escogieron) + `escogido` {persona: cuando} */
@@ -499,52 +499,78 @@
       'liga_joven'].forEach(function (k) { if (p[k] != null && p[k] !== '') { reg[k] = p[k]; } });
     return reg;
   }
-  function esMio(e) { return !!(e && Editor.activo && e.pick.por.indexOf(Editor.persona) >= 0); }
+  function esMio(e) { return !!(e && Editor.activo && (e.pata || (e.pick.por || []).indexOf(Editor.persona) >= 0)); }
+  /* Escoger = agregar a tu jugada (Javier, 25/11/2026: "cuando hago una seleccion en ese rato la mando y quiero que se
+     borre despues de mandarla"). Como en una app de apuestas: el ＋ de cualquier pick (Hoy, la liga, el dia, las tablas
+     de "Todos los mercados") lo lleva directo a la jugada de "Del dia", en este telefono y con el momio que se ve al
+     tocarlo (alla se puede cambiar). Al guardarla en el historial ya no cuenta como seleccion y al compartirla en Green
+     Zone se borra. Los escogidos de antes (data/escogidos) se quedan en su archivo; ya no se agregan nuevos. */
+  function jugadaAbierta() { return Editor.activo && GZ.patas.length > 0 && !guardadaGZ(); }
+  function enJugada(pid) {
+    if (!jugadaAbierta()) { return null; }
+    var x = GZ.patas.filter(function (y) { return y.id === pid; })[0];
+    return x ? { pick: x.pick, pata: x, sem: null } : null;
+  }
+  function jugadaPicks() {          // con el momio que lleva en la jugada
+    return jugadaAbierta() ? GZ.patas.filter(function (x) { return !x.manual; }).map(function (x) {
+      var p = copia(x.pick);
+      if (x.momio) { p.americano = (x.signo === '+' ? '+' : '-') + x.momio; }
+      return p;
+    }) : [];
+  }
+  function jugadaDe(archivo) { return jugadaPicks().filter(function (p) { return p.archivo === archivo; }); }
+  /* el momio que se ve en el pick al tocarlo: el de su lista (top, seguros, valor), el del pick o el de su celda */
+  function momioVisto(r) {
+    var p = r.pick, o = r.o || {};
+    var mo = o.momio ? o.momio : (p.americano || (typeof p.momio === 'number' && p.momio > 1 ? americano(p.momio) : ''));
+    var m = /^([+\-−])?\s*(\d+)$/.exec(String(mo || '').trim());
+    return m && +m[2] >= 100 ? { signo: m[1] === '+' ? '+' : '-', momio: m[2] } : null;
+  }
   function alternar(pid) {
     var r = REG[pid];
     if (!r || !Editor.activo) { return; }
-    if (cerrado(r.pick, r.o.auditada)) { avisar('🔒 Ese partido ya empezó: el pick ya no se puede cambiar.'); return; }
-    var ya = Esc.buscar(pid), yo = Editor.persona;
-    if (esMio(ya)) {
-      var q = { tipo: 'quitar', pid: pid, quien: yo };
-      aplicarOp(Esc.datos[ya.sem], q);
-      encolar(ya.sem, q, { tipo: 'quitar', semana: ya.sem, id: pid });
-      avisar('Quitaste este pick de tus escogidos.');
+    var ya = enJugada(pid);
+    if (ya) {
+      GZ.patas = GZ.patas.filter(function (x) { return x !== ya.pata; });
+      if (!GZ.patas.length) { GZ.hechos = null; GZ.ids = null; GZ.guardado = null; }
+      GZ.total = null;
+      guardarGZ();
+      avisar('Lo quitaste de tu jugada.');
       refrescarSeleccion();
       return;
     }
-    var reg = registro(pid, r), sem = ya ? ya.sem : (reg.sem || (reg.fecha ? semanaDe(reg.fecha) : r.o.doc.semana));
-    Esc.cargar(sem).then(function (datos) {
-      var a = { tipo: 'agregar', pid: pid, quien: yo, pick: reg };
-      aplicarOp(datos, a);
-      encolar(sem, a, { tipo: 'agregar', sa: reg.sa, archivo: reg.archivo, partido: reg.partido, mercado: reg.mercado });
-      avisar('✅ Escogido para el ' + (reg.fecha ? fLarga(reg.fecha).toLowerCase() : 'día por confirmar'),
-        '#/escogidos', 'Ver escogidos');
-      refrescarSeleccion();
-    });
+    if (cerrado(r.pick, r.o.auditada)) { avisar('🔒 Ese partido ya empezó: ya no se puede agregar.'); return; }
+    if (GZ.patas.length && guardadaGZ()) {
+      if (!confirm('Tu jugada anterior ya está guardada en el historial. ¿Empezar una nueva con este pick?')) { return; }
+      limpiarGZ();
+    }
+    var reg = registro(pid, r), m = momioVisto(r);
+    reg.por = [Editor.persona];
+    if (r.pick.just) { reg.just = r.pick.just; }
+    GZ.patas.push({ id: pid, pick: reg, signo: m ? m.signo : '-', momio: m ? m.momio : '', apuesta: '' });
+    GZ.patas.sort(function (a, b) { return ordenPicks(a.pick, b.pick); });
+    GZ.total = null;
+    guardarGZ();
+    avisar('🎟️ A tu jugada' + (m ? ' con momio ' + (m.signo === '+' ? '+' : '−') + m.momio : '') + ' · ' +
+      plural(GZ.patas.length, 'selección', 'selecciones'), '#/green', 'Armar');
+    refrescarSeleccion();
   }
   /* Pagina 2.5 (06/11/2026): el boleto, como en una app de apuestas. En modo editor, abajo y en todas las secciones
-     menos "Del dia": la jugada que se esta armando (o, si no hay, tus escogidos de hoy que no han empezado), con su
-     boton para armarla */
+     menos "Del dia": la jugada que se esta armando o, si ya se guardo, el recordatorio de compartirla */
   function pintarBoleto() {
     var b = $('#boleto');
     if (!b) {
       b = document.createElement('a'); b.id = 'boleto'; b.className = 'boleto'; b.href = '#/green'; b.hidden = true;
       document.body.appendChild(b);
     }
-    var n = Editor.activo ? GZ.patas.length : 0, m = 0;
-    if (Editor.activo && !n) {
-      for (var s in Esc.datos) {
-        Esc.datos[s].picks.forEach(function (p) { if (p.fecha === hoy() && (p.por || []).indexOf(Editor.persona) >= 0 && !empezado(p)) { m++; } });
-      }
-    }
-    var ver = !!(n || m) && !/^#\/green/.test(location.hash);
+    var n = jugadaAbierta() ? GZ.patas.length : 0, g = Editor.activo && GZ.patas.length > 0 && guardadaGZ();
+    var ver = !!(n || g) && !/^#\/green/.test(location.hash);
     b.hidden = !ver;
     document.body.classList.toggle('con-boleto', ver);
     if (ver) {
-      b.innerHTML = '<span class="bol-ico" aria-hidden="true">🎟️</span><span class="bol-txt"><b>' + (n ? 'Tu jugada' : 'Escogidos de hoy') +
-        '</b><small>' + (n ? plural(n, 'selección', 'selecciones') : plural(m, 'pick escogido', 'picks escogidos') + ' · aún sin jugada') +
-        '</small></span><span class="bol-ir">Armar ›</span>';
+      b.innerHTML = '<span class="bol-ico" aria-hidden="true">🎟️</span><span class="bol-txt"><b>' + (n ? 'Tu jugada' : 'Jugada guardada') +
+        '</b><small>' + (n ? plural(n, 'selección', 'selecciones') : 'falta compartirla en Green Zone') +
+        '</small></span><span class="bol-ir">' + (n ? 'Armar ›' : 'Compartir ›') + '</span>';
     }
   }
   /* sin repintar la pagina: se marcan las tarjetas y se rehace el bloque de la liga */
@@ -553,7 +579,7 @@
     if (seccion === '' || seccion === 'hoy' || seccion === 'escogidos' || seccion === 'resultados') { router(true); return; }
     $$('[data-pid]').forEach(function (el) {
       if (el.tagName === 'BUTTON') { return; }
-      var pid = el.getAttribute('data-pid'), r = REG[pid], e = Esc.buscar(pid);
+      var pid = el.getAttribute('data-pid'), r = REG[pid], e = enJugada(pid);
       el.classList.toggle('es-escogido', !!e);
       var s = el.querySelector('.sello');
       if (s) { s.outerHTML = sello(e); }
@@ -633,7 +659,7 @@
   }
   function botonEscoger(pid, p, o, compacto) {
     if (!Editor.activo || o.escoger === false) { return ''; }
-    var e = Esc.buscar(pid), mio = esMio(e), bloq = cerrado(p, o.auditada);
+    var e = enJugada(pid), mio = !!e, bloq = !mio && cerrado(p, o.auditada);
     if (bloq) {
       var t = bloq === 'auditada' ? 'Jornada ya auditada' : 'El partido ya empezó';
       return compacto ? '<button type="button" class="btn-mini" disabled title="' + t + '">🔒</button>'
@@ -641,10 +667,10 @@
     }
     var a = ' data-accion="escoger" data-pid="' + esc(pid) + '" aria-pressed="' + mio + '"';
     return compacto
-      ? '<button type="button" class="btn-mini' + (mio ? ' mio' : '') + '"' + a + ' aria-label="' + (mio ? 'Quitar de' : 'Añadir a') +
-        ' mis picks escogidos">' + (mio ? '✓' : '＋') + '</button>'
+      ? '<button type="button" class="btn-mini' + (mio ? ' mio' : '') + '"' + a + ' aria-label="' + (mio ? 'Quitar de' : 'Agregar a') +
+        ' tu jugada">' + (mio ? '✓' : '＋') + '</button>'
       : '<button type="button" class="btn-escoger' + (mio ? ' mio' : '') + '"' + a + '>' +
-        (mio ? '✓ Lo escogiste · tocar para quitar' : (e ? '＋ Escogerlo también' : '＋ Escoger este pick')) + '</button>';
+        (mio ? '✓ En tu jugada · tocar para quitar' : '＋ Agregar a mi jugada') + '</button>';
   }
   function bloqueResultado(res) {
     if (!res) { return ''; }
@@ -659,7 +685,7 @@
   /* o: {doc, origen, cabecera, conLiga, conOrigen, resultado, auditada, escoger} */
   function tarjeta(p, o) {
     if (!p) { return ''; }
-    var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
+    var pid = registrar(p, o), sel = enJugada(pid), res = o.resultado;
     var cab = '<div class="pick-cab">' +
       (o.conLiga ? ligaMini(o.doc) : '<span class="pick-dia">📅 ' + esc(cuando(p)) + '</span>') +
       sello(sel) + '</div>';
@@ -673,7 +699,7 @@
       bloqueResultado(res) + botonEscoger(pid, p, o, false) + '</article>';
   }
   function fila(p, o) {
-    var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
+    var pid = registrar(p, o), sel = enJugada(pid), res = o.resultado;
     return '<li class="fila' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + '" data-pid="' + esc(pid) + '">' +
       '<span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
       '<span class="fila-fin">' + sello(sel) + cuota(p, p.americano) + botonEscoger(pid, p, o, true) + '</span>' +
@@ -697,7 +723,7 @@
      lo que haga falta (hora, liga, partido, de donde sale, quien lo escogio). o como en tarjeta +
      sub (html de abajo) y sinSello (cuando quien lo escogio ya va abajo) */
   function renglon(p, o) {
-    var pid = registrar(p, o), sel = Esc.buscar(pid), res = o.resultado;
+    var pid = registrar(p, o), sel = enJugada(pid), res = o.resultado;
     return '<li class="fila renglon' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + (o.sinSello ? ' sin-sello' : '') +
       '" data-pid="' + esc(pid) + '"><span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
       '<span class="fila-fin">' + cuota(p, o.momio !== undefined ? o.momio : (p.americano || (typeof p.momio === 'number' && p.momio > 1 ? americano(p.momio) : ''))) +
@@ -880,10 +906,10 @@
     if (todos && !ver.length) { ver = picks.slice(0, 1); }
     var resto = picks.filter(function (x) { return ver.indexOf(x) < 0; });
     var empezo = m.ts ? Date.now() >= m.ts * 1000 : false;
-    var nEsc = m.picks.filter(function (x) { return Esc.buscar(x.pid); }).length;
+    var nEsc = m.picks.filter(function (x) { return enJugada(x.pid); }).length;
     return '<article class="partido-hoy' + (empezo ? ' empezado' : '') + '"><div class="ph-cab">' +
       '<a class="ph-liga" href="#/analisis/' + esc(m.d.semana) + '/' + esc(m.d.archivo) + '">' + (m.d.emoji || '⚽') + ' ' + bandera(m.d.bandera) + ' ' + esc(m.d.nombre) +
-      ' · ' + esc(etqJornada(m.d)) + '</a>' + (nEsc ? '<span class="sello">✅ ' + nEsc + '</span>' : '') +
+      ' · ' + esc(etqJornada(m.d)) + '</a>' + (nEsc ? '<span class="sello">🎟️ ' + nEsc + '</span>' : '') +
       (empezo ? '<span class="ph-hora empezo">🔒 Empezó</span>' : '<span class="ph-hora">' + esc(m.hora || '—') + '</span>') + '</div>' +
       '<h3 class="ph-partido ph-equipos">' + equipos(m.partido, m.d) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
       '<ul class="lista">' + ver.map(function (x) { return renglonHoy(x, false); }).join('') + '</ul>' +
@@ -972,7 +998,7 @@
     /* las listas Seguros y Valor van dentro del top de tops, solo en modo editor (20/10/2026) */
     var cual = orden === 'top' && Editor.activo && LISTAS[q.get('lista')] ? q.get('lista') : '';
     var sems = ventanaHist();
-    return Promise.all([indice(), docsDeDias(dias[0], dias[2]), Esc.rango(dias[0], dias[2]),
+    return Promise.all([indice(), docsDeDias(dias[0], dias[2]), Promise.resolve(jugadaPicks()),
       Editor.activo ? Hist.cargar(sems, true).then(function () { return Hist.lista(sems); }, function () { return null; }) : null,
       topDeTops().catch(function () { return null; }),
       Editor.activo ? listasValor().catch(function () { return null; }) : null
@@ -989,22 +1015,22 @@
         h += '<nav class="dias-tabs" aria-label="Día">' + dias.map(function (d, i) {
           var e = escs.filter(function (p) { return p.fecha === d; }).length;
           return '<a href="' + urlHoy(d, filtro, orden, cual) + '" aria-current="' + (d === dia) + '"><b>' + nombre(d, i) + '</b><span>' + fCorta(d) + '</span>' +
-            '<small>' + plural(porDia[i].length, 'pick', 'picks') + (e ? ' · ✅ ' + e : '') + '</small></a>';
+            '<small>' + plural(porDia[i].length, 'pick', 'picks') + (e ? ' · 🎟️ ' + e : '') + '</small></a>';
         }).join('') + '</nav>';
         if (Editor.activo && sels) { h += bloquePendientes(sels, mapas, dia, idx); }
 
-        /* los escogidos que ya empezaron, al final y plegados (sugerencia aprobada por Javier, 10/10) */
+        /* tu jugada de este dia (25/11/2026; antes, los escogidos): los que ya empezaron, al final y plegados */
         var escProx = escDia.filter(function (p) { return !empezado(p); }), escEmp = escDia.filter(empezado);
         var renE = function (p) { return renglonEscogido(p, null, {}); };
-        h += '<h2><span class="emoji">✅</span>Escogidos ' + (dia === h0 ? 'de hoy' : 'del ' + fCorta(dia)) + ' <span class="cuenta">' + escDia.length + '</span></h2>' +
-          (escProx.length ? '<ul class="lista tabla-caja">' + escProx.map(renE).join('') + '</ul>'
-            : escDia.length ? '<p class="criterio">Los escogidos de este día ya empezaron.</p>'
-            : '<p class="criterio">' + (Editor.activo ? 'Todavía no hay picks escogidos para este día: toca <b>＋</b> en los de abajo.' : 'Todavía no hay picks escogidos para este día.') + '</p>') +
+        h += '<h2><span class="emoji">🎟️</span>En tu jugada ' + (dia === h0 ? 'de hoy' : 'del ' + fCorta(dia)) + ' <span class="cuenta">' + escDia.length + '</span></h2>' +
+          (escProx.length ? '<ul class="lista tabla-caja">' + escProx.map(renE).join('') + '</ul><p><a class="boton" href="#/green">🟢 Armar la jugada ›</a></p>'
+            : escDia.length ? '<p class="criterio">Los de tu jugada de este día ya empezaron.</p>'
+            : '<p class="criterio">Toca <b>＋</b> en cualquier pick de abajo o del análisis: se agrega a tu jugada de <a href="#/green">🟢 Del día</a> con su momio.</p>') +
           plegadoEmpezados('hoy-esc-empezados', escEmp, '<ul class="lista">' + escEmp.map(renE).join('') + '</ul>', function (p) { return p.archivo + '|' + p.partido; });
 
         var ligas = unicos(lista.map(function (x) { return x.d.liga; })), partidos = partidosDe(lista, ordenLiga);
         var filtrar = function (L, f) {
-          return L.filter(function (x) { return f === 'top5' ? x.top5 : f === 'sug' ? x.sug.length : f === 'esc' ? !!Esc.buscar(x.pid) : true; });
+          return L.filter(function (x) { return f === 'top5' ? x.top5 : f === 'sug' ? x.sug.length : f === 'esc' ? !!enJugada(x.pid) : true; });
         };
         var ver = filtrar(lista, filtro);
         h += '<h2 id="s-picks"><span class="emoji">📋</span>Todos los picks ' + (dia === h0 ? 'de hoy' : 'del ' + fCorta(dia)) + '</h2>' +
@@ -1057,7 +1083,7 @@
           var base = orden === 'top' ? (cual ? enLista : tops) : lista;
           h += '<div class="hoy-filtros"><nav class="filtros" aria-label="Qué picks">' +
             [['todos', '📋 Todos'], ['top5', docs.some(function (d) { return d.v25; }) ? '🏆 Top' : '🏆 TOP 5'],
-              ['sug', docs.some(function (d) { return d.v25; }) ? (Editor.activo ? '🛡️ Seguros y valor' : '🛡️ Seguros') : '💡 Sugeridos'], ['esc', '✅ Escogidos']].map(function (f) {
+              ['sug', docs.some(function (d) { return d.v25; }) ? (Editor.activo ? '🛡️ Seguros y valor' : '🛡️ Seguros') : '💡 Sugeridos'], ['esc', '🎟️ En tu jugada']].map(function (f) {
               return '<a href="' + urlHoy(dia, f[0], orden, cual) + '" aria-current="' + (filtro === f[0]) + '">' + f[1] + ' <b>' + filtrar(base, f[0]).length + '</b></a>';
             }).join('') + '</nav><div class="conmutador" role="group" aria-label="Ordenar"><a href="' + urlHoy(dia, filtro, 'partido') +
             '" aria-current="' + (orden === 'partido') + '">🕐 Por partido</a><a href="' + urlHoy(dia, filtro, 'p') + '" aria-current="' + (orden === 'p') +
@@ -1164,13 +1190,13 @@
     india: 'asia', australia: 'asia', europe: 'copas' };
   function continenteDe(L) { return PAIS_CONT[String(L.liga || L.id || L.archivo || '').split('__')[0]] || 'europa'; }
   function tarjetaLigaAnalisis(L, sem) {
-    var n = Esc.deArchivo(L.archivo).length;
+    var n = jugadaDe(L.archivo).length;
     return '<a class="liga" href="#/analisis/' + sem + '/' + esc(L.archivo) + '"><div class="liga-txt">' +
       '<div class="liga-nombre">⚽ ' + esc(L.nombre) +
       (L.liga_joven ? ' <span class="chip neutro">🌱 Inicio de temporada</span>' : '') + '</div>' +
       '<div class="liga-linea">' + lineaJornada(L) + (L.desde ? ' · ' + rango(L.desde, L.hasta) : '') + '</div>' +
       '<div class="liga-linea">🏆 <b>' + esc(L.n_top5) + '</b> en el TOP 5 · ' + esc(L.n_partidos) + ' partidos' +
-      (n ? ' · <span class="sello">✅ ' + n + ' escogido' + (n === 1 ? '' : 's') + '</span>' : '') + '</div>' +
+      (n ? ' · <span class="sello">🎟️ ' + n + ' en tu jugada</span>' : '') + '</div>' +
       '</div><span class="flecha-der" aria-hidden="true">›</span></a>';
   }
   function tarjetaLigaLuego(L) {
@@ -1184,8 +1210,8 @@
   function porContinente(ligas, luego, sem, tarjeta, resumen) {
     tarjeta = tarjeta || tarjetaLigaAnalisis;
     resumen = resumen || function (ls) {
-      var nEsc = ls.reduce(function (s, L) { return s + Esc.deArchivo(L.archivo).length; }, 0);
-      return nEsc ? ' · ✅ ' + nEsc : '';
+      var nEsc = ls.reduce(function (s, L) { return s + jugadaDe(L.archivo).length; }, 0);
+      return nEsc ? ' · 🎟️ ' + nEsc : '';
     };
     return CONTINENTES.map(function (c) {
       var ls = ligas.filter(function (L) { return continenteDe(L) === c[0]; }), lg = luego.filter(function (L) { return continenteDe(L) === c[0]; });
@@ -1281,18 +1307,15 @@
     return out;
   }
   function bloqueEscogidosLiga(d) {
-    var lista = Esc.deArchivo(d.archivo);
+    var lista = jugadaDe(d.archivo);
     if (!lista.length) {
-      return Editor.activo ? '<p class="nota verde">✏️ Toca <b>＋ Escoger</b> en cualquier pick: aparecerá aquí, en ' +
-        '<a href="#/hoy">🏠 Hoy</a> y en <a href="#/escogidos">✅ Escogidos</a>, en el día en que se juega.</p>' : '';
+      return Editor.activo ? '<p class="nota verde">✏️ Toca <b>＋</b> en cualquier pick: se agrega a tu jugada de <a href="#/green">🟢 Del día</a>, ' +
+        'con el momio que ves.</p>' : '';
     }
-    return '<h2><span class="emoji">✅</span>Picks escogidos de esta liga <span class="cuenta">' + lista.length + '</span></h2>' +
+    return '<h2><span class="emoji">🎟️</span>En tu jugada, de esta liga <span class="cuenta">' + lista.length + '</span></h2>' +
       '<div class="grid-picks">' + lista.map(function (p) {
         return tarjeta(p, { doc: d, origen: p.origen, conOrigen: true, auditada: !!d.auditoria });
-      }).join('') + '</div>' +
-      (lista.some(function (p) { return !p.fecha || p.fecha >= hoy(); })
-        ? '<p><a class="boton secundario" href="#/escogidos?liga=' + esc(d.liga) + '">Ver en los escogidos ›</a></p>'
-        : '<p><a class="boton secundario" href="#/resultados/' + esc(lunesDe(lista[0].fecha)) + '">Ver sus resultados ›</a></p>');
+      }).join('') + '</div><p><a class="boton" href="#/green">🟢 Armar la jugada ›</a></p>';
   }
   function fichasPorDia(d, mapaRes) {
     var grupos = {}, orden = [];
@@ -1530,6 +1553,7 @@
     var b = '';
     /* escoger desde la tabla (Javier, 05/11/2026): cada linea con su boton, en modo editor y si el partido no ha empezado */
     if (sel && Editor.activo && !cerrado(sel.pick, sel.o.auditada)) {
+      if (c[i + 1] && !sel.pick.americano) { sel.pick.americano = String(c[i + 1]); }
       var pid = registrar(sel.pick, sel.o), r = REG[pid];
       b = '<span class="mk-esc" data-pid="' + esc(pid) + '" data-compacto="1">' + botonEscoger(pid, r.pick, r.o, true) + '</span>';
     }
@@ -1578,7 +1602,7 @@
       var ctx = f ? { d: doc, f: f, partido: q[2] } : null;
       var secs = (d.partidos || {})[q[2]] || [];
       caja.innerHTML = secs.length ? (Editor.activo ? '<p class="criterio">💲 Debajo de cada probabilidad, el momio de Playdoit y el edge. En verde, lo que tiene momio; en verde fuerte, con edge de 5% o más.' +
-        (ctx ? ' Toca ＋ para escoger cualquier línea.' : '') + '</p>' : '') + secs.map(function (s) {
+        (ctx ? ' Toca ＋ para agregar cualquier línea a tu jugada.' : '') + '</p>' : '') + secs.map(function (s) {
         return '<details class="caja mk-sec"><summary><span class="emoji">' + s.e + '</span><span class="sum-txt">' + s.s + '. ' + esc(s.t) + '</span><span class="cuenta">' + s.m.length + '</span></summary><div class="cuerpo">' +
           s.m.map(function (m) { return mercadoMk(m, ctx); }).join('') + '</div></details>';
       }).join('') : '<p class="criterio">Sin mercados para este partido.</p>';
@@ -1781,8 +1805,8 @@
         }
         if (d.fechas_deducidas) { h += '<p class="nota">📅 Algunas fechas se dedujeron del día de la semana: la hora de esos partidos está por confirmar.</p>'; }
         /* primero los partidos y despues los picks (pedido de Javier, 10/10) */
-        h += '<nav class="indice" aria-label="En esta jornada">' + (d.v25 ? [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 Top'], ['s-seguros', '🛡️ Seguros']].concat(
-          Editor.activo ? [['s-valor', '💎 Valor']] : [], [['s-mercados', '📊 Mercados']]) : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5'],
+        h += '<nav class="indice" aria-label="En esta jornada">' + (d.v25 ? [['s-partidos', '📋 Partidos'], ['s-escogidos', '🎟️ Tu jugada'], ['s-top5', '🏆 Top'], ['s-seguros', '🛡️ Seguros']].concat(
+          Editor.activo ? [['s-valor', '💎 Valor']] : [], [['s-mercados', '📊 Mercados']]) : [['s-partidos', '📋 Partidos'], ['s-escogidos', '🎟️ Tu jugada'], ['s-top5', '🏆 TOP 5'],
           ['s-sugeridos', '💡 Sugeridos'], ['s-mercados', '📊 Mercados']]).map(function (x) {
           return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
         }).join('') + '</nav>';
@@ -1965,7 +1989,7 @@
         '</section>';
       var conSeg = d.reglas_otro ? [['s-seguros', '🛡️ Seguros']] : [];
       h += '<nav class="indice" aria-label="En este día">' + (aud ? [['s-top5', '🏆 TOP 5']].concat(conSeg, [['s-mercados', '📊 Mercados'], ['s-partidos', '📋 Partidos']])
-        : [['s-partidos', '📋 Partidos'], ['s-escogidos', '✅ Escogidos'], ['s-top5', '🏆 TOP 5']].concat(conSeg, [['s-mercados', '📊 Mercados']])).map(function (x) {
+        : [['s-partidos', '📋 Partidos'], ['s-escogidos', '🎟️ Tu jugada'], ['s-top5', '🏆 TOP 5']].concat(conSeg, [['s-mercados', '📊 Mercados']])).map(function (x) {
         return '<a href="#" data-accion="ir" data-id="' + x[0] + '">' + x[1] + '</a>';
       }).join('') + '</nav>';
       if (!aud) { h += partidos + '<section id="s-escogidos" data-archivo="' + esc(d.archivo) + '">' + bloqueEscogidosLiga(d) + '</section>'; }
@@ -2427,53 +2451,114 @@
     h += '<details class="caja" data-k="top-semanas"><summary><span class="emoji">📈</span>Todas las semanas <span class="cuenta">' + ls.length +
       '</span></summary><div class="cuerpo"><div class="tabla-scroll"><table><thead><tr><th>Semana</th><th class="num">Picks</th><th class="num">✅</th>' +
       '<th class="num">❌</th><th class="num">➖</th><th class="num">⏳</th><th class="num">Acierto</th><th class="num">Prometido</th></tr></thead><tbody>' +
-      ls.map(function (l) { return '<tr><td><a href="#/resultados/' + l + '">' + rangoSemana(l) + '</a></td>' + fila(top.semanas[l]) + '</tr>'; }).join('') +
+      ls.map(function (l) { return '<tr><td><a href="#/listas/' + l + '">' + rangoSemana(l) + '</a></td>' + fila(top.semanas[l]) + '</tr>'; }).join('') +
       (top.acumulado ? '<tr class="total"><td>Total' + (top.desde ? ' desde el ' + fCorta(top.desde) : '') + '</td>' + fila(top.acumulado) + '</tr>' : '') +
       '</tbody></table></div></div></details>' +
       '<p class="criterio">Se audita lo que estaba en el top antes de cada partido: cuando un partido empieza, su pick ya no entra ni sale. ' +
       'Cada resultado es el de la auditoría de su liga; los anulados y no comprobables no cuentan.</p>';
     return h;
   }
+  /* Resultados > Semana (Javier, 25/11/2026: "en la semana lo que quiero ver son los picks enviados, como lo tienes en el
+     historial pero mas detallado"): las jugadas guardadas de lunes a domingo, por dia, cada pick con su resultado de la
+     auditoria; arriba, como van los picks enviados y las jugadas. El top de tops, Seguros y Valor pasaron a "⭐ Listas" */
   function vResultados(partes, q) {
-    if (q && q.get('ver') === 'ranking') { location.replace('#/ranking'); return Promise.resolve(); }
+    if (q && q.get('ver') === 'ranking') { location.replace('#/listas'); return Promise.resolve(); }
     var sem = /^\d{4}-\d{2}-\d{2}$/.test(partes[0] || '') ? lunesDe(partes[0]) : lunesDe(hoy());
-    return Promise.all([cargarTodo(), topDeTops().catch(function () { return null; }),
-      Editor.activo ? listasValor().catch(function () { return null; }) : null]).then(function (x) {
-      var T = x[0], top = x[1], listas = x[2];
-      var ult = T.picks.map(function (p) { return p.fecha || ''; }).sort().pop() || hoy();
-      var min = lunesDe(CUENTAS_DESDE), max = lunesDe(ult > hoy() ? ult : hoy());
-      var mapas = T.mapas, picks = T.picks.filter(function (p) { return p.fecha && p.fecha >= sem && p.fecha <= masDias(sem, 6); });
-      var n = contar(picks, mapas);
-      var h = cabeceraRes('semana') + selectorLunes(sem, 'resultados', min, max);
-      if (!picks.length) {
-        h += vacio('📭', 'No hubo picks escogidos esta semana.');
-      } else {
-        h += marcadorCajas([['✅ Acertados', n.ok + ' de ' + n.comp, 'verde'], ['🎯 Acierto real', pct(n.acierto), 'verde'],
-          ['📈 Prometido (media)', pct(n.prometido), 'azul'], ['⏳ Sin resultado', n.pend, n.pend ? 'azul' : '']]) +
-          tira(n) + '<p class="leyenda"><span>✅ ' + plural(n.ok, 'acertado', 'acertados') + '</span><span>❌ ' +
-          plural(n.ko, 'fallado', 'fallados') + '</span><span>➖ ' + plural(n.nulo, 'anulado o no comprobable', 'anulados o no comprobables') +
-          '</span><span>⏳ ' + (n.pend - n.aud) + ' por jugarse</span><span>🕓 ' + n.aud + ' ya jugados, por auditar</span></p>';
-        h += '<h2><span class="emoji">🗓️</span>Por día</h2>' + porDiaLista(picks.slice().sort(ordenPicks), function (p) {
-          return renglonEscogido(p, mapas, { conEstado: true, escoger: false });
-        });
-        var ligas = unicos(picks.map(function (p) { return p.liga; }));
-        h += '<h2><span class="emoji">⚽</span>Por liga</h2><div class="tabla-caja tabla-scroll"><table><thead><tr><th>Liga</th><th class="num">Escogidos</th>' +
-          '<th class="num">✅</th><th class="num">❌</th><th class="num">➖</th><th class="num">⏳</th><th class="num">Acierto</th></tr></thead><tbody>' +
-          ligas.map(function (l) {
-            var sub = picks.filter(function (p) { return p.liga === l; }), c = contar(sub, mapas);
-            return '<tr><td>' + bandera(sub[0].bandera) + ' ' + emojiDe(docDe(sub[0])) + ' ' + esc(sub[0].nombre) + '</td><td class="num">' + sub.length + '</td><td class="num">' + c.ok +
-              '</td><td class="num">' + c.ko + '</td><td class="num">' + c.nulo + '</td><td class="num">' + c.pend + '</td><td class="num"><b>' + pct(c.acierto) + '</b></td></tr>';
-          }).join('') + '</tbody></table></div>';
-      }
-      h += bloqueTop(top, sem);
+    if (!Editor.activo) { return pintar(cabeceraRes('semana') + CANDADO, 'Resultados'); }
+    var semanas = ventanaHist();
+    return Hist.cargar(semanas, true).then(function () {
+      var todas = Hist.lista(semanas), fin = masDias(sem, 6);
+      var sels = todas.filter(function (s) { return s.fecha >= sem && s.fecha <= fin; });
+      return mapasHist(sels).then(function (mapas) {
+        var ult = todas.map(function (s) { return s.fecha; }).sort().pop() || hoy();
+        var h = cabeceraRes('semana') + selectorLunes(sem, 'resultados', lunesDe(CUENTAS_DESDE), lunesDe(ult > hoy() ? ult : hoy()));
+        if (!sels.length) {
+          return pintar(h + vacio('📭', 'No mandaste jugadas esta semana. Ármalas en <a href="#/green">🟢 Del día</a> y guárdalas en el historial.'), 'Resultados');
+        }
+        var pk = contarPatas(sels, mapas), n = contarHist(sels, mapas);
+        var apostado = sels.reduce(function (s, x) { return s + (x.apuesta || 0); }, 0);
+        h += '<h2><span class="emoji">🎯</span>Picks enviados <span class="cuenta">' + plural(pk.total, 'pick', 'picks') + '</span></h2>' +
+          marcadorCajas([['✅ Acertados', pk.ok + ' de ' + (pk.ok + pk.ko), 'verde'], ['🎯 Acierto real', pct(pk.ok + pk.ko ? pk.ok / (pk.ok + pk.ko) : null), 'verde'],
+            ['📈 Prometido (media)', pct(pk.prometido), 'azul'], ['⏳ Sin resultado', pk.pend, pk.pend ? 'azul' : '']]) +
+          tira({ ok: pk.ok, ko: pk.ko, nulo: pk.nulo, pend: pk.pend });
+        h += '<h2><span class="emoji">🟢</span>Jugadas <span class="cuenta">' + plural(n.total, 'jugada', 'jugadas') +
+          (apostado ? ' · 💵 ' + dinero(apostado) + ' apostados' : '') + '</span></h2>' + marcadorHist(n);
+        h += '<h2><span class="emoji">🗓️</span>Por día</h2>' + unicos(sels.map(function (s) { return s.fecha; })).sort().map(function (f) {
+          var del = sels.filter(function (s) { return s.fecha === f; }), c = contarHist(del, mapas);
+          return '<div class="dia-cab">🗓️ ' + fLarga(f) + '<span class="cuenta">' + plural(del.length, 'jugada', 'jugadas') +
+            (c.ganada + c.perdida ? ' · ✅ ' + c.ganada + ' · ❌ ' + c.perdida : '') + '</span></div>' +
+            '<div class="envios">' + del.map(function (s, i) { return tarjetaEnvio(s, mapas, del.length, i + 1); }).join('') + '</div>';
+        }).join('');
+        h += '<p class="criterio">Cada pick se resuelve con la auditoría de su jornada; las jugadas que llevan una selección propia se marcan a mano ' +
+          '(aquí o en <a href="#/historial">📚 Historial</a>).</p>';
+        pintar(h, 'Resultados');
+      });
+    });
+  }
+  /* los picks enviados de unas jugadas, sin repetir (el mismo pick en dos jugadas cuenta una vez) */
+  function contarPatas(sels, mapas) {
+    var n = { total: 0, ok: 0, ko: 0, nulo: 0, pend: 0, prometido: null }, vistos = {}, suma = 0, k = 0;
+    sels.forEach(function (s) {
+      s.patas.forEach(function (p) {
+        var id = (p.archivo || 'propia') + '|' + p.partido + '|' + p.mercado;
+        if (vistos[id]) { return; }
+        vistos[id] = true;
+        n.total++;
+        if (p.p != null) { suma += p.p; k++; }
+        var e = estadoPata(p, mapas)[0];
+        if (e === 'acierto') { n.ok++; } else if (e === 'fallo') { n.ko++; } else if (e === 'anulado' || e === 'no_comprobable') { n.nulo++; } else { n.pend++; }
+      });
+    });
+    n.prometido = k ? suma / k : null;
+    return n;
+  }
+  /* [estado, detalle] de un pick de una jugada: el de la auditoria o, si no ha llegado, por jugarse / por auditar */
+  function estadoPata(p, mapas) {
+    var r = p.manual || !p.archivo || !p.sa ? null : ((mapas[p.sa] || {})[p.archivo] || {})[p.partido + '|' + p.mercado];
+    if (r) { return [r[0], r[1] || '']; }
+    if (p.manual) { return ['propia', '']; }
+    var t = tsDe(p.fecha, p.hora);
+    return [t && Date.now() > t + 2.5 * 3600e3 ? 'por_auditar' : 'pendiente', ''];
+  }
+  function renglonEnvio(p, mapas) {
+    var r = estadoPata(p, mapas), e = r[0] === 'propia' ? { e: '✍️', t: 'Selección propia: se marca a mano' } : (ESTADO[r[0]] || ESTADO.no_comprobable);
+    var liga = p.archivo && p.sa ? '<a href="#/analisis/' + esc(p.sa) + '/' + esc(p.archivo) + '">' + esc(p.nombre || '') + '</a>' : esc(p.nombre || deporteDe(p)[1]);
+    return '<li class="fila renglon envio-pata r-' + esc(r[0]) + '"><span class="m">' + deporteDe(p)[0] + ' ' + mkHTML(p) + '</span>' +
+      '<span class="fila-fin">' + (p.momio ? '<span class="cuota"><b>' + esc(p.momio) + '</b>' + (p.p != null ? '<small>' + pct(p.p) + '</small>' : '') + '</span>'
+        : p.p != null ? '<span class="cuota sin"><b>' + pct(p.p) + '</b><small>probabilidad</small></span>' : '') + '</span>' +
+      '<span class="pt">' + (p.hora ? '<span class="cuando">🕐 ' + esc(p.hora) + '</span> · ' : '') + (p.bandera ? bandera(p.bandera) + ' ' : '') + liga +
+      (p.partido ? ' · ' + esc(p.partido) : '') + '</span>' +
+      (r[0] === 'pendiente' || r[0] === 'por_auditar' ? '' : '<span class="det">' + e.e + ' ' + e.t + (r[1] ? ': ' + esc(r[1]) : '') + '</span>') + '</li>';
+  }
+  /* una jugada enviada, con el detalle de cada pick (y los botones para marcarla, como en el historial) */
+  function tarjetaEnvio(s, mapas, nDia, iDia) {
+    var st = estadoPend(s, mapas), sel = estadoSel(s, mapas), niv = NIVELES[s.nivel] || NIVELES.fuerte, neto = netoSel(s, sel.e);
+    var puede = s.por === Editor.persona || Editor.persona === 'picksin', hora = s.creado ? horaMx(s.creado).split(' ').pop() : '';
+    return '<article class="hs envio r-' + (st === 'jugarse' || st === 'auditoria' ? 'pendiente' : st) + '" data-sel="' + esc(s.id) + '" data-sem="' + esc(s._sem) + '">' +
+      '<div class="hs-cab"><b>' + (s.tipo === 'parlay' ? (sgpDe(s.patas) ? '🧩 SGP de ' : '🔗 Parlay de ') + s.patas.length : '🎯 Directa') + '</b>' +
+      (nDia > 1 ? '<span class="chip neutro">' + iDia + ' de ' + nDia + ' del día</span>' : '') +
+      '<span class="chip n-' + esc(s.nivel) + '">' + niv.e + ' ' + niv.t + '</span>' + (hora ? '<span class="chip neutro">📤 ' + esc(hora) + '</span>' : '') +
+      persona(s.por) + '</div>' +
+      '<div class="hs-res">' + RES[st][0] + ' ' + RES[st][1] + (sel.auto ? ' <small>según la auditoría</small>' : '') + '</div>' +
+      '<ul class="lista envio-patas">' + s.patas.map(function (p) { return renglonEnvio(p, mapas); }).join('') + '</ul>' +
+      '<div class="hs-tot">' + [s.momio ? 'Momio <b>' + esc(s.momio) + '</b>' : '', s.apuesta ? 'Apuesta <b>' + dinero(s.apuesta) + '</b>' : '',
+        s.pago ? 'Paga <b>' + dinero(s.pago) + '</b>' : '', neto != null ? 'Resultado <b class="' + (neto > 0 ? 'mas' : neto < 0 ? 'menos' : '') + '">' + netoTxt(neto) + '</b>' : '']
+        .filter(Boolean).join(' · ') + '</div>' +
+      (puede ? '<div class="hs-acciones">' + ['ganada', 'perdida', 'nula'].map(function (k) {
+        return '<button type="button" class="r-' + k + '" data-accion="gz-hs-resultado" data-res="' + k + '" aria-pressed="' + (s.resultado === k) + '">' +
+          RES[k][0] + ' ' + RES[k][1] + '</button>';
+      }).join('') + (s.resultado ? '<button type="button" data-accion="gz-hs-resultado" data-res="" title="Volver a pendiente">↺</button>' : '') +
+        '<button type="button" class="hs-borrar" data-accion="gz-hs-borrar" aria-label="Borrar del historial">🗑</button></div>' : '') +
+      '</article>';
+  }
+  /* Resultados > Listas (Javier, 25/11/2026, en lugar del ranking): el top de tops, Seguros y Valor de la semana */
+  function vListas(partes) {
+    var sem = /^\d{4}-\d{2}-\d{2}$/.test(partes[0] || '') ? lunesDe(partes[0]) : lunesDe(hoy());
+    return Promise.all([topDeTops().catch(function () { return null; }), Editor.activo ? listasValor().catch(function () { return null; }) : null]).then(function (x) {
+      var top = x[0], listas = x[1];
+      var h = cabeceraRes('listas') + selectorLunes(sem, 'listas', lunesDe((top && top.desde) || CUENTAS_DESDE), lunesDe(hoy())) + bloqueTop(top, sem);
       if (Editor.activo && listas) { h += bloqueLista(listas, 'seguros', sem) + bloqueLista(listas, 'valor', sem); }
-      h += '<h2><span class="emoji">📈</span>Historial de la selección <span class="cuenta">lunes a domingo</span></h2>' + historialSemanas(T);
-      if (picks.length) {                  // la tabla de seleccionadores, hasta el final (pedido de Javier)
-        var t = porSeleccionador([{ picks: picks, mapas: mapas }]);
-        h += '<h2><span class="emoji">👥</span>Por seleccionador <span class="cuenta">esta semana</span></h2>' + tablaSeleccionadores(t, ordenTabla(t)) +
-          '<p class="criterio">Un pick escogido por dos personas cuenta para las dos. <a href="#/ranking">Ver el ranking de todas las semanas ›</a></p>';
-      }
-      pintar(h, 'Resultados');
+      pintar(h, 'Listas');
     });
   }
   function vRanking() {
@@ -3201,9 +3286,12 @@
   }
   function panelGZ() {
     var P = GZ.patas, c = calcularGZ();
-    var h = '<h2><span class="emoji">2️⃣</span>Tu jugada' + (P.length ? ' <span class="cuenta">' + plural(P.length, 'selección', 'selecciones') + '</span>' : '') + '</h2>';
+    var h = '<h2><span class="emoji">1️⃣</span>Tu jugada' + (P.length ? ' <span class="cuenta">' + plural(P.length, 'selección', 'selecciones') + '</span>' : '') + '</h2>' +
+      '<p class="criterio gz-como">Toca <b>＋</b> en cualquier pick de <a href="#/hoy">🏠 Hoy</a> o del <a href="#/analisis">📊 Análisis</a> ' +
+      '(también en «Todos los mercados» de cada partido, para un SGP): llega aquí con el momio que viste.</p>' +
+      '<button type="button" class="boton secundario gz-propia-btn" data-accion="gz-propia">✍️ Agregar una selección propia</button>';
     if (!P.length) {
-      return h + vacio('🎯', 'Toca los picks de la lista o agrega una selección propia: una para una directa, dos o más para un parlay o varias directas.');
+      return h + vacio('🎟️', 'Tu jugada está vacía. Una selección para una directa; dos o más para un parlay, un SGP o varias directas.');
     }
     if (P.length > 1) {
       h += '<div class="conmutador gz-tipo" role="group" aria-label="Tipo de jugada">' +
@@ -3235,7 +3323,7 @@
       return '<button type="button" class="n-' + k + '" data-accion="gz-nivel" data-nivel="' + k + '" aria-pressed="' + (GZ.nivel === k) + '">' +
         '<span class="e" aria-hidden="true">' + n.e + '</span>' + n.t + '</button>';
     }).join('') + '</div>';
-    h += '<h2><span class="emoji">3️⃣</span>Guarda y comparte en Green Zone</h2>' +
+    h += '<h2><span class="emoji">2️⃣</span>Guarda y comparte en Green Zone</h2>' +
       '<div class="gz-vista preparando"><img id="gz-img" alt="Vista previa de la imagen para el grupo"' + (gzUrl ? ' src="' + gzUrl + '"' : '') + '></div>' +
       '<ol class="gz-pasos"><li><button type="button" class="boton gz-guardar" data-accion="gz-guardar">💾 Guardar en el historial</button></li>' +
       '<li><button type="button" class="boton gz-compartir" data-accion="gz-compartir">📤 Compartir en Green Zone</button></li></ol>' +
@@ -3318,34 +3406,14 @@
       f.innerHTML = '🟢 ' + plural(GZ.patas.length, 'selección', 'selecciones') + ' · ver tu jugada ↓';
     }
   }
-  function vGreen(partes, q) {
+  function vGreen() {
     var cab = cabeceraGZ();
     if (!Editor.activo) { return pintar(cab + CANDADO, SECC.green[1]); }
-    var h0 = hoy(), otro = /^\d{4}-\d{2}-\d{2}$/.test((q && q.get('dia')) || '') && q.get('dia') < h0 ? q.get('dia') : null;
-    return Esc.rango(otro || h0, otro || masDias(h0, 21)).then(function (picks) {
-      gzPicks = picks;
-      if (otro) { GZ.dia = otro; }
-      var h = cab;
-      h += '<div class="gz"><section class="gz-col"><h2><span class="emoji">1️⃣</span>Escoge tus selecciones</h2>' +
-        '<button type="button" class="boton secundario gz-propia-btn" data-accion="gz-propia">✍️ Agregar una selección propia</button>' +
-        '<p class="criterio gz-propia-nota">Para lo que no está en el análisis (tenis, box, béisbol…). Se combina con los escogidos en parlay o en directas.</p>' +
-        '<h3>✅ De los picks escogidos ' + (otro ? 'del ' + fCorta(otro) : 'de hoy en adelante') + '</h3>' +
-        '<p class="criterio gz-sgp-nota">🧩 Para un SGP: en el partido abre «Todos los mercados», toca ＋ en cada línea que quieras y júntalas aquí.</p>' +
-        (otro ? '<p class="nota">📅 Estás viendo un día que ya pasó. <a href="#/green">Volver a hoy ›</a></p>' : '') +
-        (gzPicks.length ? '<div id="gz-lista">' + listaGZ() + '</div>'
-          : vacio('📭', 'No hay picks escogidos ' + (otro ? 'ese día' : 'de hoy en adelante') + '. Escógelos en <a href="#/hoy">🏠 Hoy</a>.')) +
-        '<form class="gz-otro" id="gz-otro"><label>📅 Otro día <input type="date" name="dia" max="' + h0 + '" value="' + (otro || '') + '"></label>' +
-        '<button type="submit" class="boton secundario">Ver</button></form>' +
-        '</section><section class="gz-col gz-panel" id="gz-panel"></section></div>' +
-        '<button type="button" class="gz-flotante" id="gz-flotante" data-accion="ir" data-id="gz-panel" hidden></button>';
-      pintar(h, SECC.green[1]);
-      pintarPanelGZ();
-      if (gzVigia) { gzVigia.disconnect(); gzVigia = null; }
-      if (window.IntersectionObserver) {
-        gzVigia = new IntersectionObserver(function (e) { var f = $('#gz-flotante'); if (f) { f.classList.toggle('oculto', e[0].isIntersecting); } });
-        gzVigia.observe($('#gz-panel'));
-      }
-    });
+    gzPicks = [];
+    if (gzVigia) { gzVigia.disconnect(); gzVigia = null; }
+    pintar(cab + '<div class="gz gz-sola"><section class="gz-col gz-panel" id="gz-panel"></section></div>', SECC.green[1]);
+    pintarPanelGZ();
+    return Promise.resolve();
   }
   function alternarGZ(id) {
     var ya = GZ.patas.filter(function (x) { return x.id === id; })[0];
@@ -3392,16 +3460,21 @@
     try { archivo = new File([gzBlob], nombreGZ(), { type: 'image/png' }); } catch (e) { archivo = null; }
     var copiado = texto ? copiarTexto(texto).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
     if (archivo && navigator.canShare && navigator.canShare({ files: [archivo] })) {
+      /* ya mandada: queda en el historial y la jugada se borra para armar otra (Javier, 25/11/2026) */
       navigator.share(texto ? { files: [archivo], text: texto } : { files: [archivo] }).then(function () {
-        copiado.then(function (ok) { if (ok) { avisar('✅ Listo. El texto también quedó copiado por si lo quieres pegar.'); } });
+        copiado.then(function (ok) {
+          limpiarGZ();
+          avisar('✅ Compartida en Green Zone. Quedó en el historial y la jugada se borró.' + (ok ? ' El texto también quedó copiado.' : ''));
+        });
       }, function (e) {
-        if (e && e.name !== 'AbortError') { descargarGZ(); avisar('📥 Se descargó la imagen: compártela desde tu galería.'); }
+        if (e && e.name !== 'AbortError') { descargarGZ(); limpiarGZ(); avisar('📥 Se descargó la imagen: compártela desde tu galería. La jugada ya está en el historial.'); }
       });
       return;
     }
     descargarGZ();
     copiado.then(function (ok) {
-      avisar(ok ? '📥 Imagen descargada y texto copiado: pégalos en el grupo.' : '📥 Imagen descargada: súbela al grupo.');
+      limpiarGZ();
+      avisar(ok ? '📥 Imagen descargada y texto copiado: pégalos en el grupo. La jugada ya está en el historial.' : '📥 Imagen descargada: súbela al grupo. La jugada ya está en el historial.');
     });
   }
 
@@ -3643,12 +3716,12 @@
      los seleccionadores, el historial y los reportes de la seleccion del dia */
   var porMarcarN = 0;
   function cabeceraRes(activa) {
-    var t = { semana: SECC.resultados[2], ranking: 'Buenas y malas de cada seleccionador, de todas las semanas.',
+    var t = { semana: SECC.resultados[2], listas: 'Top de tops, Seguros y Valor: lo que eligió el motor cada semana, con su resultado.',
       historial: 'Las selecciones del día guardadas, con su resultado. Se guardan al menos ' + ANOS_HISTORIAL + ' años.',
       reporte: 'Tu control por días (hasta 10) o por mes. La imagen para redes, solo cuando la pidas.' }[activa];
     var tabs = [['semana', '#/resultados', '🏅 Semana']];
     if (Editor.activo) { tabs.push(['historial', '#/historial', '📚 Historial'], ['reporte', '#/reporte', '📊 Reportes']); }
-    tabs.push(['ranking', '#/ranking', '👥 Ranking']);
+    tabs.push(['listas', '#/listas', '⭐ Listas']);
     return '<div class="titulo-seccion"><span class="icono" aria-hidden="true">🏅</span><div><h1>' + SECC.resultados[1] + '</h1>' +
       '<p class="sub">' + t + '</p></div></div><nav class="gz-tabs res-tabs" aria-label="Resultados">' + tabs.map(function (x) {
         return '<a href="' + x[1] + '"' + (x[0] === activa ? ' aria-current="page"' : '') + '>' + x[2] +
@@ -3716,8 +3789,9 @@
         salidasGZ();
         Hist.cache = true;
         avisoMarcar();
+        pintarBoleto();
         avisar((previas ? '💾 Cambios guardados' : '💾 Guardada en el historial') + (sels.length > 1 ? ' (' + sels.length + ' directas)' : '') +
-          '. Ya puedes compartirla.', '#/historial', 'Ver historial');
+          '. Ya no cuenta como selección: compártela en Green Zone y la jugada se borra.', '#/resultados', 'Ver la semana');
       });
     }).catch(function (e) {
       salidasGZ();
@@ -4368,11 +4442,10 @@
   function guiaHTML() {
     var fila = function (x) { return '<li class="fila"><span class="m">' + x[0] + ' ' + x[1] + '</span><span></span><span class="pt">' + x[2] + '</span></li>'; };
     return '<h2 id="s-ordenada"><span class="emoji">🗺️</span>Cómo está ordenada la página</h2><div class="tabla-caja"><ul class="lista">' +
-      [['🏠', 'Hoy', 'todos los picks de hoy, mañana y pasado mañana de todas las ligas, por partido, por probabilidad o en el ⭐ Top de tops (los más seguros del día); los escogidos del día y lo pendiente.'],
+      [['🏠', 'Hoy', 'todos los picks de hoy, mañana y pasado mañana de todas las ligas, por partido, por probabilidad o en el ⭐ Top de tops (los más seguros del día); lo que llevas en tu jugada y lo pendiente.'],
         ['📊', 'Análisis', 'cada liga con su jornada (semana del ciclo de su deporte: fútbol de jueves a miércoles) y su auditoría.'],
-        ['✅', 'Escogidos', 'los picks escogidos de hoy en adelante, por día o por liga.'],
-        ['🟢', 'Del día', 'arma la selección del día de Green Zone: primero se guarda y luego se comparte.'],
-        ['🏅', 'Resultados', 'la semana de lunes a domingo, el ranking de seleccionadores y, para los seleccionadores, el historial y los reportes de la selección del día.']
+        ['🟢', 'Del día', 'tu jugada para Green Zone: lo que agregas con ＋ en cualquier pick llega aquí con su momio; se guarda, se comparte y se borra.'],
+        ['🏅', 'Resultados', 'las jugadas que mandaste cada semana (lunes a domingo) con el resultado de cada pick, el historial, los reportes y ⭐ Listas (top de tops, Seguros y Valor).']
       ].map(fila).join('') + '</ul></div>' +
       '<h2 id="s-leer"><span class="emoji">🧭</span>Cómo leer un pick</h2><div class="tabla-caja"><ul class="lista">' +
       [['📈', 'Probabilidad', 'lo que el Motor Picksin 2.5 calcula para ese mercado, ya calibrado.'],
@@ -4380,8 +4453,7 @@
         ['⚖️', 'Respaldo bilateral', 'cuántos de los cuatro componentes (lo que hace cada equipo y lo que permite su rival) apoyan el pick.'],
         ['🟢', 'Confianza', 'Alta, Media o Baja según la solidez de la muestra y la consistencia del partido.'],
         ['🏆', 'TOP 5 y sugeridos', 'los mejores picks de la jornada y los de cada uno de los cinco criterios; los demás salen en los rankings por mercado.'],
-        ['✅', 'Escogido', 'pick seleccionado; su resultado se ve en «Resultados».'],
-        ['👤', 'Seleccionador', 'quién lo escogió: ' + Object.keys(COLORES).map(persona).join(' ') + '. Cada quien lleva su cuenta en el ranking.']
+        ['🎟️', 'En tu jugada', 'pick que agregaste con ＋; al guardar la jugada su resultado se ve en «Resultados».']
       ].map(fila).join('') + '</ul></div>';
   }
   /* Pagina 2.5 (06/11/2026): en Inicio, lo primero son los mas seguros de hoy (el top de tops), como el destacado de una app */
@@ -4452,7 +4524,6 @@
         ['📊', numero(D.jornadas), 'jornadas analizadas y archivadas'],
         ['🔍', numero(D.auditados), 'picks auditados contra el resultado real'],
         ['🎯', D.acierto == null ? '—' : numero(+(D.acierto * 100).toFixed(1), 1, '%'), D.acierto == null ? 'de acierto real: sale con la primera auditoría' : 'de acierto real del motor'],
-        ['✅', e ? numero(e.total) : '—', 'picks escogidos' + (e && e.acierto != null ? ' · ' + pct(e.acierto) + ' de acierto' : '')],
         ['🟢', g ? '<b>' + g.ganada + '–' + g.perdida + '</b>' : '—', 'selecciones del día ganadas–perdidas'],
         ['📅', numero(D.dias), 'días con el Motor Picksin']
       ].filter(function (x) { return !(x[0] === '🟢' && !Editor.activo); }).map(function (x) {
@@ -4519,9 +4590,19 @@
   }
 
   /* ================================================================== navegacion */
-  var VISTAS = { '': vInicio, hoy: vHoy, analisis: vAnalisis, auditoria: vAuditoria, escogidos: vEscogidos, resultados: vResultados,
-    ranking: vRanking, seleccionadores: vSeleccionadores, green: vGreen, historial: vHistorial, reporte: vReporte, liga: vIrALiga,
-    inicio: vInicio, ayuda: vInicio };
+  var irA = function (r) { return function () { location.replace(r); return Promise.resolve(); }; };
+  var VISTAS = { '': vInicio, hoy: vHoy, analisis: vAnalisis, auditoria: vAuditoria, escogidos: irA('#/green'), resultados: vResultados,
+    listas: vListas, ranking: irA('#/listas'), seleccionadores: irA('#/listas'), green: vGreen, historial: vHistorial, reporte: vReporte,
+    liga: vIrALiga, inicio: vInicio, ayuda: vInicio };
+  /* la pagina publica, en pausa (Javier, 25/11/2026: "nadie la ve porque no se la he pasado a nadie, puedes ponerla
+     inactiva por ahora"): sin clave solo se ve la invitacion a entrar con ella. Para volver a abrirla: PAUSA = false */
+  var PAUSA = true;
+  function vPausa() {
+    pintar('<section class="pausa"><img class="pausa-logo" src="assets/logo.webp" alt="Picksin" width="120" height="142">' +
+      '<h1>Picksin está en pausa</h1><p class="sub">Por ahora la app es solo para los seleccionadores. Entra con tu clave para verla completa.</p>' +
+      '<p><button type="button" class="boton" data-accion="editor">🔑 Entrar con mi clave</button></p></section>', '');
+    return Promise.resolve();
+  }
   var rutaAnterior = null;
   function router(repintar) {
     var h = location.hash.replace(/^#\/?/, ''), q = '', i = h.indexOf('?');
@@ -4530,7 +4611,10 @@
     var seccion = partes.shift() || '';
     var vista = VISTAS[seccion];
     if (!vista) { location.replace('#/'); return Promise.resolve(); }
-    var enMenu = { '': 'inicio', historial: 'resultados', reporte: 'resultados', ranking: 'resultados', seleccionadores: 'resultados',
+    var pausa = PAUSA && !Editor.activo;
+    document.documentElement.classList.toggle('en-pausa', pausa);
+    if (pausa) { vista = vPausa; }
+    var enMenu = { '': 'inicio', historial: 'resultados', reporte: 'resultados', listas: 'resultados', ranking: 'resultados', seleccionadores: 'resultados',
       auditoria: 'analisis' }[seccion] || seccion;
     $$('.nav a').forEach(function (a) {
       if (a.getAttribute('data-nav') === enMenu) { a.setAttribute('aria-current', 'page'); } else { a.removeAttribute('aria-current'); }
