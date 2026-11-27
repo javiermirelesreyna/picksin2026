@@ -1,0 +1,51 @@
+{
+ "semana": "2026-11-26",
+ "actualizado": "2026-11-27T00:21:32.375Z",
+ "selecciones": [
+  {
+   "id": "mwy8kkqp-bgro3n",
+   "fecha": "2026-11-26",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "-148",
+   "dec": 1.6757,
+   "apuesta": 1000,
+   "pago": 1675.6757,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇲🇽",
+     "nombre": "Liga MX",
+     "partido": "Club Leon vs Cruz Azul",
+     "mercado": "Under 3.5 Goles",
+     "fecha": "2026-11-26",
+     "hora": "21:10",
+     "momio": "-225",
+     "dec": 1.4444,
+     "p": 0.811,
+     "archivo": "mexico__liga-mx-j18",
+     "sa": "2026-11-19"
+    },
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇲🇽",
+     "nombre": "Liga MX",
+     "partido": "Club Leon vs Cruz Azul",
+     "mercado": "Cruz Azul marca en ambas mitades: No",
+     "fecha": "2026-11-26",
+     "hora": "21:10",
+     "momio": "-275",
+     "dec": 1.3636,
+     "p": 0.812,
+     "archivo": "mexico__liga-mx-j18",
+     "sa": "2026-11-19"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-11-27T00:21:32.375Z",
+   "resultado": null
+  }
+ ]
+}
