@@ -725,7 +725,7 @@
   function renglon(p, o) {
     var pid = registrar(p, o), sel = enJugada(pid), res = o.resultado;
     return '<li class="fila renglon' + (sel ? ' es-escogido' : '') + (res ? ' r-' + esc(res[0]) : '') + (o.sinSello ? ' sin-sello' : '') +
-      '" data-pid="' + esc(pid) + '"><span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
+      (o.irA ? ' con-ir' : '') + '" data-pid="' + esc(pid) + '"' + (o.irA ? ' data-ir="' + esc(o.irA) + '"' : '') + '><span class="m">' + mkHTML(p, o.doc) + barraP(p) + '</span>' +
       '<span class="fila-fin">' + cuota(p, o.momio !== undefined ? o.momio : (p.americano || (typeof p.momio === 'number' && p.momio > 1 ? americano(p.momio) : ''))) +
       botonEscoger(pid, p, o, true) + '</span>' +
       '<span class="pt">' + sello(sel) + (o.sub || '') + '</span>' +
@@ -743,7 +743,7 @@
       (rec.origen ? ' · ' + emojiOrigen(rec.origen) + ' ' + esc(rec.origen) : '') + ' ' + personas(rec.por);
     var cerrada = !!(res && res[0] !== 'pendiente' && res[0] !== 'por_auditar');
     return renglon(rec, { doc: docDe(rec), origen: rec.origen, sub: sub, resultado: res, auditada: cerrada,
-      escoger: op.escoger !== false, sinSello: true });
+      escoger: op.escoger !== false, sinSello: true, irA: rec.sa && rec.archivo ? urlPartido(docDe(rec), rec.partido) : null });
   }
   function vacio(emoji, texto) { return '<div class="vacio"><span class="emoji">' + emoji + '</span>' + texto + '</div>'; }
   function cabecera(k) {
@@ -871,7 +871,7 @@
         '</span>' : '');
     var mo = (x.top && (x.top.americano || (x.top.momio ? americano(x.top.momio) : ''))) || p.americano || '';
     return renglon(p, { doc: d, origen: x.top5 ? 'TOP 5' : x.sug[0] || x.rk[0], sub: sub, auditada: !!d.auditoria || !!res, resultado: res,
-      escoger: x.escoger, momio: mo });
+      escoger: x.escoger, momio: mo, irA: urlPartido(d, p.partido) });
   }
   /* un partido con sus picks: a la vista los del TOP 5 y los sugeridos (o el mejor, si no tiene);
      los demas de sus rankings, al tocar "mas picks" */
@@ -911,7 +911,7 @@
       '<a class="ph-liga" href="#/analisis/' + esc(m.d.semana) + '/' + esc(m.d.archivo) + '">' + (m.d.emoji || '⚽') + ' ' + bandera(m.d.bandera) + ' ' + esc(m.d.nombre) +
       ' · ' + esc(etqJornada(m.d)) + '</a>' + (nEsc ? '<span class="sello">🎟️ ' + nEsc + '</span>' : '') +
       (empezo ? '<span class="ph-hora empezo">🔒 Empezó</span>' : '<span class="ph-hora">' + esc(m.hora || '—') + '</span>') + '</div>' +
-      '<h3 class="ph-partido ph-equipos">' + equipos(m.partido, m.d) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
+      '<h3 class="ph-partido ph-equipos con-ir" data-ir="' + esc(urlPartido(m.d, m.partido)) + '">' + equipos(m.partido, m.d) + '</h3>' + lineaPartido(fichaDe(m.d, m.partido)) +
       '<ul class="lista">' + ver.map(function (x) { return renglonHoy(x, false); }).join('') + '</ul>' +
       (resto.length ? '<details class="ph-mas" data-k="ph-' + esc(m.d.archivo + '|' + m.partido) + '"><summary>＋ ' +
         plural(resto.length, 'pick más', 'picks más') + ' de este partido</summary><ul class="lista">' +
@@ -1521,7 +1521,7 @@
         '<td class="num">' + pct(m.local_mas) + '</td></tr>';
     }).join('');
     var tm = f.tendencia;
-    return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '"><summary>⚽ ' +
+    return '<details class="caja" data-k="f-' + esc(d.archivo + f.local) + '" data-partido="' + esc(f.partido || f.local + ' vs ' + f.visitante) + '"><summary>⚽ ' +
       sumPartido(f, d, f.visitante, f.hora ? '🕐 ' + esc(f.hora) : esc(f.dia || '')) + '</summary><div class="cuerpo">' +
       lineaPartido(f) + explicaHTML(f.explicacion, f, d) + tendenciaHTML(tm, d) + mejorHTML(f, d) +
       '<div class="x12"><div>🏠 Local<b>' + pct(g.p_local) + '</b></div><div>🤝 Empate<b>' + pct(g.p_empate) + '</b></div>' +
@@ -2039,7 +2039,7 @@
      rival en cada metrica (la maxima del motor) y la porteria y definicion de cada equipo */
   function fichaOtro(f, d) {
     var k = 'f-' + d.archivo + f.local;
-    var cab = '<details class="caja" data-k="' + esc(k) + '"><summary>' + emojiDe(d) + ' ' +
+    var cab = '<details class="caja" data-k="' + esc(k) + '" data-partido="' + esc(f.partido || f.local + ' vs ' + f.visita) + '"><summary>' + emojiDe(d) + ' ' +
       sumPartido(f, d, f.visita, f.hora ? '🕐 ' + esc(f.hora) : '') + '</summary><div class="cuerpo">' +
       explicaHTML(f.explicacion, f, d) + tendenciaHTML(f.tendencia, d);           // como el futbol (12/11/2026)
     if (depDe(d) === 'basquetbol') { return cab + fichaBasquetbol(f, d) + '</div></details>'; }
@@ -4723,6 +4723,29 @@
     return Promise.resolve();
   }
   var rutaAnterior = null;
+  /* Tocar un pick de Hoy (o su partido) lleva a la ficha de ese partido en el analisis, abierta y a la vista (Javier,
+     26/11/2026: "que al picar en el titulo o en el recuadro me lleve al analisis de ese partido"). El ＋ y los enlaces
+     siguen haciendo lo suyo; al volver con "atras" la lista queda donde estaba. */
+  var volverA = null;
+  function urlPartido(d, partido) { return '#/analisis/' + d.semana + '/' + d.archivo + '?p=' + encodeURIComponent(partido); }
+  function abrirPartido(partido) {
+    var f = $$('details[data-partido]').filter(function (x) { return x.getAttribute('data-partido') === partido; })[0];
+    if (!f) { return; }
+    for (var p = f; p; p = p.parentElement ? p.parentElement.closest('details') : null) { p.open = true; }
+    f.classList.remove('destacada'); void f.offsetWidth; f.classList.add('destacada');
+    var tope = 12;                       // lo que queda fijo arriba (la barra y el indice de la jornada) no la tapa
+    $$('.barra, .indice').forEach(function (el) {
+      var cs = getComputedStyle(el);
+      if (cs.position === 'sticky' || cs.position === 'fixed') { tope += el.getBoundingClientRect().height; }
+    });
+    window.scrollTo(0, f.getBoundingClientRect().top + window.scrollY - Math.max(tope, 76));
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-ir]');
+    if (!t || e.target.closest('button, a, input, select, textarea, summary, [data-accion]')) { return; }
+    volverA = { hash: location.hash, y: window.scrollY };
+    location.hash = t.getAttribute('data-ir');
+  });
   function router(repintar) {
     var h = location.hash.replace(/^#\/?/, ''), q = '', i = h.indexOf('?');
     if (i >= 0) { q = h.slice(i + 1); h = h.slice(0, i); }
@@ -4744,8 +4767,13 @@
       if (repintar === true) {
         abiertos.forEach(function (k) { $$('details[data-k]').forEach(function (d) { if (d.getAttribute('data-k') === k) { d.open = true; } }); });
         window.scrollTo(0, y);
+      } else if (volverA && location.hash === volverA.hash) {
+        window.scrollTo(0, volverA.y);
+        volverA = null;
       } else if (location.hash !== rutaAnterior) {
         window.scrollTo(0, 0);
+        var pd = new URLSearchParams(q).get('p');
+        if (pd) { abrirPartido(pd); }
       }
       rutaAnterior = location.hash;
       pintarBoleto();
