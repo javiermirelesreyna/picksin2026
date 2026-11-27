@@ -1057,7 +1057,8 @@
             if (x) { x.top = r; }
             return x;
           }).filter(Boolean);
-          var r7 = !!(top && top.regla === 'R7');
+          var r8 = !!(top && top.regla === 'R8');   /* R8 (Javier, 27/11/2026): solo con momio de Playdoit y sin techo */
+          var r7 = !!(top && (top.regla === 'R7' || r8));
           var r5 = !!(top && (top.regla === 'R5' || r7));
           var rsTop = ((top && top.resumen) || {})[dia];
           /* Seguros y Valor (modo editor, 20/10/2026): como el top, cada pick con su lugar; si no esta en los
@@ -1113,9 +1114,9 @@
                 'mercado (de Under 6.5 y Under 5.5 de tarjetas del mismo partido entra solo una)' : '') + '. Cuando empieza su partido, un pick ya no entra ' +
                 'ni sale: así se audita lo que estaba aquí antes de jugarse (<a href="#/resultados/' + lunesDe(dia) + '">🏅 Resultados</a>).</p>' +
                 (Editor.activo ? '<p class="criterio top-explica">💲 <b>Momios de Playdoit</b>' + (top.momios_de ? ' de las ' + esc(horaMx(top.momios_de)) : '') +
-                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ' + (r7 ? '⏳ Sin momio: Playdoit todavía no publica ese mercado; entra si la línea queda cerca de lo que proyecta el motor y da hasta ' + pct(top.techo_sin_momio) + ', y compite junto con los demás (actualiza momios). En resultado y hándicap no entra si el motor da más de 5 puntos sobre Playdoit. ' +
+                  ': entran si pagan ' + esc(americano(top.momio_minimo)) + ' o mejor. ' + (r7 ? (r8 ? 'Solo entra lo que Playdoit paga; sin momio no entra, y no hay tope de probabilidad. ' : '⏳ Sin momio: Playdoit todavía no publica ese mercado; entra si la línea queda cerca de lo que proyecta el motor y da hasta ' + pct(top.techo_sin_momio) + ', y compite junto con los demás (actualiza momios). ') + 'En resultado y hándicap no entra si el motor da más de 5 puntos sobre Playdoit. ' +
                   (top.tope_otros ? 'En la NBA y la NFL, lo que tiene momio no entra si el motor da más de ' + num(100 * (top.tope_otros.nba || top.tope_otros.nfl), 0) +
-                    ' puntos sobre Playdoit (ahí la casa sabe más). ' : '') + 'En los otros deportes, lo que no tiene momio va después. ' : '⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ') +
+                    ' puntos sobre Playdoit (ahí la casa sabe más). ' : '') + (r8 ? '' : 'En los otros deportes, lo que no tiene momio va después. ') : '⏳ Sin momio: Playdoit todavía no lo ofrece (actualiza momios). ') +
                   '🔎 Oportunidad encontrada: Playdoit lo paga como si fuera mucho menos probable; revisa información antes de jugarlo. ' +
                   '🚧 Diferencia motor–casa: en esa liga Playdoit pone la línea de ese mercado muy lejos de lo que espera el motor; ' +
                   'manda el motor, pero revisa información.</p>' : '')
