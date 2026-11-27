@@ -3805,8 +3805,9 @@
       ? '<a class="pend ok" href="#/historial"><span>🟢 Selección del día ' + etq + ': <b>' + plural(delDia.length, 'guardada', 'guardadas') + '</b> · ' +
         delDia.map(function (x) { var e = estadoPend(x, mapas); return RES[e][0] + ' ' + RES[e][1]; }).join(' · ') + '</span><b class="ir">Ver ›</b></a>'
       : '<a class="pend" href="#/green"><span>🟢 Todavía no hay selección del día ' + etq + ' guardada.</span><b class="ir">Armarla ›</b></a>');
-    return '<section class="pendientes' + (marcar.length || av.urgentes ? ' con-alerta' : '') + '"><h2><span class="emoji">📌</span>Pendientes' +
-      (n ? ' <span class="badge">' + n + '</span>' : ' <span class="cuenta">✓ nada por marcar</span>') + '</h2>' + it.join('') + '</section>';
+    /* desplegable y cerrado (Javier, 26/11/2026): el numerito rojo sigue a la vista en el titulo */
+    return '<details class="pendientes' + (marcar.length || av.urgentes ? ' con-alerta' : '') + '" data-k="hoy-pendientes"><summary><h2><span class="emoji">📌</span>Pendientes' +
+      (n ? ' <span class="badge">' + n + '</span>' : ' <span class="cuenta">✓ nada por marcar</span>') + '</h2></summary>' + it.join('') + '</details>';
   }
   function contarHist(sels, mapas) {
     var n = { total: 0, ganada: 0, perdida: 0, nula: 0, pendiente: 0, balance: 0, apostado: 0 };

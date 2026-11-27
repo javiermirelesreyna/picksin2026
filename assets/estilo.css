@@ -1227,3 +1227,11 @@ details.continente > .cuerpo > .pais:first-child { margin-top: 4px; }
 li.fila.con-ir:active { background: var(--azul-suave); }
 details.destacada { animation: destacar 2.4s ease-out 1; }
 @keyframes destacar { 0%, 35% { box-shadow: 0 0 0 3px var(--verde); } 100% { box-shadow: 0 0 0 0 rgba(73, 173, 51, 0); } }
+
+/* "Pendientes" de Hoy, desplegable (26/11/2026) */
+details.pendientes > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+details.pendientes > summary::-webkit-details-marker { display: none; }
+details.pendientes > summary h2 { flex: 1; }
+details.pendientes > summary::after { content: "+"; color: var(--suave); font-weight: 400; font-size: 1.3rem; line-height: 1; }
+details.pendientes[open] > summary::after { content: "−"; }
+details.pendientes:not([open]) { padding-bottom: 2px; }
