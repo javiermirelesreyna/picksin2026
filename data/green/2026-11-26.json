@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-26",
- "actualizado": "2026-11-28T03:12:16.376Z",
+ "actualizado": "2026-11-28T06:09:11.155Z",
  "selecciones": [
   {
    "id": "mwy8kkqp-bgro3n",
@@ -95,6 +95,51 @@
    "resultado": "ganada",
    "resuelto_por": "picksin",
    "resuelto": "2026-11-28T03:12:16.376Z"
+  },
+  {
+   "id": "mx00fiaq-uw17ja",
+   "fecha": "2026-11-28",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "-133",
+   "dec": 1.7532,
+   "apuesta": 1000,
+   "pago": 1753.2468,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+     "nombre": "Championship",
+     "partido": "West Bromwich Albion vs Bristol City",
+     "mercado": "West Bromwich Albion gana alguna mitad: Si",
+     "fecha": "2026-11-28",
+     "hora": "09:00",
+     "momio": "-275",
+     "dec": 1.3636,
+     "p": 0.818,
+     "archivo": "england__championship-j18",
+     "sa": "2026-11-26"
+    },
+    {
+     "manual": false,
+     "deporte": "futbol",
+     "bandera": "🇧🇪",
+     "nombre": "Jupiler Pro League",
+     "partido": "KVC Westerlo vs RAAL La Louviere",
+     "mercado": "Over 2.5 Tarjetas",
+     "fecha": "2026-11-28",
+     "hora": "09:00",
+     "momio": "-350",
+     "dec": 1.2857,
+     "p": 0.864,
+     "archivo": "belgium__pro-league-j13",
+     "sa": "2026-11-26"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-11-28T06:09:11.155Z",
+   "resultado": null
   }
  ]
 }
