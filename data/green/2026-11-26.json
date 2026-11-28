@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-26",
- "actualizado": "2026-11-27T00:21:32.375Z",
+ "actualizado": "2026-11-28T01:26:28.727Z",
  "selecciones": [
   {
    "id": "mwy8kkqp-bgro3n",
@@ -45,6 +45,51 @@
    ],
    "por": "picksin",
    "creado": "2026-11-27T00:21:32.375Z",
+   "resultado": null
+  },
+  {
+   "id": "mwzqbvyr-iq0zza",
+   "fecha": "2026-11-27",
+   "tipo": "parlay",
+   "nivel": "superfuerte",
+   "momio": "-110",
+   "dec": 1.9091,
+   "apuesta": 1000,
+   "pago": 1909.0909,
+   "patas": [
+    {
+     "manual": false,
+     "deporte": "basquetbol",
+     "bandera": "🇺🇸",
+     "nombre": "NBA",
+     "partido": "Phoenix Suns vs Dallas Mavericks",
+     "mercado": "Puntos de la 1ª mitad menos de 120.5",
+     "fecha": "2026-11-27",
+     "hora": "20:00",
+     "momio": "-205",
+     "dec": 1.4878,
+     "p": 0.774,
+     "archivo": "nba-2026-11-27",
+     "sa": "2026-11-26"
+    },
+    {
+     "manual": false,
+     "deporte": "basquetbol",
+     "bandera": "🇺🇸",
+     "nombre": "NBA",
+     "partido": "Phoenix Suns vs Dallas Mavericks",
+     "mercado": "Puntos del visitante en la 1ª mitad menos de 58.5",
+     "fecha": "2026-11-27",
+     "hora": "20:00",
+     "momio": "-150",
+     "dec": 1.6667,
+     "p": 0.675,
+     "archivo": "nba-2026-11-27",
+     "sa": "2026-11-26"
+    }
+   ],
+   "por": "picksin",
+   "creado": "2026-11-28T01:26:28.727Z",
    "resultado": null
   }
  ]
