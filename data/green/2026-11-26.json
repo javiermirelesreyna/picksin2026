@@ -1,6 +1,6 @@
 {
  "semana": "2026-11-26",
- "actualizado": "2026-11-28T03:12:10.991Z",
+ "actualizado": "2026-11-28T03:12:16.376Z",
  "selecciones": [
   {
    "id": "mwy8kkqp-bgro3n",
@@ -92,7 +92,9 @@
    ],
    "por": "picksin",
    "creado": "2026-11-28T01:26:28.727Z",
-   "resultado": null
+   "resultado": "ganada",
+   "resuelto_por": "picksin",
+   "resuelto": "2026-11-28T03:12:16.376Z"
   }
  ]
 }
